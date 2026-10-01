@@ -1,7 +1,7 @@
 {
-  "id": "/mi-negocio-app-2026/",
-  "name": "Mi Negocio - Inventario y Ventas",
-  "short_name": "Mi Negocio",
+  "id": "/inventario-nuevo-2026/",
+  "name": "Control Total de Inventario",
+  "short_name": "Mi Inventario",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

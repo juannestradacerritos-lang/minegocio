@@ -1,7 +1,9 @@
 {
+  "id": "/mi-negocio-app-2026/",
   "name": "Mi Negocio - Inventario y Ventas",
   "short_name": "Mi Negocio",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#F9FAFB",
   "theme_color": "#2563EB",

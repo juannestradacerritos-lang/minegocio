@@ -1,8 +1,8 @@
 {
-  "id": "/inventario-nuevo-2026/",
-  "name": "Control Total de Inventario",
-  "short_name": "Mi Inventario",
-  "start_url": "./index.html",
+  "id": "/mi-negocio-version-nueva-2026/",
+  "name": "Control de Inventario",
+  "short_name": "Inventario",
+  "start_url": "./index.html?app=nuevo2026",
   "scope": "./",
   "display": "standalone",
   "background_color": "#F9FAFB",

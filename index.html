@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Inventario y Ventas</title>
+    
+    <!-- Enlaces PWA -->
+    <link rel="manifest" href="./manifest.json?v=2">
+    <meta name="theme-color" content="#2563EB">
+    <link rel="icon" href="./icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="./icon.svg">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Firebase SDK v8 (Compatibilidad directa en HTML) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+    <style>
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans antialiased">
+
+    <!-- ================= PANTALLA DE LOGIN ================= -->
+    <div id="login-screen" class="fixed inset-0 bg-gray-50 z-50 flex flex-col items-center justify-center px-4 transition-opacity duration-300">
+        <div class="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 max-w-sm w-full text-center">
+            <div class="w-20 h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl shadow-inner">
+                🏪
+            </div>
+            <h1 class="text-2xl font-black text-gray-800 mb-2">Mi Negocio</h1>
+            <p class="text-gray-500 text-sm mb-8">Inicia sesión para gestionar tu inventario y ventas en la nube.</p>
+            
+            <button onclick="loginConGoogle()" class="w-full bg-white border border-gray-300 text-gray-700 font-bold py-3 px-4 rounded-xl shadow-sm hover:bg-gray-50 active:bg-gray-100 transition-all flex items-center justify-center space-x-3">
+                <svg class="w-6 h-6" viewBox="0 0 48 48">
+                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                </svg>
+                <span>Continuar con Google</span>
+            </button>
+            <button onclick="iniciarModoPrueba()" class="w-full mt-3 bg-blue-50 border border-blue-200 text-blue-700 font-bold py-3 px-4 rounded-xl hover:bg-blue-100 transition-colors">
+                Probar sin iniciar sesión
+            </button>
+        </div>
+    </div>
+
+    <!-- ================= CONTENIDO DE LA APLICACIÓN ================= -->
+    <div id="app-content" class="hidden pb-28">
+        
+        <header class="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-40 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <h1 class="text-xl font-bold tracking-wide">Mi Negocio</h1>
+                <span id="demo-badge" class="hidden text-[10px] font-black uppercase tracking-wide bg-yellow-300 text-yellow-900 px-2 py-1 rounded-full">Prueba</span>
+            </div>
+            <div class="flex items-center space-x-3">
+                <img id="user-avatar" src="" alt="Perfil" class="w-8 h-8 rounded-full border-2 border-white shadow-sm hidden">
+                <button onclick="cerrarSesion()" class="text-sm bg-blue-700 hover:bg-blue-800 px-3 py-1.5 rounded-lg font-semibold transition-colors">
+                    Salir
+                </button>
+            </div>
+        </header>
+
+        <main class="max-w-4xl mx-auto p-4">
+
+            <!-- 1. PESTAÑA: RESUMEN -->
+            <section id="tab-resumen" class="fade-in block">
+                <h2 class="text-2xl font-bold mb-6 text-gray-800">Resumen de Inventario</h2>
+                
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6 text-center">
+                    <p class="text-gray-500 text-sm font-semibold uppercase tracking-wider">Ganancia Neta Proyectada</p>
+                    <p class="text-5xl font-black text-green-500 my-3" id="resumen-ganancia">Q0.00</p>
+                    <p class="text-sm text-gray-400">Al vender todo el stock actual</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-8">
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                        <p class="text-sm text-gray-500 font-semibold mb-1">Costo (Inversión)</p>
+                        <p class="text-2xl font-bold text-red-500" id="resumen-costo">Q0.00</p>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                        <p class="text-sm text-gray-500 font-semibold mb-1">Venta Total</p>
+                        <p class="text-2xl font-bold text-blue-600" id="resumen-venta">Q0.00</p>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                        <p class="text-sm text-gray-500 font-semibold mb-1">Productos</p>
+                        <p class="text-2xl font-bold text-gray-700" id="resumen-variedad">0</p>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                        <p class="text-sm text-gray-500 font-semibold mb-1">Unidades</p>
+                        <p class="text-2xl font-bold text-gray-700" id="resumen-unidades">0</p>
+                    </div>
+                </div>
+
+                <div class="border-t border-gray-200 pt-6 space-y-3">
+                    <button onclick="exportarCSV()" class="w-full bg-white border border-gray-300 text-gray-700 font-bold py-3 rounded-xl shadow-sm">
+                        📊 Descargar Inventario (Excel)
+                    </button>
+                    <button onclick="limpiarTodo()" class="w-full bg-red-50 border border-red-200 text-red-600 font-bold py-3 rounded-xl shadow-sm">
+                        ⚠️ Borrar Todo el Sistema
+                    </button>
+                </div>
+            </section>
+
+            <!-- 2. PESTAÑA: CATÁLOGO -->
+            <section id="tab-catalogo" class="fade-in hidden">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800">Catálogo</h2>
+                <div class="relative mb-6">
+                    <span class="absolute left-4 top-3.5 text-gray-400">🔍</span>
+                    <input type="text" id="buscar-producto" placeholder="Buscar producto..." class="w-full p-3 pl-10 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm" onkeyup="renderizarCatalogo()">
+                </div>
+                
+                <div id="lista-catalogo" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </section>
+
+            <!-- 3. PESTAÑA: VENDER -->
+            <section id="tab-vender" class="fade-in hidden">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800">Caja Registradora</h2>
+                
+                <p class="text-sm text-gray-500 mb-2 font-semibold">Toca un producto para vender:</p>
+                <div class="flex overflow-x-auto space-x-3 pb-4 mb-2" id="lista-vender"></div>
+
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                    <h3 class="font-bold text-gray-700 mb-3 border-b pb-2">Carrito de Compras</h3>
+                    <div id="carrito-items" class="min-h-[120px] max-h-[40vh] overflow-y-auto mb-4">
+                        <p class="text-center text-gray-400 mt-10">El carrito está vacío</p>
+                    </div>
+                    
+                    <div class="border-t pt-4">
+                        <div class="flex justify-between items-center mb-5">
+                            <span class="text-gray-500 font-semibold">Total a Cobrar:</span>
+                            <span class="text-4xl font-black text-blue-600" id="carrito-total">Q0.00</span>
+                        </div>
+                        <button onclick="abrirModalCobro()" class="w-full bg-green-500 text-white font-bold py-4 rounded-xl shadow-md hover:bg-green-600 active:bg-green-700 text-lg transition-transform transform active:scale-95">
+                            Cobrar Venta
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. PESTAÑA: NUEVO PRODUCTO -->
+            <section id="tab-nuevo" class="fade-in hidden">
+                <h2 class="text-2xl font-bold mb-6 text-gray-800">Registrar Producto</h2>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <form id="form-nuevo" onsubmit="guardarProducto(event)">
+                        <div class="mb-5">
+                            <label class="block text-sm font-medium text-gray-600 mb-2">Nombre del Producto</label>
+                            <input type="text" id="nuevo-nombre" required class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg" placeholder="Ej. Zapatos Nike">
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4 mb-5">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-2">Categoría</label>
+                                <select id="nuevo-categoria" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white text-lg">
+                                    <option value="Verduras">Verduras</option>
+                                    <option value="Cosméticos">Cosméticos</option>
+                                    <option value="Ropa/Calzado">Ropa/Calzado</option>
+                                    <option value="Limpieza">Limpieza</option>
+                                    <option value="Otros">Otros</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-2">Cantidad (Stock)</label>
+                                <input type="number" id="nuevo-stock" required min="0" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg" placeholder="0">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4 mb-8">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-2">Costo (Compra)</label>
+                                <div class="relative">
+                                    <span class="absolute left-4 top-4 text-gray-500 font-bold">Q</span>
+                                    <input type="number" id="nuevo-costo" required min="0" step="0.01" class="w-full p-4 pl-9 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg" placeholder="0.00">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-2">Precio (Venta)</label>
+                                <div class="relative">
+                                    <span class="absolute left-4 top-4 text-gray-500 font-bold">Q</span>
+                                    <input type="number" id="nuevo-precio" required min="0" step="0.01" class="w-full p-4 pl-9 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg" placeholder="0.00">
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-md hover:bg-blue-700 active:bg-blue-800 text-lg transition-transform transform active:scale-95">
+                            Guardar Producto
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+        </main>
+
+        <nav class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.1)] z-40">
+            <div class="max-w-4xl mx-auto flex justify-between items-center px-4 py-2">
+                <button onclick="cambiarTab('resumen', this)" class="nav-btn flex-1 flex flex-col items-center p-2 text-blue-600 transition-colors">
+                    <span class="text-2xl mb-1">📊</span>
+                    <span class="text-xs font-semibold">Resumen</span>
+                </button>
+                <button onclick="cambiarTab('catalogo', this)" class="nav-btn flex-1 flex flex-col items-center p-2 text-gray-400 transition-colors">
+                    <span class="text-2xl mb-1">📦</span>
+                    <span class="text-xs font-medium">Catálogo</span>
+                </button>
+                <button onclick="cambiarTab('vender', this)" class="nav-btn flex-1 flex flex-col items-center p-2 text-gray-400 transition-colors">
+                    <span class="text-2xl mb-1">🛒</span>
+                    <span class="text-xs font-medium">Vender</span>
+                </button>
+                <button onclick="cambiarTab('nuevo', this)" class="nav-btn flex-1 flex flex-col items-center p-2 text-gray-400 transition-colors">
+                    <span class="text-2xl mb-1">➕</span>
+                    <span class="text-xs font-medium">Nuevo</span>
+                </button>
+            </div>
+        </nav>
+    </div>
+
+    <!-- MODALES OCULTOS -->
+    <div id="modal-eliminar" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden transition-opacity">
+        <div class="bg-white p-6 rounded-2xl w-11/12 max-w-sm text-center shadow-2xl">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span class="text-red-500 text-3xl">🗑️</span>
+            </div>
+            <h3 class="text-xl font-bold mb-2 text-gray-800">¿Eliminar producto?</h3>
+            <p class="text-gray-500 mb-6 text-sm">Este producto se borrará de tu catálogo en la nube y no podrás recuperarlo.</p>
+            <div class="flex space-x-3">
+                <button onclick="cerrarModalEliminar()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-bold transition-colors">Cancelar</button>
+                <button id="btn-confirmar-eliminar" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-xl font-bold shadow-md transition-colors">Sí, eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-cobrar" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden transition-opacity">
+        <div class="bg-white p-6 rounded-2xl w-11/12 max-w-sm text-center shadow-2xl">
+            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span class="text-green-500 text-3xl">💵</span>
+            </div>
+            <h3 class="text-xl font-bold mb-4 text-gray-800">Completar Venta</h3>
+            
+            <div class="bg-gray-50 p-4 rounded-xl mb-4 border border-gray-100 flex justify-between items-center">
+                <span class="text-gray-500 text-sm font-semibold">Total a cobrar:</span>
+                <span class="text-2xl font-black text-blue-600" id="modal-total-cobro">Q0.00</span>
+            </div>
+
+            <div class="mb-4 text-left">
+                <label class="block text-sm font-medium text-gray-600 mb-2">Efectivo Recibido:</label>
+                <div class="relative">
+                    <span class="absolute left-4 top-4 text-gray-500 font-bold">Q</span>
+                    <input type="number" id="input-efectivo" min="0" step="0.01" class="w-full p-4 pl-9 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-green-500 text-xl font-bold text-gray-800" placeholder="0.00" oninput="calcularVuelto()">
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center mb-6 px-2">
+                <span class="text-gray-500 text-sm font-bold">Cambio (Vuelto):</span>
+                <span class="text-2xl font-black text-green-500" id="modal-vuelto">Q0.00</span>
+            </div>
+
+            <div class="flex space-x-3">
+                <button onclick="cerrarModalCobro()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-bold transition-colors">Cancelar</button>
+                <button id="btn-finalizar-venta" onclick="confirmarVenta()" class="flex-1 bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-bold shadow-md transition-colors opacity-50 cursor-not-allowed" disabled>Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script de Lógica, Firebase y Auth -->
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyB9q6uASZ7EYVtVWcviNgp4FEZFAYAzH9o",
+            authDomain: "negocio-adce8.firebaseapp.com",
+            projectId: "negocio-adce8",
+            storageBucket: "negocio-adce8.firebasestorage.app",
+            messagingSenderId: "71442162313",
+            appId: "1:71442162313:web:b01a48d4355ac72a569c58",
+            measurementId: "G-V4554VJEF2"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+        const provider = new firebase.auth.GoogleAuthProvider();
+
+        let inventario = [];
+        let carrito = [];
+        let productoAEliminar = null;
+        let totalVentaActual = 0; 
+        let unsubscribeFirestore = null;
+        let modoPrueba = false;
+
+        auth.onAuthStateChanged((user) => {
+            if (modoPrueba) return;
+            if (user) {
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('app-content').classList.remove('hidden');
+                
+                const avatar = document.getElementById('user-avatar');
+                if(user.photoURL) {
+                    avatar.src = user.photoURL;
+                    avatar.classList.remove('hidden');
+                }
+
+                iniciarLecturaInventario();
+            } else {
+                document.getElementById('login-screen').classList.remove('hidden');
+                document.getElementById('app-content').classList.add('hidden');
+                
+                if(unsubscribeFirestore) unsubscribeFirestore();
+                
+                inventario = [];
+                carrito = [];
+                actualizarResumen();
+                renderizarCatalogo();
+                renderizarListaVenta();
+                renderizarCarrito();
+            }
+        });
+
+        function iniciarModoPrueba() {
+            modoPrueba = true;
+            if (unsubscribeFirestore) unsubscribeFirestore();
+            inventario = [
+                { id: 'demo-1', nombre: 'Tomate', categoria: 'Verduras', costo: 2.50, precio: 4.00, stock: 12 },
+                { id: 'demo-2', nombre: 'Jabón líquido', categoria: 'Limpieza', costo: 10.00, precio: 15.00, stock: 6 },
+                { id: 'demo-3', nombre: 'Camiseta', categoria: 'Ropa/Calzado', costo: 35.00, precio: 50.00, stock: 3 }
+            ];
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('app-content').classList.remove('hidden');
+            document.getElementById('demo-badge').classList.remove('hidden');
+            actualizarResumen();
+            renderizarCatalogo();
+            renderizarListaVenta();
+            renderizarCarrito();
+        }
+
+        function loginConGoogle() {
+            modoPrueba = false;
+            auth.signInWithPopup(provider).catch((error) => {
+                alert("Error al iniciar sesión: " + error.message);
+            });
+        }
+
+        function cerrarSesion() {
+            if (modoPrueba) {
+                modoPrueba = false;
+                carrito = [];
+                document.getElementById('demo-badge').classList.add('hidden');
+                document.getElementById('app-content').classList.add('hidden');
+                document.getElementById('login-screen').classList.remove('hidden');
+                return;
+            }
+            auth.signOut();
+        }
+
+        function iniciarLecturaInventario() {
+            unsubscribeFirestore = db.collection("productos").onSnapshot((querySnapshot) => {
+                inventario = [];
+                querySnapshot.forEach((doc) => {
+                    inventario.push({ id: doc.id, ...doc.data() });
+                });
+                
+                inventario.sort((a, b) => a.nombre.localeCompare(b.nombre));
+                actualizarResumen();
+                renderizarCatalogo();
+                renderizarListaVenta();
+            });
+        }
+
+        function cambiarTab(tabId, elementoBtn) {
+            document.querySelectorAll('main > section').forEach(sec => sec.classList.add('hidden'));
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('text-blue-600');
+                btn.classList.add('text-gray-400');
+                btn.querySelector('span:last-child').classList.remove('font-semibold');
+                btn.querySelector('span:last-child').classList.add('font-medium');
+            });
+            elementoBtn.classList.remove('text-gray-400');
+            elementoBtn.classList.add('text-blue-600');
+            elementoBtn.querySelector('span:last-child').classList.remove('font-medium');
+            elementoBtn.querySelector('span:last-child').classList.add('font-semibold');
+        }
+
+        function actualizarResumen() {
+            let totalUnidades = 0, costoTotal = 0, ventaTotal = 0;
+            inventario.forEach(p => {
+                totalUnidades += p.stock;
+                costoTotal += (p.costo * p.stock);
+                ventaTotal += (p.precio * p.stock);
+            });
+
+            document.getElementById('resumen-variedad').innerText = inventario.length;
+            document.getElementById('resumen-unidades').innerText = totalUnidades;
+            document.getElementById('resumen-costo').innerText = `Q${costoTotal.toFixed(2)}`;
+            document.getElementById('resumen-venta').innerText = `Q${ventaTotal.toFixed(2)}`;
+            document.getElementById('resumen-ganancia').innerText = `Q${(ventaTotal - costoTotal).toFixed(2)}`;
+        }
+
+        function renderizarCatalogo() {
+            const contenedor = document.getElementById('lista-catalogo');
+            const busqueda = document.getElementById('buscar-producto').value.toLowerCase();
+            contenedor.innerHTML = '';
+
+            const filtrados = inventario.filter(p => p.nombre.toLowerCase().includes(busqueda));
+
+            if(filtrados.length === 0) {
+                contenedor.innerHTML = `<p class="text-center col-span-full text-gray-400 py-10">No se encontraron productos.</p>`;
+                return;
+            }
+
+            filtrados.forEach(p => {
+                const bgStock = p.stock === 0 ? 'bg-red-100 text-red-700' : p.stock <= 5 ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700';
+                
+                contenedor.innerHTML += `
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <span class="text-xs font-bold uppercase text-gray-400 tracking-wider">${p.categoria}</span>
+                                <h3 class="font-bold text-gray-800 text-lg leading-tight mt-1">${p.nombre}</h3>
+                            </div>
+                            <button onclick="abrirModalEliminar('${p.id}')" class="text-gray-300 hover:text-red-500 transition-colors text-xl">
+                                🗑️️
+                            </button>
+                        </div>
+                        
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-sm text-gray-500">Costo: Q${p.costo.toFixed(2)}</span>
+                            <span class="font-black text-blue-600 text-lg">Q${p.precio.toFixed(2)}</span>
+                        </div>
+
+                        <div class="flex justify-between items-center bg-gray-50 p-2 rounded-xl">
+                            <span class="text-xs font-bold px-3 py-1 rounded-lg ${bgStock}">Stock: ${p.stock}</span>
+                            <div class="flex space-x-2">
+                                <button onclick="ajustarStock('${p.id}', -1)" class="w-8 h-8 rounded-lg bg-white border border-gray-200 text-gray-700 font-bold shadow-sm active:bg-gray-100">-</button>
+                                <button onclick="ajustarStock('${p.id}', 1)" class="w-8 h-8 rounded-lg bg-white border border-gray-200 text-gray-700 font-bold shadow-sm active:bg-gray-100">+</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function ajustarStock(id, cantidad) {
+            const prod = inventario.find(p => p.id === id);
+            if(prod) {
+                let nuevoStock = prod.stock + cantidad;
+                if(nuevoStock < 0) nuevoStock = 0;
+                if (modoPrueba) {
+                    prod.stock = nuevoStock;
+                    actualizarResumen();
+                    renderizarCatalogo();
+                    renderizarListaVenta();
+                } else {
+                    db.collection("productos").doc(id).update({ stock: nuevoStock });
+                }
+            }
+        }
+
+        function abrirModalEliminar(id) {
+            productoAEliminar = id;
+            document.getElementById('modal-eliminar').classList.remove('hidden');
+        }
+
+        function cerrarModalEliminar() {
+            productoAEliminar = null;
+            document.getElementById('modal-eliminar').classList.add('hidden');
+        }
+
+        document.getElementById('btn-confirmar-eliminar').addEventListener('click', () => {
+            if(productoAEliminar) {
+                if (modoPrueba) {
+                    inventario = inventario.filter(p => p.id !== productoAEliminar);
+                    cerrarModalEliminar();
+                    actualizarResumen();
+                    renderizarCatalogo();
+                    renderizarListaVenta();
+                } else {
+                    db.collection("productos").doc(productoAEliminar).delete().then(() => {
+                        cerrarModalEliminar();
+                    });
+                }
+            }
+        });
+
+        function guardarProducto(e) {
+            e.preventDefault();
+            const nuevo = {
+                nombre: document.getElementById('nuevo-nombre').value,
+                categoria: document.getElementById('nuevo-categoria').value,
+                costo: parseFloat(document.getElementById('nuevo-costo').value),
+                precio: parseFloat(document.getElementById('nuevo-precio').value),
+                stock: parseInt(document.getElementById('nuevo-stock').value)
+            };
+
+            if (modoPrueba) {
+                nuevo.id = `demo-${Date.now()}`;
+                inventario.push(nuevo);
+                inventario.sort((a, b) => a.nombre.localeCompare(b.nombre));
+                document.getElementById('form-nuevo').reset();
+                actualizarResumen();
+                renderizarCatalogo();
+                renderizarListaVenta();
+                cambiarTab('catalogo', document.querySelectorAll('.nav-btn')[1]);
+            } else {
+                db.collection("productos").add(nuevo).then(() => {
+                    document.getElementById('form-nuevo').reset();
+                    cambiarTab('catalogo', document.querySelectorAll('.nav-btn')[1]);
+                });
+            }
+        }
+
+        function renderizarListaVenta() {
+            const contenedor = document.getElementById('lista-vender');
+            contenedor.innerHTML = '';
+            const conStock = inventario.filter(p => p.stock > 0);
+            
+            if(conStock.length === 0) {
+                contenedor.innerHTML = '<span class="text-sm text-gray-400">No hay productos con stock.</span>';
+                return;
+            }
+
+            conStock.forEach(p => {
+                contenedor.innerHTML += `
+                    <div onclick="agregarAlCarrito('${p.id}')" class="flex-shrink-0 w-32 bg-white border border-gray-200 rounded-xl p-3 text-center shadow-sm active:border-blue-500 cursor-pointer">
+                        <p class="text-sm font-bold text-gray-700 truncate">${p.nombre}</p>
+                        <p class="text-blue-600 font-black mt-1">Q${p.precio.toFixed(2)}</p>
+                        <p class="text-[10px] text-gray-400 mt-1">Disp: ${p.stock}</p>
+                    </div>
+                `;
+            });
+        }
+
+        function agregarAlCarrito(id) {
+            const prod = inventario.find(p => p.id === id);
+            if(!prod || prod.stock <= 0) return;
+            const itemExistente = carrito.find(item => item.id === id);
+            
+            if(itemExistente) {
+                if(itemExistente.cantidad < prod.stock) itemExistente.cantidad++;
+                else alert('Stock máximo alcanzado');
+            } else {
+                carrito.push({...prod, cantidad: 1});
+            }
+            renderizarCarrito();
+        }
+
+        function renderizarCarrito() {
+            const contenedor = document.getElementById('carrito-items');
+            totalVentaActual = 0;
+
+            if(carrito.length === 0) {
+                contenedor.innerHTML = '<p class="text-center text-gray-400 mt-10">El carrito está vacío</p>';
+                document.getElementById('carrito-total').innerText = 'Q0.00';
+                return;
+            }
+
+            contenedor.innerHTML = '';
+            carrito.forEach((item, index) => {
+                const subtotal = item.precio * item.cantidad;
+                totalVentaActual += subtotal;
+                contenedor.innerHTML += `
+                    <div class="flex justify-between items-center py-3 border-b border-gray-100 last:border-0">
+                        <div>
+                            <p class="font-bold text-gray-700 text-sm">${item.nombre}</p>
+                            <p class="text-xs text-gray-500">${item.cantidad} und. x Q${item.precio.toFixed(2)}</p>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <span class="font-black text-gray-700">Q${subtotal.toFixed(2)}</span>
+                            <button onclick="quitarDelCarrito(${index})" class="text-red-400 hover:text-red-600 font-bold text-lg">×</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('carrito-total').innerText = `Q${totalVentaActual.toFixed(2)}`;
+        }
+
+        function quitarDelCarrito(index) {
+            carrito.splice(index, 1);
+            renderizarCarrito();
+        }
+
+        function abrirModalCobro() {
+            if(carrito.length === 0) return alert('El carrito está vacío.');
+            
+            document.getElementById('modal-total-cobro').innerText = `Q${totalVentaActual.toFixed(2)}`;
+            document.getElementById('input-efectivo').value = '';
+            document.getElementById('modal-vuelto').innerText = 'Q0.00';
+            document.getElementById('modal-vuelto').className = "text-2xl font-black text-green-500";
+            
+            const btn = document.getElementById('btn-finalizar-venta');
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+
+            document.getElementById('modal-cobrar').classList.remove('hidden');
+            setTimeout(() => document.getElementById('input-efectivo').focus(), 100);
+        }
+
+        function cerrarModalCobro() {
+            document.getElementById('modal-cobrar').classList.add('hidden');
+        }
+
+        function calcularVuelto() {
+            const efectivo = parseFloat(document.getElementById('input-efectivo').value) || 0;
+            const vuelto = efectivo - totalVentaActual;
+            const textoVuelto = document.getElementById('modal-vuelto');
+            const btn = document.getElementById('btn-finalizar-venta');
+
+            if (efectivo >= totalVentaActual) {
+                textoVuelto.innerText = `Q${vuelto.toFixed(2)}`;
+                textoVuelto.classList.remove('text-red-500');
+                textoVuelto.classList.add('text-green-500');
+                
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                textoVuelto.innerText = `Falta Q${Math.abs(vuelto).toFixed(2)}`;
+                textoVuelto.classList.remove('text-green-500');
+                textoVuelto.classList.add('text-red-500');
+                
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        function confirmarVenta() {
+            if (modoPrueba) {
+                carrito.forEach(itemVenta => {
+                    const prodReal = inventario.find(p => p.id === itemVenta.id);
+                    if (prodReal) prodReal.stock = Math.max(0, prodReal.stock - itemVenta.cantidad);
+                });
+                carrito = [];
+                renderizarCarrito();
+                actualizarResumen();
+                renderizarCatalogo();
+                renderizarListaVenta();
+                cerrarModalCobro();
+                alert('✅ Venta de prueba registrada. Los cambios no se guardaron.');
+                return;
+            }
+
+            const batch = db.batch();
+            carrito.forEach(itemVenta => {
+                const prodRef = db.collection("productos").doc(itemVenta.id);
+                const prodReal = inventario.find(p => p.id === itemVenta.id);
+                if(prodReal) {
+                    batch.update(prodRef, { stock: prodReal.stock - itemVenta.cantidad });
+                }
+            });
+
+            batch.commit().then(() => {
+                carrito = [];
+                renderizarCarrito();
+                cerrarModalCobro();
+                alert('✅ Venta cobrada con éxito. Inventario actualizado en la Nube.');
+            });
+        }
+
+        function exportarCSV() {
+            if(inventario.length === 0) return alert('No hay datos para exportar');
+            let csv = "Nombre,Categoria,Costo,Precio,Stock\n";
+            inventario.forEach(p => { csv += `"${p.nombre}","${p.categoria}",${p.costo},${p.precio},${p.stock}\n`; });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('hidden', '');
+            a.setAttribute('href', url);
+            a.setAttribute('download', 'Inventario_Nube.csv');
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function limpiarTodo() {
+            if(confirm("⚠ PELIGRO: ¿Estás seguro de borrar TODO tu inventario de la nube? Esta acción no se puede deshacer.")) {
+                if (modoPrueba) {
+                    inventario = [];
+                    carrito = [];
+                    renderizarCarrito();
+                    actualizarResumen();
+                    renderizarCatalogo();
+                    renderizarListaVenta();
+                    alert('Datos de prueba borrados. El inventario real no se modificó.');
+                    return;
+                }
+                db.collection("productos").get().then((querySnapshot) => {
+                    const batch = db.batch();
+                    querySnapshot.forEach((doc) => {
+                        batch.delete(doc.ref);
+                    });
+                    return batch.commit();
+                }).then(() => {
+                    carrito = [];
+                    renderizarCarrito();
+                    alert('Base de datos reiniciada.');
+                });
+            }
+        }
+    </script>
+
+    <!-- Registro del service worker PWA -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(() => console.log('Service worker registrado'))
+                    .catch(err => console.log('Error en service worker:', err));
+            });
+        }
+    </script>
+</body>
+</html>

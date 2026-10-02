@@ -131,7 +131,7 @@
                         📊 Descargar inventario
                     </button>
                     <button onclick="limpiarTodo(); cerrarMenuAjustes()" class="w-full text-left px-4 py-3 text-sm font-semibold text-red-600 hover:bg-red-50 border-b border-gray-100">
-                        ⚠️ Borrar todo el sistema
+                        ⚠️️ Borrar todo el sistema
                     </button>
                     <button onclick="cerrarSesion()" class="w-full text-left px-4 py-3 text-sm font-semibold hover:bg-gray-50">
                         🚪 Salir
@@ -373,15 +373,15 @@
 
     <!-- Script de Lógica, Firebase y Auth -->
     <script>
-        // PEGA AQUÍ LAS NUEVAS CREDENCIALES DE TU NUEVO PROYECTO DE FIREBASE
+        // ¡OJO! Reemplaza este bloque con el código de tu nuevo proyecto de Firebase.
         const firebaseConfig = {
-            apiKey: "TU_NUEVA_API_KEY",
+            apiKey: "AIzaSyB...",
             authDomain: "tu-nuevo-proyecto.firebaseapp.com",
             projectId: "tu-nuevo-proyecto",
             storageBucket: "tu-nuevo-proyecto.firebasestorage.app",
-            messagingSenderId: "TU_SENDER_ID",
-            appId: "TU_APP_ID",
-            measurementId: "TU_MEASUREMENT_ID"
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdefg",
+            measurementId: "G-XXXXXXXXX"
         };
         
         let db = null;
@@ -392,8 +392,8 @@
             try {
                 firebase.initializeApp(firebaseConfig);
                 db = firebase.firestore();
-
-                // 1. Habilitar persistencia de datos offline
+                
+                // Habilitar persistencia de datos offline
                 db.enablePersistence().catch(err => {
                     console.warn('Persistencia offline no disponible:', err);
                 });
@@ -445,7 +445,8 @@
         });
 
         function loginConGoogle() {
-            auth.signInWithPopup(provider).catch((error) => {
+            // Usamos Redirect en lugar de Popup para evitar bloqueos en celulares
+            auth.signInWithRedirect(provider).catch((error) => {
                 alert("Error al iniciar sesión: " + error.message);
             });
         }
@@ -522,6 +523,7 @@
             document.getElementById('menu-ajustes').classList.add('hidden');
         }
 
+        // Cierra ajustes al tocar cualquier punto fuera del botón y del menú.
         document.addEventListener('click', (event) => {
             const menu = document.getElementById('menu-ajustes');
             const botonAjustes = event.target.closest('button[onclick="alternarMenuAjustes()"]');
@@ -653,7 +655,7 @@
             alert(`No se pudo ${accion}. ${detalle}`);
         }
 
-        // 2. Función corregida para evitar que se quede pensando infinitamente
+        // Nueva función con límite de tiempo para evitar cuelgues
         async function ejecutarEscrituraFirebase(operacion) {
             await Promise.race([
                 operacion(),
@@ -691,6 +693,7 @@
             const boton = document.getElementById('btn-confirmar-eliminar');
             boton.disabled = true;
             boton.textContent = 'Eliminando...';
+            
             ejecutarEscrituraFirebase(() => db.collection("productos").doc(productoAEliminar).delete())
                 .then(() => {
                     cerrarModalEliminar();
@@ -703,7 +706,7 @@
                 });
         });
 
-        // 3. Función GuardarProducto con bloqueo de botón implementado
+        // Función de guardar producto actualizada
         function guardarProducto(e) {
             e.preventDefault();
             if (!db) return alert('Firebase no está disponible. Vuelve a iniciar sesión.');
@@ -718,12 +721,14 @@
                 return alert('Completa correctamente todos los datos del producto.');
             }
 
+            // Cambiar estado del botón
             const boton = e.target.querySelector('button[type="submit"]');
             const textoOriginal = boton.innerText;
             boton.disabled = true;
             boton.innerText = 'Guardando...';
             boton.classList.add('opacity-50', 'cursor-not-allowed');
 
+            // Usar la función segura con límite de tiempo
             ejecutarEscrituraFirebase(() => db.collection("productos").add(nuevo))
                 .then(() => {
                     document.getElementById('form-nuevo').reset();
@@ -732,6 +737,7 @@
                 })
                 .catch(error => mostrarErrorFirebase('guardar el producto', error))
                 .finally(() => {
+                    // Restaurar el botón independientemente del resultado
                     boton.disabled = false;
                     boton.innerText = textoOriginal;
                     boton.classList.remove('opacity-50', 'cursor-not-allowed');
@@ -838,6 +844,7 @@
 
         function calcularVuelto() {
             const campoEfectivo = document.getElementById('input-efectivo');
+            // Algunos teclados móviles usan coma decimal.
             const efectivo = parseFloat(campoEfectivo.value.replace(',', '.')) || 0;
             const vuelto = efectivo - totalVentaActual;
             const textoVuelto = document.getElementById('modal-vuelto');
@@ -914,14 +921,14 @@
             const a = document.createElement('a');
             a.setAttribute('hidden', '');
             a.setAttribute('href', url);
-            a.setAttribute('download', 'Inventario.csv');
+            a.setAttribute('download', 'Inventario_Nube.csv');
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
         }
 
         function limpiarTodo() {
-            if(confirm("⚠ PELIGRO: ¿Estás seguro de borrar TODO tu inventario? Esta acción no se puede deshacer.")) {
+            if(confirm("⚠ PELIGRO: ¿Estás seguro de borrar TODO tu inventario de la nube? Esta acción no se puede deshacer.")) {
                 db.collection("productos").get().then((querySnapshot) => {
                     const batch = db.batch();
                     querySnapshot.forEach((doc) => {
@@ -942,7 +949,7 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
-                    .then(() => console.log('Service worker registrado correctamente.'))
+                    .then(() => console.log('Service worker registrado'))
                     .catch(err => console.log('Error en service worker:', err));
             });
         }

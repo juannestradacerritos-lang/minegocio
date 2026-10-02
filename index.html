@@ -422,7 +422,8 @@
         });
 
         function loginConGoogle() {
-            auth.signInWithPopup(provider).catch((error) => {
+            // El inicio por redirección evita que navegadores integrados bloqueen la ventana emergente de Google.
+            auth.signInWithRedirect(provider).catch((error) => {
                 alert("Error al iniciar sesión: " + error.message);
             });
         }

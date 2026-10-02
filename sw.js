@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mi-negocio-v23';
+const CACHE_NAME = 'mi-negocio-v24';
 const urlsToCache = [
   './',
   './index.html',

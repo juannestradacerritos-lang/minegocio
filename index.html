@@ -383,14 +383,20 @@
             measurementId: "G-V4554VJEF2"
         };
         
-        // El modo de prueba debe funcionar incluso si los SDK externos no cargan.
         let db = null;
         let auth = null;
         let provider = null;
+
         if (typeof firebase !== 'undefined' && firebase.firestore && firebase.auth) {
             try {
                 firebase.initializeApp(firebaseConfig);
                 db = firebase.firestore();
+
+                // 1. Habilitar persistencia de datos offline
+                db.enablePersistence().catch(err => {
+                    console.warn('Persistencia offline no disponible:', err);
+                });
+
                 auth = firebase.auth();
                 provider = new firebase.auth.GoogleAuthProvider();
             } catch (error) {
@@ -437,11 +443,11 @@
             }
         });
 
-function loginConGoogle() {
-    auth.signInWithPopup(provider).catch((error) => {
-        alert("Error al iniciar sesión: " + error.message);
-    });
-}
+        function loginConGoogle() {
+            auth.signInWithPopup(provider).catch((error) => {
+                alert("Error al iniciar sesión: " + error.message);
+            });
+        }
 
         function cerrarSesion() {
             auth.signOut();
@@ -515,7 +521,6 @@ function loginConGoogle() {
             document.getElementById('menu-ajustes').classList.add('hidden');
         }
 
-        // Cierra ajustes al tocar cualquier punto fuera del botón y del menú.
         document.addEventListener('click', (event) => {
             const menu = document.getElementById('menu-ajustes');
             const botonAjustes = event.target.closest('button[onclick="alternarMenuAjustes()"]');
@@ -577,7 +582,7 @@ function loginConGoogle() {
                 const isAgotado = p.stock === 0;
                 const bgCard = isAgotado ? 'bg-red-50 border-red-200' : 'bg-orange-50 border-orange-200';
                 const textColor = isAgotado ? 'text-red-700' : 'text-orange-700';
-                const icon = isAgotado ? '❌ AGOTADO' : '⚠️️ POR TERMINAR';
+                const icon = isAgotado ? '❌ AGOTADO' : '⚠ POR TERMINAR';
 
                 contenedor.innerHTML += `
                     <div class="${bgCard} border p-4 rounded-xl shadow-sm flex justify-between items-center mb-1">
@@ -647,14 +652,12 @@ function loginConGoogle() {
             alert(`No se pudo ${accion}. ${detalle}`);
         }
 
-        // Firestore confirma primero en el teléfono y puede quedar pendiente sin internet.
-        // Esperamos la confirmación del servidor para no mostrar una acción como terminada antes de tiempo.
+        // 2. Función corregida para evitar que se quede pensando infinitamente
         async function ejecutarEscrituraFirebase(operacion) {
-            await operacion();
             await Promise.race([
-                db.waitForPendingWrites(),
+                operacion(),
                 new Promise((_, rechazar) => setTimeout(() => {
-                    rechazar(new Error('Firebase no confirmó el cambio. Revisa tu conexión e inténtalo de nuevo.'));
+                    rechazar(new Error('Firebase no respondió a tiempo. Revisa tu conexión o tu base de datos.'));
                 }, 12000))
             ]);
         }
@@ -699,6 +702,7 @@ function loginConGoogle() {
                 });
         });
 
+        // 3. Función GuardarProducto con bloqueo de botón implementado
         function guardarProducto(e) {
             e.preventDefault();
             if (!db) return alert('Firebase no está disponible. Vuelve a iniciar sesión.');
@@ -713,10 +717,24 @@ function loginConGoogle() {
                 return alert('Completa correctamente todos los datos del producto.');
             }
 
-            db.collection("productos").add(nuevo).then(() => {
-                document.getElementById('form-nuevo').reset();
-                cambiarTab('catalogo', document.querySelectorAll('.nav-btn')[5]);
-            }).catch(error => mostrarErrorFirebase('guardar el producto', error));
+            const boton = e.target.querySelector('button[type="submit"]');
+            const textoOriginal = boton.innerText;
+            boton.disabled = true;
+            boton.innerText = 'Guardando...';
+            boton.classList.add('opacity-50', 'cursor-not-allowed');
+
+            ejecutarEscrituraFirebase(() => db.collection("productos").add(nuevo))
+                .then(() => {
+                    document.getElementById('form-nuevo').reset();
+                    cambiarTab('catalogo', document.querySelectorAll('.nav-btn')[5]);
+                    alert('Producto guardado correctamente.');
+                })
+                .catch(error => mostrarErrorFirebase('guardar el producto', error))
+                .finally(() => {
+                    boton.disabled = false;
+                    boton.innerText = textoOriginal;
+                    boton.classList.remove('opacity-50', 'cursor-not-allowed');
+                });
         }
 
         function renderizarListaVenta() {
@@ -819,7 +837,6 @@ function loginConGoogle() {
 
         function calcularVuelto() {
             const campoEfectivo = document.getElementById('input-efectivo');
-            // Algunos teclados móviles usan coma decimal.
             const efectivo = parseFloat(campoEfectivo.value.replace(',', '.')) || 0;
             const vuelto = efectivo - totalVentaActual;
             const textoVuelto = document.getElementById('modal-vuelto');
@@ -877,7 +894,7 @@ function loginConGoogle() {
                 carrito = [];
                 renderizarCarrito();
                 cerrarModalCobro();
-                alert('✅ Venta cobrada con éxito. Inventario actualizado en la nube.');
+                alert('✅ Venta cobrada con éxito. Inventario actualizado.');
             }).catch(error => mostrarErrorFirebase('registrar la venta', error))
               .finally(() => {
                   boton.disabled = false;
@@ -896,14 +913,14 @@ function loginConGoogle() {
             const a = document.createElement('a');
             a.setAttribute('hidden', '');
             a.setAttribute('href', url);
-            a.setAttribute('download', 'Inventario_Nube.csv');
+            a.setAttribute('download', 'Inventario.csv');
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
         }
 
         function limpiarTodo() {
-            if(confirm("⚠ PELIGRO: ¿Estás seguro de borrar TODO tu inventario de la nube? Esta acción no se puede deshacer.")) {
+            if(confirm("⚠ PELIGRO: ¿Estás seguro de borrar TODO tu inventario? Esta acción no se puede deshacer.")) {
                 db.collection("productos").get().then((querySnapshot) => {
                     const batch = db.batch();
                     querySnapshot.forEach((doc) => {
@@ -924,7 +941,7 @@ function loginConGoogle() {
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
-                    .then(() => console.log('Service worker registrado'))
+                    .then(() => console.log('Service worker registrado correctamente.'))
                     .catch(err => console.log('Error en service worker:', err));
             });
         }

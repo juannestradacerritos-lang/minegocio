@@ -56,7 +56,7 @@
         #app-content .shadow-sm, #app-content .shadow-md, #app-content .shadow-lg { box-shadow: none; }
         #app-content .border-gray-100, #app-content .border-gray-200 { border-color: var(--line); }
 
-        /* Bento grid del resumen: la ganancia es el bloque editorial principal. */
+        /* Bento grid del resumen */
         #tab-resumen > .bg-white:first-of-type { background: #eaf0f7; border: 1px solid #d6e1ee; color: var(--ink); text-align: left; }
         #tab-resumen > .bg-white:first-of-type p:first-child { color: #64748b; }
         #tab-resumen > .bg-white:first-of-type #resumen-ganancia { color: #47678f; letter-spacing: -.08em; }
@@ -110,7 +110,6 @@
                 </svg>
                 <span>Continuar con Google</span>
             </button>
-            
         </div>
     </div>
 
@@ -131,7 +130,7 @@
                         📊 Descargar inventario
                     </button>
                     <button onclick="limpiarTodo(); cerrarMenuAjustes()" class="w-full text-left px-4 py-3 text-sm font-semibold text-red-600 hover:bg-red-50 border-b border-gray-100">
-                        ⚠️️ Borrar todo el sistema
+                        ⚠ Borrar todo el sistema
                     </button>
                     <button onclick="cerrarSesion()" class="w-full text-left px-4 py-3 text-sm font-semibold hover:bg-gray-50">
                         🚪 Salir
@@ -170,8 +169,6 @@
                         <p class="text-2xl font-bold text-gray-700" id="resumen-unidades">0</p>
                     </div>
                 </div>
-
-
             </section>
 
             <!-- 2. PESTAÑA: CATÁLOGO -->
@@ -311,7 +308,6 @@
                     <span class="text-2xl mb-1">➕</span>
                     <span class="text-[10px] font-medium text-center w-full">Nuevo</span>
                 </button>
-                <!-- BOTÓN NUEVO: FALTANTES -->
                 <button onclick="cambiarTab('faltantes', this)" class="nav-btn flex-1 flex flex-col items-center p-2 text-gray-400 transition-colors">
                     <span class="text-2xl mb-1">⚠️</span>
                     <span class="text-[10px] font-medium text-center w-full">Alertas</span>
@@ -373,15 +369,14 @@
 
     <!-- Script de Lógica, Firebase y Auth -->
     <script>
-        // ¡OJO! Reemplaza este bloque con el código de tu nuevo proyecto de Firebase.
         const firebaseConfig = {
-            apiKey: "AIzaSyB...",
-            authDomain: "tu-nuevo-proyecto.firebaseapp.com",
-            projectId: "tu-nuevo-proyecto",
-            storageBucket: "tu-nuevo-proyecto.firebasestorage.app",
-            messagingSenderId: "123456789",
-            appId: "1:123456789:web:abcdefg",
-            measurementId: "G-XXXXXXXXX"
+            apiKey: "AIzaSyDlfGFOcDpprqEGGGiWoK-wTEQKZ23YxLA",
+            authDomain: "minegocio-f080d.firebaseapp.com",
+            projectId: "minegocio-f080d",
+            storageBucket: "minegocio-f080d.firebasestorage.app",
+            messagingSenderId: "592544254145",
+            appId: "1:592544254145:web:32932306f840d4b67b6c40",
+            measurementId: "G-C6NC2WD21R"
         };
         
         let db = null;
@@ -393,7 +388,6 @@
                 firebase.initializeApp(firebaseConfig);
                 db = firebase.firestore();
                 
-                // Habilitar persistencia de datos offline
                 db.enablePersistence().catch(err => {
                     console.warn('Persistencia offline no disponible:', err);
                 });
@@ -401,7 +395,7 @@
                 auth = firebase.auth();
                 provider = new firebase.auth.GoogleAuthProvider();
             } catch (error) {
-                console.warn('Firebase no está disponible; el modo de prueba sigue activo.', error);
+                console.warn('Firebase no está disponible.', error);
             }
         }
 
@@ -445,7 +439,6 @@
         });
 
         function loginConGoogle() {
-            // Usamos Redirect en lugar de Popup para evitar bloqueos en celulares
             auth.signInWithRedirect(provider).catch((error) => {
                 alert("Error al iniciar sesión: " + error.message);
             });
@@ -523,7 +516,6 @@
             document.getElementById('menu-ajustes').classList.add('hidden');
         }
 
-        // Cierra ajustes al tocar cualquier punto fuera del botón y del menú.
         document.addEventListener('click', (event) => {
             const menu = document.getElementById('menu-ajustes');
             const botonAjustes = event.target.closest('button[onclick="alternarMenuAjustes()"]');
@@ -655,7 +647,6 @@
             alert(`No se pudo ${accion}. ${detalle}`);
         }
 
-        // Nueva función con límite de tiempo para evitar cuelgues
         async function ejecutarEscrituraFirebase(operacion) {
             await Promise.race([
                 operacion(),
@@ -706,7 +697,6 @@
                 });
         });
 
-        // Función de guardar producto actualizada
         function guardarProducto(e) {
             e.preventDefault();
             if (!db) return alert('Firebase no está disponible. Vuelve a iniciar sesión.');
@@ -721,14 +711,12 @@
                 return alert('Completa correctamente todos los datos del producto.');
             }
 
-            // Cambiar estado del botón
             const boton = e.target.querySelector('button[type="submit"]');
             const textoOriginal = boton.innerText;
             boton.disabled = true;
             boton.innerText = 'Guardando...';
             boton.classList.add('opacity-50', 'cursor-not-allowed');
 
-            // Usar la función segura con límite de tiempo
             ejecutarEscrituraFirebase(() => db.collection("productos").add(nuevo))
                 .then(() => {
                     document.getElementById('form-nuevo').reset();
@@ -737,7 +725,6 @@
                 })
                 .catch(error => mostrarErrorFirebase('guardar el producto', error))
                 .finally(() => {
-                    // Restaurar el botón independientemente del resultado
                     boton.disabled = false;
                     boton.innerText = textoOriginal;
                     boton.classList.remove('opacity-50', 'cursor-not-allowed');
@@ -844,7 +831,6 @@
 
         function calcularVuelto() {
             const campoEfectivo = document.getElementById('input-efectivo');
-            // Algunos teclados móviles usan coma decimal.
             const efectivo = parseFloat(campoEfectivo.value.replace(',', '.')) || 0;
             const vuelto = efectivo - totalVentaActual;
             const textoVuelto = document.getElementById('modal-vuelto');

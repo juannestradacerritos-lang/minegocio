@@ -647,6 +647,18 @@ function loginConGoogle() {
             alert(`No se pudo ${accion}. ${detalle}`);
         }
 
+        // Firestore confirma primero en el teléfono y puede quedar pendiente sin internet.
+        // Esperamos la confirmación del servidor para no mostrar una acción como terminada antes de tiempo.
+        async function ejecutarEscrituraFirebase(operacion) {
+            await operacion();
+            await Promise.race([
+                db.waitForPendingWrites(),
+                new Promise((_, rechazar) => setTimeout(() => {
+                    rechazar(new Error('Firebase no confirmó el cambio. Revisa tu conexión e inténtalo de nuevo.'));
+                }, 12000))
+            ]);
+        }
+
         function ajustarStock(id, cantidad) {
             const prod = inventario.find(p => p.id === id);
             if (!db) return alert('Firebase no está disponible. Vuelve a iniciar sesión.');
@@ -675,8 +687,11 @@ function loginConGoogle() {
             const boton = document.getElementById('btn-confirmar-eliminar');
             boton.disabled = true;
             boton.textContent = 'Eliminando...';
-            db.collection("productos").doc(productoAEliminar).delete()
-                .then(cerrarModalEliminar)
+            ejecutarEscrituraFirebase(() => db.collection("productos").doc(productoAEliminar).delete())
+                .then(() => {
+                    cerrarModalEliminar();
+                    alert('Producto eliminado correctamente.');
+                })
                 .catch(error => mostrarErrorFirebase('eliminar el producto', error))
                 .finally(() => {
                     boton.disabled = false;
@@ -858,7 +873,7 @@ function loginConGoogle() {
             });
             batch.set(db.collection("ventas").doc(), venta);
 
-            batch.commit().then(() => {
+            ejecutarEscrituraFirebase(() => batch.commit()).then(() => {
                 carrito = [];
                 renderizarCarrito();
                 cerrarModalCobro();

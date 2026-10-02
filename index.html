@@ -6,7 +6,7 @@
     <title>Inventario y Ventas</title>
     
     <!-- Enlaces PWA -->
-    <link rel="manifest" href="./manifest.json?v=3">
+    <link rel="manifest" href="./manifest.json?v=4">
     <meta name="theme-color" content="#2563EB">
     <link rel="icon" href="./icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="./icon.svg">
@@ -308,7 +308,7 @@
     <div id="modal-eliminar" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden transition-opacity">
         <div class="bg-white p-6 rounded-2xl w-11/12 max-w-sm text-center shadow-2xl">
             <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span class="text-red-500 text-3xl">🗑️️</span>
+                <span class="text-red-500 text-3xl">🗑</span>
             </div>
             <h3 class="text-xl font-bold mb-2 text-gray-800">¿Eliminar producto?</h3>
             <p class="text-gray-500 mb-6 text-sm">Este producto se borrará de tu catálogo y no podrás recuperarlo.</p>
@@ -398,7 +398,6 @@
         let ventas = [];
         
         if (auth) {
-            // Revisa si viene regresando de la redirección de Google
             auth.getRedirectResult().catch(error => {
                 alert("Error al procesar login con Google: " + error.message);
             });
@@ -912,6 +911,22 @@
                     alert('Base de datos reiniciada.');
                 });
             }
+        }
+    </script>
+
+    <!-- Limpiador forzado de caché y Service Worker viejo -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for (let registration of registrations) {
+                    registration.unregister(); // Elimina el service worker viejo
+                }
+            });
+        }
+        if ('caches' in window) {
+            caches.keys().then(function(names) {
+                for (let name of names) caches.delete(name); // Borra todos los archivos viejos en caché
+            });
         }
     </script>
 </body>

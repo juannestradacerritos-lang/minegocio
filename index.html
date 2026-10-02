@@ -56,7 +56,7 @@
         #app-content .shadow-sm, #app-content .shadow-md, #app-content .shadow-lg { box-shadow: none; }
         #app-content .border-gray-100, #app-content .border-gray-200 { border-color: var(--line); }
 
-        /* Bento grid del resumen: la ganancia es el bloque editorial principal. */
+        /* Bento grid del resumen */
         #tab-resumen > .bg-white:first-of-type { background: #eaf0f7; border: 1px solid #d6e1ee; color: var(--ink); text-align: left; }
         #tab-resumen > .bg-white:first-of-type p:first-child { color: #64748b; }
         #tab-resumen > .bg-white:first-of-type #resumen-ganancia { color: #47678f; letter-spacing: -.08em; }
@@ -77,7 +77,6 @@
         #app-content nav .nav-btn.text-blue-600 { color: var(--ink); position: relative; }
         #app-content nav .nav-btn.text-blue-600::before { content: ''; position: absolute; top: 0; width: 28px; height: 3px; background: var(--signal); }
 
-        /* Evita que el teclado móvil tape los controles del cobro. */
         #modal-cobrar { padding: 1rem; align-items: flex-start; overflow-y: auto; }
         #modal-cobrar > div { margin: auto; }
 
@@ -170,8 +169,6 @@
                         <p class="text-2xl font-bold text-gray-700" id="resumen-unidades">0</p>
                     </div>
                 </div>
-
-
             </section>
 
             <!-- 2. PESTAÑA: CATÁLOGO -->
@@ -181,7 +178,6 @@
                     <span class="absolute left-4 top-3.5 text-gray-400">🔍</span>
                     <input type="text" id="buscar-producto" placeholder="Buscar producto..." class="w-full p-3 pl-10 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm" onkeyup="renderizarCatalogo()">
                 </div>
-                
                 <div id="lista-catalogo" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </section>
 
@@ -195,7 +191,6 @@
             <!-- 4. PESTAÑA: VENDER -->
             <section id="tab-vender" class="fade-in hidden">
                 <h2 class="text-2xl font-bold mb-4 text-gray-800">Caja Registradora</h2>
-                
                 <p class="text-sm text-gray-500 mb-2 font-semibold">Toca un producto para vender:</p>
                 <div class="flex overflow-x-auto space-x-3 pb-4 mb-2" id="lista-vender"></div>
 
@@ -284,7 +279,7 @@
                             </div>
                         </div>
 
-                        <button type="submit" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-md hover:bg-blue-700 active:bg-blue-800 text-lg transition-transform transform active:scale-95">
+                        <button type="submit" id="btn-guardar-producto" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-md hover:bg-blue-700 active:bg-blue-800 text-lg transition-transform transform active:scale-95">
                             Guardar Producto
                         </button>
                     </form>
@@ -333,7 +328,6 @@
             <p class="text-gray-500 mb-6 text-sm">Este producto se borrará de tu catálogo en la nube y no podrás recuperarlo.</p>
             <div class="flex space-x-3">
                 <button onclick="cerrarModalEliminar()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-bold transition-colors">Cancelar</button>
-                <!-- BOTÓN ELIMINAR CORREGIDO CON ONCLICK -->
                 <button id="btn-confirmar-eliminar" onclick="confirmarEliminar()" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-xl font-bold shadow-md transition-colors">Sí, eliminar</button>
             </div>
         </div>
@@ -517,7 +511,7 @@
         document.addEventListener('click', (event) => {
             const menu = document.getElementById('menu-ajustes');
             const botonAjustes = event.target.closest('button[onclick="alternarMenuAjustes()"]');
-            if (!menu.contains(event.target) && !botonAjustes) cerrarMenuAjustes();
+            if (menu && !menu.contains(event.target) && !botonAjustes) cerrarMenuAjustes();
         });
 
         function cambiarTab(tabId, elementoBtn) {
@@ -656,7 +650,7 @@
             document.getElementById('modal-eliminar').classList.add('hidden');
         }
 
-        // ======================= CORRECCIÓN ELIMINAR =======================
+        // ================= ANTI-CONGELAMIENTO AL ELIMINAR =================
         function confirmarEliminar() {
             if(productoAEliminar) {
                 const btn = document.getElementById('btn-confirmar-eliminar');
@@ -664,20 +658,29 @@
                 btn.innerText = 'Borrando...';
                 btn.disabled = true;
 
-                db.collection("productos").doc(productoAEliminar).delete().then(() => {
+                const operacion = db.collection("productos").doc(productoAEliminar).delete();
+                const limiteTiempo = new Promise((_, reject) => setTimeout(() => reject(new Error("Firebase no responde. Revisa tu internet o si tienes un bloqueador de anuncios activo.")), 8000));
+
+                Promise.race([operacion, limiteTiempo]).then(() => {
                     cerrarModalEliminar();
                     btn.innerText = textoOriginal;
                     btn.disabled = false;
                 }).catch(error => {
-                    alert("Error en la Nube al eliminar: " + error.message);
+                    alert("Aviso: " + error.message);
                     btn.innerText = textoOriginal;
                     btn.disabled = false;
                 });
             }
         }
 
+        // ================= ANTI-CONGELAMIENTO AL GUARDAR NUEVO PRODUCTO =================
         function guardarProducto(e) {
             e.preventDefault();
+            const btn = document.getElementById('btn-guardar-producto');
+            const textoOriginal = btn.innerText;
+            btn.innerText = 'Guardando...';
+            btn.disabled = true;
+
             const nuevo = {
                 nombre: document.getElementById('nuevo-nombre').value,
                 categoria: document.getElementById('nuevo-categoria').value,
@@ -686,9 +689,18 @@
                 stock: parseFloat(document.getElementById('nuevo-stock').value)
             };
 
-            db.collection("productos").add(nuevo).then(() => {
+            const operacion = db.collection("productos").add(nuevo);
+            const limiteTiempo = new Promise((_, reject) => setTimeout(() => reject(new Error("La nube no responde. Revisa tu internet o si tienes un bloqueador de anuncios.")), 8000));
+
+            Promise.race([operacion, limiteTiempo]).then(() => {
                 document.getElementById('form-nuevo').reset();
+                btn.innerText = textoOriginal;
+                btn.disabled = false;
                 cambiarTab('catalogo', document.querySelectorAll('.nav-btn')[5]);
+            }).catch(error => {
+                alert("Aviso: " + error.message);
+                btn.innerText = textoOriginal;
+                btn.disabled = false;
             });
         }
 
@@ -814,7 +826,7 @@
             }
         }
 
-        // ======================= CORRECCIÓN VENTA =======================
+        // ================= ANTI-CONGELAMIENTO AL COBRAR =================
         function confirmarVenta() {
             try {
                 const btn = document.getElementById('btn-finalizar-venta');
@@ -825,7 +837,7 @@
 
                 const venta = {
                     total: totalVentaActual,
-                    fecha: firebase.firestore.FieldValue.serverTimestamp(),
+                    fecha: new Date(), // SE CAMBIÓ SERVER_TIMESTAMP POR LA HORA LOCAL PARA EVITAR CONGELAMIENTO
                     items: carrito.map(item => ({ nombre: item.nombre, precio: item.precio, cantidad: item.cantidad }))
                 };
 
@@ -837,17 +849,20 @@
                 });
                 batch.set(db.collection("ventas").doc(), venta);
 
-                batch.commit().then(() => {
+                const operacion = batch.commit();
+                const limiteTiempo = new Promise((_, reject) => setTimeout(() => reject(new Error("La nube no responde. Revisa tu internet o si tienes un bloqueador de anuncios.")), 8000));
+
+                Promise.race([operacion, limiteTiempo]).then(() => {
                     carrito = [];
                     renderizarCarrito();
                     cerrarModalCobro();
                     btn.innerText = textoOriginal;
-                    alert('✅ Venta cobrada con éxito. Inventario actualizado en la Nube.');
+                    alert('✅ Venta cobrada con éxito.');
                 }).catch(error => {
                     btn.innerText = textoOriginal;
                     btn.disabled = false;
                     btn.classList.remove('opacity-50', 'cursor-not-allowed');
-                    alert('No se pudo registrar la venta en la nube: ' + error.message);
+                    alert('Aviso: ' + error.message);
                 });
             } catch(error) {
                 alert('Error interno en la aplicación: ' + error.message);

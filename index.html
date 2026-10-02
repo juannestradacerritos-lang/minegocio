@@ -35,6 +35,8 @@
 
         /* Acceso: composición sobria y enfocada. */
         #login-screen { background: #f3f6f9; min-height: 100dvh; display: grid; place-items: center; padding: 1.5rem; overflow: auto; }
+        /* La clase de Tailwind debe poder ocultar esta pantalla después del login. */
+        #login-screen.hidden { display: none; }
         #login-screen::before { content: ''; position: fixed; width: min(68vw, 520px); height: min(68vw, 520px); border: 1px solid #d9e3ed; border-radius: 50%; top: -240px; right: -180px; pointer-events: none; }
         #login-screen > div { position: relative; z-index: 1; background: rgba(255, 255, 255, .94); border: 1px solid #dbe4ed; border-radius: .5rem; box-shadow: 0 16px 40px rgba(71, 103, 143, .08); padding: 2.5rem; }
 
@@ -382,6 +384,12 @@
         const auth = firebase.auth();
         const provider = new firebase.auth.GoogleAuthProvider();
 
+        // Los errores de signInWithRedirect ocurren al volver de Google, no al iniciar el salto.
+        auth.getRedirectResult().catch((error) => {
+            console.error('Error de autenticación:', error);
+            alert(`No se pudo iniciar sesión (${error.code || 'error'}): ${error.message}`);
+        });
+
         let inventario = [];
         let carrito = [];
         let productoAEliminar = null;
@@ -422,10 +430,9 @@
         });
 
         function loginConGoogle() {
-            // El inicio por redirección evita que navegadores integrados bloqueen la ventana emergente de Google.
-            auth.signInWithRedirect(provider).catch((error) => {
-                alert("Error al iniciar sesión: " + error.message);
-            });
+            // La redirección evita el cierre de ventanas emergentes en navegadores integrados.
+            // El posible error se recibe en auth.getRedirectResult() al regresar de Google.
+            auth.signInWithRedirect(provider);
         }
 
         function cerrarSesion() {

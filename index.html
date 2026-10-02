@@ -56,7 +56,7 @@
         #app-content .shadow-sm, #app-content .shadow-md, #app-content .shadow-lg { box-shadow: none; }
         #app-content .border-gray-100, #app-content .border-gray-200 { border-color: var(--line); }
 
-        /* Bento grid del resumen */
+        /* Bento grid del resumen: la ganancia es el bloque editorial principal. */
         #tab-resumen > .bg-white:first-of-type { background: #eaf0f7; border: 1px solid #d6e1ee; color: var(--ink); text-align: left; }
         #tab-resumen > .bg-white:first-of-type p:first-child { color: #64748b; }
         #tab-resumen > .bg-white:first-of-type #resumen-ganancia { color: #47678f; letter-spacing: -.08em; }
@@ -77,6 +77,7 @@
         #app-content nav .nav-btn.text-blue-600 { color: var(--ink); position: relative; }
         #app-content nav .nav-btn.text-blue-600::before { content: ''; position: absolute; top: 0; width: 28px; height: 3px; background: var(--signal); }
 
+        /* Evita que el teclado móvil tape los controles del cobro. */
         #modal-cobrar { padding: 1rem; align-items: flex-start; overflow-y: auto; }
         #modal-cobrar > div { margin: auto; }
 
@@ -169,6 +170,8 @@
                         <p class="text-2xl font-bold text-gray-700" id="resumen-unidades">0</p>
                     </div>
                 </div>
+
+
             </section>
 
             <!-- 2. PESTAÑA: CATÁLOGO -->
@@ -178,6 +181,7 @@
                     <span class="absolute left-4 top-3.5 text-gray-400">🔍</span>
                     <input type="text" id="buscar-producto" placeholder="Buscar producto..." class="w-full p-3 pl-10 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm" onkeyup="renderizarCatalogo()">
                 </div>
+                
                 <div id="lista-catalogo" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </section>
 
@@ -191,6 +195,7 @@
             <!-- 4. PESTAÑA: VENDER -->
             <section id="tab-vender" class="fade-in hidden">
                 <h2 class="text-2xl font-bold mb-4 text-gray-800">Caja Registradora</h2>
+                
                 <p class="text-sm text-gray-500 mb-2 font-semibold">Toca un producto para vender:</p>
                 <div class="flex overflow-x-auto space-x-3 pb-4 mb-2" id="lista-vender"></div>
 
@@ -279,7 +284,7 @@
                             </div>
                         </div>
 
-                        <button type="submit" id="btn-guardar-producto" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-md hover:bg-blue-700 active:bg-blue-800 text-lg transition-transform transform active:scale-95">
+                        <button type="submit" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-md hover:bg-blue-700 active:bg-blue-800 text-lg transition-transform transform active:scale-95">
                             Guardar Producto
                         </button>
                     </form>
@@ -306,6 +311,7 @@
                     <span class="text-2xl mb-1">➕</span>
                     <span class="text-[10px] font-medium text-center w-full">Nuevo</span>
                 </button>
+                <!-- BOTÓN NUEVO: FALTANTES -->
                 <button onclick="cambiarTab('faltantes', this)" class="nav-btn flex-1 flex flex-col items-center p-2 text-gray-400 transition-colors">
                     <span class="text-2xl mb-1">⚠️</span>
                     <span class="text-[10px] font-medium text-center w-full">Alertas</span>
@@ -328,7 +334,7 @@
             <p class="text-gray-500 mb-6 text-sm">Este producto se borrará de tu catálogo en la nube y no podrás recuperarlo.</p>
             <div class="flex space-x-3">
                 <button onclick="cerrarModalEliminar()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-bold transition-colors">Cancelar</button>
-                <button id="btn-confirmar-eliminar" onclick="confirmarEliminar()" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-xl font-bold shadow-md transition-colors">Sí, eliminar</button>
+                <button id="btn-confirmar-eliminar" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-xl font-bold shadow-md transition-colors">Sí, eliminar</button>
             </div>
         </div>
     </div>
@@ -377,6 +383,7 @@
             measurementId: "G-V4554VJEF2"
         };
         
+        // El modo de prueba debe funcionar incluso si los SDK externos no cargan.
         let db = null;
         let auth = null;
         let provider = null;
@@ -387,7 +394,7 @@
                 auth = firebase.auth();
                 provider = new firebase.auth.GoogleAuthProvider();
             } catch (error) {
-                console.warn('Firebase no está disponible.', error);
+                console.warn('Firebase no está disponible; el modo de prueba sigue activo.', error);
             }
         }
 
@@ -430,11 +437,11 @@
             }
         });
 
-        function loginConGoogle() {
-            auth.signInWithPopup(provider).catch((error) => {
-                alert("Error al iniciar sesión: " + error.message);
-            });
-        }
+function loginConGoogle() {
+    auth.signInWithPopup(provider).catch((error) => {
+        alert("Error al iniciar sesión: " + error.message);
+    });
+}
 
         function cerrarSesion() {
             auth.signOut();
@@ -508,10 +515,11 @@
             document.getElementById('menu-ajustes').classList.add('hidden');
         }
 
+        // Cierra ajustes al tocar cualquier punto fuera del botón y del menú.
         document.addEventListener('click', (event) => {
             const menu = document.getElementById('menu-ajustes');
             const botonAjustes = event.target.closest('button[onclick="alternarMenuAjustes()"]');
-            if (menu && !menu.contains(event.target) && !botonAjustes) cerrarMenuAjustes();
+            if (!menu.contains(event.target) && !botonAjustes) cerrarMenuAjustes();
         });
 
         function cambiarTab(tabId, elementoBtn) {
@@ -569,7 +577,7 @@
                 const isAgotado = p.stock === 0;
                 const bgCard = isAgotado ? 'bg-red-50 border-red-200' : 'bg-orange-50 border-orange-200';
                 const textColor = isAgotado ? 'text-red-700' : 'text-orange-700';
-                const icon = isAgotado ? '❌ AGOTADO' : '⚠ POR TERMINAR';
+                const icon = isAgotado ? '❌ AGOTADO' : '⚠️️ POR TERMINAR';
 
                 contenedor.innerHTML += `
                     <div class="${bgCard} border p-4 rounded-xl shadow-sm flex justify-between items-center mb-1">
@@ -631,12 +639,22 @@
             });
         }
 
+        function mostrarErrorFirebase(accion, error) {
+            console.error(`Error al ${accion}:`, error);
+            const detalle = error && error.code === 'permission-denied'
+                ? 'Firebase bloqueó el cambio por las reglas de Firestore.'
+                : (error && error.message) || 'No se pudo conectar con Firebase.';
+            alert(`No se pudo ${accion}. ${detalle}`);
+        }
+
         function ajustarStock(id, cantidad) {
             const prod = inventario.find(p => p.id === id);
+            if (!db) return alert('Firebase no está disponible. Vuelve a iniciar sesión.');
             if(prod) {
                 let nuevoStock = prod.stock + cantidad;
                 if(nuevoStock < 0) nuevoStock = 0;
-                db.collection("productos").doc(id).update({ stock: nuevoStock });
+                db.collection("productos").doc(id).update({ stock: nuevoStock })
+                    .catch(error => mostrarErrorFirebase('actualizar el stock', error));
             }
         }
 
@@ -650,58 +668,40 @@
             document.getElementById('modal-eliminar').classList.add('hidden');
         }
 
-        // ================= ANTI-CONGELAMIENTO AL ELIMINAR =================
-        function confirmarEliminar() {
-            if(productoAEliminar) {
-                const btn = document.getElementById('btn-confirmar-eliminar');
-                const textoOriginal = btn.innerText;
-                btn.innerText = 'Borrando...';
-                btn.disabled = true;
+        document.getElementById('btn-confirmar-eliminar').addEventListener('click', () => {
+            if (!productoAEliminar) return;
+            if (!db) return alert('Firebase no está disponible. Vuelve a iniciar sesión.');
 
-                const operacion = db.collection("productos").doc(productoAEliminar).delete();
-                const limiteTiempo = new Promise((_, reject) => setTimeout(() => reject(new Error("Firebase no responde. Revisa tu internet o si tienes un bloqueador de anuncios activo.")), 8000));
-
-                Promise.race([operacion, limiteTiempo]).then(() => {
-                    cerrarModalEliminar();
-                    btn.innerText = textoOriginal;
-                    btn.disabled = false;
-                }).catch(error => {
-                    alert("Aviso: " + error.message);
-                    btn.innerText = textoOriginal;
-                    btn.disabled = false;
+            const boton = document.getElementById('btn-confirmar-eliminar');
+            boton.disabled = true;
+            boton.textContent = 'Eliminando...';
+            db.collection("productos").doc(productoAEliminar).delete()
+                .then(cerrarModalEliminar)
+                .catch(error => mostrarErrorFirebase('eliminar el producto', error))
+                .finally(() => {
+                    boton.disabled = false;
+                    boton.textContent = 'Sí, eliminar';
                 });
-            }
-        }
+        });
 
-        // ================= ANTI-CONGELAMIENTO AL GUARDAR NUEVO PRODUCTO =================
         function guardarProducto(e) {
             e.preventDefault();
-            const btn = document.getElementById('btn-guardar-producto');
-            const textoOriginal = btn.innerText;
-            btn.innerText = 'Guardando...';
-            btn.disabled = true;
-
+            if (!db) return alert('Firebase no está disponible. Vuelve a iniciar sesión.');
             const nuevo = {
-                nombre: document.getElementById('nuevo-nombre').value,
+                nombre: document.getElementById('nuevo-nombre').value.trim(),
                 categoria: document.getElementById('nuevo-categoria').value,
                 costo: parseFloat(document.getElementById('nuevo-costo').value),
                 precio: parseFloat(document.getElementById('nuevo-precio').value),
                 stock: parseFloat(document.getElementById('nuevo-stock').value)
             };
+            if (!nuevo.nombre || Object.values(nuevo).some(valor => typeof valor === 'number' && !Number.isFinite(valor))) {
+                return alert('Completa correctamente todos los datos del producto.');
+            }
 
-            const operacion = db.collection("productos").add(nuevo);
-            const limiteTiempo = new Promise((_, reject) => setTimeout(() => reject(new Error("La nube no responde. Revisa tu internet o si tienes un bloqueador de anuncios.")), 8000));
-
-            Promise.race([operacion, limiteTiempo]).then(() => {
+            db.collection("productos").add(nuevo).then(() => {
                 document.getElementById('form-nuevo').reset();
-                btn.innerText = textoOriginal;
-                btn.disabled = false;
                 cambiarTab('catalogo', document.querySelectorAll('.nav-btn')[5]);
-            }).catch(error => {
-                alert("Aviso: " + error.message);
-                btn.innerText = textoOriginal;
-                btn.disabled = false;
-            });
+            }).catch(error => mostrarErrorFirebase('guardar el producto', error));
         }
 
         function renderizarListaVenta() {
@@ -804,6 +804,7 @@
 
         function calcularVuelto() {
             const campoEfectivo = document.getElementById('input-efectivo');
+            // Algunos teclados móviles usan coma decimal.
             const efectivo = parseFloat(campoEfectivo.value.replace(',', '.')) || 0;
             const vuelto = efectivo - totalVentaActual;
             const textoVuelto = document.getElementById('modal-vuelto');
@@ -826,49 +827,49 @@
             }
         }
 
-        // ================= ANTI-CONGELAMIENTO AL COBRAR =================
         function confirmarVenta() {
-            try {
-                const btn = document.getElementById('btn-finalizar-venta');
-                const textoOriginal = btn.innerText;
-                btn.innerText = 'Guardando...';
-                btn.disabled = true;
-                btn.classList.add('opacity-50', 'cursor-not-allowed');
-
-                const venta = {
-                    total: totalVentaActual,
-                    fecha: new Date(), // SE CAMBIÓ SERVER_TIMESTAMP POR LA HORA LOCAL PARA EVITAR CONGELAMIENTO
-                    items: carrito.map(item => ({ nombre: item.nombre, precio: item.precio, cantidad: item.cantidad }))
-                };
-
-                const batch = db.batch();
-                carrito.forEach(itemVenta => {
-                    const prodRef = db.collection("productos").doc(itemVenta.id);
-                    const prodReal = inventario.find(p => p.id === itemVenta.id);
-                    if(prodReal) batch.update(prodRef, { stock: Math.max(0, prodReal.stock - itemVenta.cantidad) });
-                });
-                batch.set(db.collection("ventas").doc(), venta);
-
-                const operacion = batch.commit();
-                const limiteTiempo = new Promise((_, reject) => setTimeout(() => reject(new Error("La nube no responde. Revisa tu internet o si tienes un bloqueador de anuncios.")), 8000));
-
-                Promise.race([operacion, limiteTiempo]).then(() => {
-                    carrito = [];
-                    renderizarCarrito();
-                    cerrarModalCobro();
-                    btn.innerText = textoOriginal;
-                    alert('✅ Venta cobrada con éxito.');
-                }).catch(error => {
-                    btn.innerText = textoOriginal;
-                    btn.disabled = false;
-                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
-                    alert('Aviso: ' + error.message);
-                });
-            } catch(error) {
-                alert('Error interno en la aplicación: ' + error.message);
-                document.getElementById('btn-finalizar-venta').innerText = 'Confirmar';
-                document.getElementById('btn-finalizar-venta').disabled = false;
+            if (!db || !firebase || !firebase.firestore) {
+                return alert('Firebase no está disponible. Vuelve a iniciar sesión.');
             }
+            if (!carrito.length || totalVentaActual <= 0) return alert('El carrito está vacío.');
+
+            const productosSinStock = carrito.filter(item => {
+                const productoActual = inventario.find(p => p.id === item.id);
+                return !productoActual || productoActual.stock < item.cantidad;
+            });
+            if (productosSinStock.length) {
+                return alert('El stock cambió. Actualiza el carrito antes de cobrar.');
+            }
+
+            const boton = document.getElementById('btn-finalizar-venta');
+            boton.disabled = true;
+            boton.textContent = 'Guardando...';
+            boton.classList.add('opacity-50', 'cursor-not-allowed');
+
+            const venta = {
+                total: totalVentaActual,
+                fecha: firebase.firestore.FieldValue.serverTimestamp(),
+                items: carrito.map(item => ({ nombre: item.nombre, precio: item.precio, cantidad: item.cantidad }))
+            };
+            const batch = db.batch();
+            carrito.forEach(itemVenta => {
+                const prodReal = inventario.find(p => p.id === itemVenta.id);
+                batch.update(db.collection("productos").doc(itemVenta.id), { stock: Math.max(0, prodReal.stock - itemVenta.cantidad) });
+            });
+            batch.set(db.collection("ventas").doc(), venta);
+
+            batch.commit().then(() => {
+                carrito = [];
+                renderizarCarrito();
+                cerrarModalCobro();
+                alert('✅ Venta cobrada con éxito. Inventario actualizado en la nube.');
+            }).catch(error => mostrarErrorFirebase('registrar la venta', error))
+              .finally(() => {
+                  boton.disabled = false;
+                  boton.textContent = 'Confirmar';
+                  boton.classList.remove('opacity-50', 'cursor-not-allowed');
+                  calcularVuelto();
+              });
         }
 
         function exportarCSV() {
@@ -898,7 +899,7 @@
                     carrito = [];
                     renderizarCarrito();
                     alert('Base de datos reiniciada.');
-                }).catch(error => alert("Error al limpiar: " + error.message));
+                });
             }
         }
     </script>

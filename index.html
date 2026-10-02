@@ -311,7 +311,6 @@
                     <span class="text-2xl mb-1">➕</span>
                     <span class="text-[10px] font-medium text-center w-full">Nuevo</span>
                 </button>
-                <!-- BOTÓN NUEVO: FALTANTES -->
                 <button onclick="cambiarTab('faltantes', this)" class="nav-btn flex-1 flex flex-col items-center p-2 text-gray-400 transition-colors">
                     <span class="text-2xl mb-1">⚠️</span>
                     <span class="text-[10px] font-medium text-center w-full">Alertas</span>
@@ -334,7 +333,8 @@
             <p class="text-gray-500 mb-6 text-sm">Este producto se borrará de tu catálogo en la nube y no podrás recuperarlo.</p>
             <div class="flex space-x-3">
                 <button onclick="cerrarModalEliminar()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-bold transition-colors">Cancelar</button>
-                <button id="btn-confirmar-eliminar" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-xl font-bold shadow-md transition-colors">Sí, eliminar</button>
+                <!-- BOTÓN ELIMINAR CORREGIDO CON ONCLICK -->
+                <button id="btn-confirmar-eliminar" onclick="confirmarEliminar()" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-xl font-bold shadow-md transition-colors">Sí, eliminar</button>
             </div>
         </div>
     </div>
@@ -383,7 +383,6 @@
             measurementId: "G-V4554VJEF2"
         };
         
-        // El modo de prueba debe funcionar incluso si los SDK externos no cargan.
         let db = null;
         let auth = null;
         let provider = null;
@@ -394,7 +393,7 @@
                 auth = firebase.auth();
                 provider = new firebase.auth.GoogleAuthProvider();
             } catch (error) {
-                console.warn('Firebase no está disponible; el modo de prueba sigue activo.', error);
+                console.warn('Firebase no está disponible.', error);
             }
         }
 
@@ -437,11 +436,11 @@
             }
         });
 
-function loginConGoogle() {
-    auth.signInWithPopup(provider).catch((error) => {
-        alert("Error al iniciar sesión: " + error.message);
-    });
-}
+        function loginConGoogle() {
+            auth.signInWithPopup(provider).catch((error) => {
+                alert("Error al iniciar sesión: " + error.message);
+            });
+        }
 
         function cerrarSesion() {
             auth.signOut();
@@ -515,7 +514,6 @@ function loginConGoogle() {
             document.getElementById('menu-ajustes').classList.add('hidden');
         }
 
-        // Cierra ajustes al tocar cualquier punto fuera del botón y del menú.
         document.addEventListener('click', (event) => {
             const menu = document.getElementById('menu-ajustes');
             const botonAjustes = event.target.closest('button[onclick="alternarMenuAjustes()"]');
@@ -577,7 +575,7 @@ function loginConGoogle() {
                 const isAgotado = p.stock === 0;
                 const bgCard = isAgotado ? 'bg-red-50 border-red-200' : 'bg-orange-50 border-orange-200';
                 const textColor = isAgotado ? 'text-red-700' : 'text-orange-700';
-                const icon = isAgotado ? '❌ AGOTADO' : '⚠️️ POR TERMINAR';
+                const icon = isAgotado ? '❌ AGOTADO' : '⚠ POR TERMINAR';
 
                 contenedor.innerHTML += `
                     <div class="${bgCard} border p-4 rounded-xl shadow-sm flex justify-between items-center mb-1">
@@ -644,7 +642,6 @@ function loginConGoogle() {
             if(prod) {
                 let nuevoStock = prod.stock + cantidad;
                 if(nuevoStock < 0) nuevoStock = 0;
-                
                 db.collection("productos").doc(id).update({ stock: nuevoStock });
             }
         }
@@ -659,13 +656,25 @@ function loginConGoogle() {
             document.getElementById('modal-eliminar').classList.add('hidden');
         }
 
-        document.getElementById('btn-confirmar-eliminar').addEventListener('click', () => {
+        // ======================= CORRECCIÓN ELIMINAR =======================
+        function confirmarEliminar() {
             if(productoAEliminar) {
+                const btn = document.getElementById('btn-confirmar-eliminar');
+                const textoOriginal = btn.innerText;
+                btn.innerText = 'Borrando...';
+                btn.disabled = true;
+
                 db.collection("productos").doc(productoAEliminar).delete().then(() => {
                     cerrarModalEliminar();
+                    btn.innerText = textoOriginal;
+                    btn.disabled = false;
+                }).catch(error => {
+                    alert("Error en la Nube al eliminar: " + error.message);
+                    btn.innerText = textoOriginal;
+                    btn.disabled = false;
                 });
             }
-        });
+        }
 
         function guardarProducto(e) {
             e.preventDefault();
@@ -783,7 +792,6 @@ function loginConGoogle() {
 
         function calcularVuelto() {
             const campoEfectivo = document.getElementById('input-efectivo');
-            // Algunos teclados móviles usan coma decimal.
             const efectivo = parseFloat(campoEfectivo.value.replace(',', '.')) || 0;
             const vuelto = efectivo - totalVentaActual;
             const textoVuelto = document.getElementById('modal-vuelto');
@@ -806,27 +814,46 @@ function loginConGoogle() {
             }
         }
 
+        // ======================= CORRECCIÓN VENTA =======================
         function confirmarVenta() {
-            const venta = {
-                total: totalVentaActual,
-                fecha: firebase.firestore.FieldValue.serverTimestamp(),
-                items: carrito.map(item => ({ nombre: item.nombre, precio: item.precio, cantidad: item.cantidad }))
-            };
+            try {
+                const btn = document.getElementById('btn-finalizar-venta');
+                const textoOriginal = btn.innerText;
+                btn.innerText = 'Guardando...';
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
 
-            const batch = db.batch();
-            carrito.forEach(itemVenta => {
-                const prodRef = db.collection("productos").doc(itemVenta.id);
-                const prodReal = inventario.find(p => p.id === itemVenta.id);
-                if(prodReal) batch.update(prodRef, { stock: Math.max(0, prodReal.stock - itemVenta.cantidad) });
-            });
-            batch.set(db.collection("ventas").doc(), venta);
+                const venta = {
+                    total: totalVentaActual,
+                    fecha: firebase.firestore.FieldValue.serverTimestamp(),
+                    items: carrito.map(item => ({ nombre: item.nombre, precio: item.precio, cantidad: item.cantidad }))
+                };
 
-            batch.commit().then(() => {
-                carrito = [];
-                renderizarCarrito();
-                cerrarModalCobro();
-                alert('✅ Venta cobrada con éxito. Inventario actualizado en la Nube.');
-            }).catch(error => alert('No se pudo registrar la venta: ' + error.message));
+                const batch = db.batch();
+                carrito.forEach(itemVenta => {
+                    const prodRef = db.collection("productos").doc(itemVenta.id);
+                    const prodReal = inventario.find(p => p.id === itemVenta.id);
+                    if(prodReal) batch.update(prodRef, { stock: Math.max(0, prodReal.stock - itemVenta.cantidad) });
+                });
+                batch.set(db.collection("ventas").doc(), venta);
+
+                batch.commit().then(() => {
+                    carrito = [];
+                    renderizarCarrito();
+                    cerrarModalCobro();
+                    btn.innerText = textoOriginal;
+                    alert('✅ Venta cobrada con éxito. Inventario actualizado en la Nube.');
+                }).catch(error => {
+                    btn.innerText = textoOriginal;
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    alert('No se pudo registrar la venta en la nube: ' + error.message);
+                });
+            } catch(error) {
+                alert('Error interno en la aplicación: ' + error.message);
+                document.getElementById('btn-finalizar-venta').innerText = 'Confirmar';
+                document.getElementById('btn-finalizar-venta').disabled = false;
+            }
         }
 
         function exportarCSV() {
@@ -856,7 +883,7 @@ function loginConGoogle() {
                     carrito = [];
                     renderizarCarrito();
                     alert('Base de datos reiniciada.');
-                });
+                }).catch(error => alert("Error al limpiar: " + error.message));
             }
         }
     </script>

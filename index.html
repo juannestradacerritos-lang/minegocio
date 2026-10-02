@@ -430,10 +430,10 @@
         });
 
         function loginConGoogle() {
-            // La redirección evita el cierre de ventanas emergentes en navegadores integrados.
-            // El posible error se recibe en auth.getRedirectResult() al regresar de Google.
-            auth.signInWithRedirect(provider);
-        }
+    auth.signInWithPopup(provider).catch((error) => {
+        alert("Error al iniciar sesión: " + error.message);
+    });
+}
 
         function cerrarSesion() {
             auth.signOut();

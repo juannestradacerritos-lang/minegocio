@@ -438,11 +438,21 @@
             }
         });
 
-function loginConGoogle() {
-    auth.signInWithPopup(provider).catch((error) => {
-        alert("Error al iniciar sesión: " + error.message);
-    });
-}
+        // NUEVO MÉTODO DE INICIO DE SESIÓN CON REDIRECCIÓN
+        function loginConGoogle() {
+            if(auth) {
+                auth.signInWithRedirect(provider);
+            }
+        }
+
+        // PROCESA POSIBLES ERRORES DESPUÉS DE LA REDIRECCIÓN
+        if(auth) {
+            auth.getRedirectResult().catch((error) => {
+                if(error) {
+                    alert("Error al iniciar sesión: " + error.message);
+                }
+            });
+        }
 
         function cerrarSesion() {
             auth.signOut();

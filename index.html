@@ -377,6 +377,9 @@
                 provider = new firebase.auth.GoogleAuthProvider();
                 db = firebase.firestore();
                 
+                // FIX 1: Forzar almacenamiento local desde el inicio para evitar pérdida de sesión al recargar
+                auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(err => console.warn('Persistencia Auth:', err));
+
                 try {
                     db.enablePersistence().catch(err => {
                         console.warn('Persistencia offline:', err);
@@ -398,10 +401,6 @@
         let ventas = [];
         
         if (auth) {
-            auth.getRedirectResult().catch(error => {
-                alert("Error al procesar login con Google: " + error.message);
-            });
-
             auth.onAuthStateChanged((user) => {
                 if (user) {
                     document.getElementById('login-screen').classList.add('hidden');
@@ -434,7 +433,9 @@
             });
         }
 
+        // FIX 2: Usar signInWithPopup y capturar errores detallados
         function loginConGoogle(event) {
+            if (event) event.preventDefault();
             const btn = document.getElementById('btn-login');
             const texto = document.getElementById('texto-login');
 
@@ -445,13 +446,22 @@
 
             btn.disabled = true;
             btn.style.opacity = '0.6';
-            texto.innerText = "Conectando con Google...";
+            texto.innerText = "Conectando...";
 
-            auth.signInWithRedirect(provider).catch((error) => {
+            auth.signInWithPopup(provider).then(() => {
                 btn.disabled = false;
                 btn.style.opacity = '1';
                 texto.innerText = "Continuar con Google";
-                alert("Error al iniciar sesión: " + error.message);
+            }).catch((error) => {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                texto.innerText = "Continuar con Google";
+                
+                if (error.code === 'auth/popup-blocked') {
+                    alert("Tu navegador bloqueó la pestaña emergente. Por favor, permite las ventanas emergentes para iniciar sesión.");
+                } else if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
+                    alert("Error al iniciar sesión: " + error.message);
+                }
             });
         }
 
@@ -471,6 +481,11 @@
                 renderizarCatalogo();
                 renderizarListaVenta();
                 renderizarFaltantes();
+            }, (error) => {
+                console.error("Error al leer inventario:", error);
+                if (error.code === 'permission-denied') {
+                    alert("Base de datos bloqueada: Revisa las reglas de seguridad en Firebase Firestore.");
+                }
             });
         }
 
@@ -479,6 +494,8 @@
                 ventas = [];
                 querySnapshot.forEach((doc) => ventas.push({ id: doc.id, ...doc.data() }));
                 renderizarGraficos();
+            }, (error) => {
+                console.error("Error al leer ventas:", error);
             });
         }
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mi-negocio-v48';
+const CACHE_NAME = 'mi-negocio-v49';
 const APP_SHELL = ['./', './index.html', './manifest.json', './icon.svg'];
 const RECURSOS_EXTERNOS = [
   'https://cdn.tailwindcss.com',

@@ -6,7 +6,7 @@
     <title>Inventario y Ventas</title>
     
     <!-- Enlaces PWA -->
-    <link rel="manifest" href="./manifest.json?v=2">
+    <link rel="manifest" href="./manifest.json?v=3">
     <meta name="theme-color" content="#2563EB">
     <link rel="icon" href="./icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="./icon.svg">
@@ -126,7 +126,7 @@
                         📊 Descargar inventario
                     </button>
                     <button onclick="limpiarTodo(); cerrarMenuAjustes()" class="w-full text-left px-4 py-3 text-sm font-semibold text-red-600 hover:bg-red-50 border-b border-gray-100">
-                        ⚠️️ Borrar todo el sistema
+                        ⚠️ Borrar todo el sistema
                     </button>
                     <button onclick="cerrarSesion()" class="w-full text-left px-4 py-3 text-sm font-semibold hover:bg-gray-50">
                         🚪 Salir
@@ -366,7 +366,7 @@
         </div>
     </div>
 
-    <!-- Script de Lógica, Firebase y Auth -->
+    <!-- Script de Lógica, Firebase y Auth (Versión 10 Igual a Panel U) -->
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
@@ -427,13 +427,12 @@
             }
         });
 
+        // NUEVO MÉTODO (IGUAL AL DEL PANEL UNIVERSITARIO)
         function loginConGoogle() {
-            auth.signInWithRedirect(provider);
+            auth.signInWithPopup(provider).catch((error) => {
+                alert("Error al iniciar sesión: " + error.message);
+            });
         }
-
-        auth.getRedirectResult().catch((error) => {
-            if(error) alert("Error al iniciar sesión: " + error.message);
-        });
 
         function cerrarSesion() {
             auth.signOut();
@@ -853,13 +852,13 @@
         }
     </script>
 
-    <!-- Registro del service worker PWA -->
+    <!-- Registro del service worker PWA (Modificado para limpiar el caché) -->
     <script>
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(() => console.log('Service worker registrado'))
-                    .catch(err => console.log('Error en service worker:', err));
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                    registration.unregister(); // Limpia el caché viejo para obligar al teléfono a usar este nuevo código
+                }
             });
         }
     </script>

@@ -1,53 +1,56 @@
-const CACHE_NAME = 'mi-negocio-cache-v35';
+// Aumentamos a v36 para forzar al navegador a notar el cambio
+const CACHE_NAME = 'mi-negocio-cache-v36'; 
 const urlsToCache = [
   './',
   './index.html',
-  './manifest.json?v=2',
-  './icon.svg' // Asegúrate de tener tu icono en la misma carpeta que estos archivos
+  './manifest.json?v=5',
+  './icon.svg'
 ];
 
-// Instalación: Guardar los archivos principales para uso offline
 self.addEventListener('install', event => {
+  // Obliga al Service Worker nuevo a instalarse de inmediato y patear al viejo
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => {
-        return cache.addAll(urlsToCache);
-      })
+      .then(cache => cache.addAll(urlsToCache))
   );
 });
 
-// Activación: Limpiar cachés de versiones anteriores
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
           if (cacheName !== CACHE_NAME) {
+            console.log('Borrando caché antigua:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
-    })
+    }).then(() => self.clients.claim()) // Toma el control de la página al instante
   );
 });
 
-// Intercepción de peticiones (Fetch)
 self.addEventListener('fetch', event => {
-  // Omitimos interceptar a Firebase para que él mismo maneje sus datos offline 
-  // (gracias a db.enablePersistence() en tu index.html)
+  // Omitimos interceptar a Firebase
   if (event.request.url.includes('firestore.googleapis.com') || 
       event.request.url.includes('identitytoolkit.googleapis.com')) {
       return;
   }
 
-  // Para todo lo demás, intentar responder con la caché, si no, ir a la red
+  // ESTRATEGIA CORREGIDA: Network First (Red primero, si falla va a la caché)
   event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        if (response) {
-          return response;
-        }
-        return fetch(event.request);
+    fetch(event.request)
+      .then(networkResponse => {
+        // Si hay internet y Netlify responde con código nuevo, actualizamos la caché en silencio
+        return caches.open(CACHE_NAME).then(cache => {
+          cache.put(event.request, networkResponse.clone());
+          return networkResponse;
+        });
+      })
+      .catch(() => {
+        // Si no hay internet (offline), entonces sí sacamos los archivos de la caché
+        return caches.match(event.request);
       })
   );
 });

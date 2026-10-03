@@ -364,6 +364,12 @@
             font-size: .875rem;
             text-align: center;
         }
+        .scanner-panel { background: #0b1825; border-radius: .65rem; overflow: hidden; }
+        .scanner-visor { position: relative; aspect-ratio: 4 / 3; background: #07111b; }
+        .scanner-visor video { width: 100%; height: 100%; object-fit: cover; }
+        .scanner-guia { position: absolute; inset: 24% 9%; border: 2px solid #77d6c8; border-radius: .55rem; box-shadow: 0 0 0 999px rgba(2, 8, 15, .38); pointer-events: none; }
+        .scanner-guia::after { content: ''; position: absolute; left: 8%; right: 8%; top: 50%; height: 2px; background: #d5a84b; box-shadow: 0 0 8px #d5a84b; animation: scannerLine 1.6s ease-in-out infinite alternate; }
+        @keyframes scannerLine { from { transform: translateY(-40px); } to { transform: translateY(40px); } }
         #leyenda-pastel { display: flex; flex-wrap: wrap; gap: .6rem 1rem; margin-top: 1rem; }
         .leyenda-item { display: flex; align-items: center; gap: .45rem; color: #526176; font-size: .75rem; font-weight: 600; }
         .leyenda-color { width: 10px; height: 10px; flex: 0 0 auto; border-radius: 3px; }
@@ -661,6 +667,15 @@
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <form id="form-nuevo" onsubmit="guardarProducto(event)">
                         <div class="mb-5">
+                            <label class="block text-sm font-medium text-gray-600 mb-2">Código de barras</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="nuevo-codigo" inputmode="numeric" autocomplete="off" class="min-w-0 flex-1 p-4 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg" placeholder="Escanea o escribe el código">
+                                <button type="button" onclick="abrirLectorCodigo()" class="shrink-0 bg-teal-600 hover:bg-teal-700 text-white px-4 font-bold" aria-label="Escanear código con la cámara">Escanear</button>
+                            </div>
+                            <p id="estado-codigo" class="mt-2 text-xs text-gray-500" aria-live="polite">Puedes usar la cámara trasera o escribir el número.</p>
+                        </div>
+
+                        <div class="mb-5">
                             <label class="block text-sm font-medium text-gray-600 mb-2">Nombre del Producto</label>
                             <input type="text" id="nuevo-nombre" required class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg" placeholder="Ej. Tomate (Unidad)">
                         </div>
@@ -739,6 +754,26 @@
     </div>
 
     <!-- MODALES OCULTOS -->
+    <div id="modal-lector" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 hidden p-4" role="dialog" aria-modal="true" aria-labelledby="titulo-lector">
+        <div class="scanner-panel w-full max-w-md text-white shadow-2xl">
+            <div class="flex items-start justify-between p-4">
+                <div>
+                    <h3 id="titulo-lector" class="text-lg font-bold">Escanear código de barras</h3>
+                    <p id="estado-lector" class="text-xs text-slate-300 mt-1" aria-live="polite">Preparando cámara…</p>
+                </div>
+                <button type="button" onclick="cerrarLectorCodigo()" class="text-3xl leading-none text-slate-300 hover:text-white" aria-label="Cerrar lector">×</button>
+            </div>
+            <div class="scanner-visor">
+                <video id="video-lector" playsinline muted></video>
+                <div class="scanner-guia" aria-hidden="true"></div>
+            </div>
+            <div class="p-4 text-xs text-slate-300 flex items-center justify-between gap-3">
+                <span>Centra el código, evita reflejos y mantén el teléfono firme.</span>
+                <button id="btn-linterna" type="button" onclick="alternarLinterna()" class="hidden shrink-0 border border-slate-500 px-3 py-2 font-bold">🔦 Luz</button>
+            </div>
+        </div>
+    </div>
+
     <div id="modal-reportes" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden transition-opacity p-4">
         <div class="bg-white p-6 rounded-2xl w-full max-w-md shadow-2xl">
             <div class="flex items-start justify-between mb-5">
@@ -1135,6 +1170,7 @@
 
         function cambiarTab(tabId, elementoBtn) {
             cerrarMenuAjustes();
+            cerrarLectorCodigo();
             document.querySelectorAll('main > section').forEach(sec => sec.classList.add('hidden'));
             document.getElementById('tab-' + tabId).classList.remove('hidden');
             if (tabId === 'graficos') renderizarGraficos();
@@ -1278,20 +1314,155 @@
             }
         });
 
-        function guardarProducto(e) {
+        let streamLector = null;
+        let detectorCodigo = null;
+        let lectorActivo = false;
+        let linternaActiva = false;
+        let cuadroLector = null;
+
+        async function abrirLectorCodigo() {
+            const modal = document.getElementById('modal-lector');
+            const estado = document.getElementById('estado-lector');
+
+            if (!navigator.mediaDevices?.getUserMedia) {
+                alert('Este navegador no permite acceder a la cámara. Abre la aplicación en Chrome o Safari mediante una conexión segura (HTTPS).');
+                return;
+            }
+            if (!('BarcodeDetector' in window)) {
+                alert('El lector automático no está disponible en este navegador. Usa Chrome en Android o escribe el código manualmente.');
+                return;
+            }
+
+            modal.classList.remove('hidden');
+            estado.textContent = 'Solicitando permiso para usar la cámara…';
+
+            try {
+                const formatosDisponibles = await BarcodeDetector.getSupportedFormats();
+                const formatosDeseados = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'codabar', 'itf'];
+                const formatos = formatosDeseados.filter(formato => formatosDisponibles.includes(formato));
+                detectorCodigo = new BarcodeDetector(formatos.length ? { formats: formatos } : undefined);
+                streamLector = await navigator.mediaDevices.getUserMedia({
+                    audio: false,
+                    video: {
+                        facingMode: { ideal: 'environment' },
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 },
+                        focusMode: { ideal: 'continuous' }
+                    }
+                });
+
+                const video = document.getElementById('video-lector');
+                video.srcObject = streamLector;
+                await video.play();
+                lectorActivo = true;
+                estado.textContent = 'Apunta al código de barras.';
+
+                const pista = streamLector.getVideoTracks()[0];
+                const capacidades = pista.getCapabilities?.() || {};
+                document.getElementById('btn-linterna').classList.toggle('hidden', !capacidades.torch);
+                detectarCodigoEnCamara();
+            } catch (error) {
+                cerrarLectorCodigo();
+                const mensaje = error.name === 'NotAllowedError'
+                    ? 'Debes permitir el acceso a la cámara desde los ajustes del navegador.'
+                    : 'No se pudo abrir la cámara. Comprueba que ninguna otra aplicación la esté usando.';
+                alert(mensaje);
+            }
+        }
+
+        async function detectarCodigoEnCamara() {
+            if (!lectorActivo || !detectorCodigo) return;
+            const video = document.getElementById('video-lector');
+            try {
+                if (video.readyState >= 2) {
+                    const codigos = await detectorCodigo.detect(video);
+                    if (codigos.length && codigos[0].rawValue) {
+                        registrarCodigoEscaneado(codigos[0].rawValue);
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.warn('No se pudo analizar este cuadro:', error);
+            }
+            cuadroLector = requestAnimationFrame(detectarCodigoEnCamara);
+        }
+
+        function registrarCodigoEscaneado(valor) {
+            const codigo = String(valor).trim();
+            if (!codigo) return;
+            const existente = inventario.find(producto => String(producto.codigo || '') === codigo);
+            document.getElementById('nuevo-codigo').value = codigo;
+            const estado = document.getElementById('estado-codigo');
+            if (existente) {
+                estado.textContent = `Este código ya pertenece a “${existente.nombre}”.`;
+                estado.className = 'mt-2 text-xs text-red-600 font-semibold';
+                navigator.vibrate?.([100, 60, 100]);
+            } else {
+                estado.textContent = `✓ Código detectado: ${codigo}`;
+                estado.className = 'mt-2 text-xs text-green-600 font-semibold';
+                navigator.vibrate?.(100);
+            }
+            cerrarLectorCodigo();
+        }
+
+        async function alternarLinterna() {
+            const pista = streamLector?.getVideoTracks()[0];
+            if (!pista) return;
+            try {
+                linternaActiva = !linternaActiva;
+                await pista.applyConstraints({ advanced: [{ torch: linternaActiva }] });
+                document.getElementById('btn-linterna').textContent = linternaActiva ? '🔦 Apagar' : '🔦 Luz';
+            } catch (error) {
+                linternaActiva = false;
+            }
+        }
+
+        function cerrarLectorCodigo() {
+            lectorActivo = false;
+            if (cuadroLector) cancelAnimationFrame(cuadroLector);
+            cuadroLector = null;
+            streamLector?.getTracks().forEach(pista => pista.stop());
+            streamLector = null;
+            detectorCodigo = null;
+            linternaActiva = false;
+            const video = document.getElementById('video-lector');
+            if (video) video.srcObject = null;
+            document.getElementById('btn-linterna')?.classList.add('hidden');
+            document.getElementById('modal-lector')?.classList.add('hidden');
+        }
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) cerrarLectorCodigo();
+        });
+
+        async function guardarProducto(e) {
             e.preventDefault();
+            const codigo = document.getElementById('nuevo-codigo').value.trim();
+            const existente = codigo && inventario.find(producto => String(producto.codigo || '') === codigo);
+            if (existente) {
+                alert(`El código ${codigo} ya pertenece a “${existente.nombre}”.`);
+                return;
+            }
+
             const nuevo = {
-                nombre: document.getElementById('nuevo-nombre').value,
+                codigo,
+                nombre: document.getElementById('nuevo-nombre').value.trim(),
                 categoria: document.getElementById('nuevo-categoria').value,
                 costo: parseFloat(document.getElementById('nuevo-costo').value),
                 precio: parseFloat(document.getElementById('nuevo-precio').value),
                 stock: parseFloat(document.getElementById('nuevo-stock').value)
             };
 
-            db.collection("productos").add(nuevo).then(() => {
+            try {
+                await db.collection("productos").add(nuevo);
                 document.getElementById('form-nuevo').reset();
+                const estado = document.getElementById('estado-codigo');
+                estado.textContent = 'Puedes usar la cámara trasera o escribir el número.';
+                estado.className = 'mt-2 text-xs text-gray-500';
                 cambiarTab('catalogo', document.querySelectorAll('.nav-btn')[5]);
-            });
+            } catch (error) {
+                alert('No se pudo guardar el producto: ' + error.message);
+            }
         }
 
         function renderizarListaVenta() {

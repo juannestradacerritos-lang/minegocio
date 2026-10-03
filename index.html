@@ -39,7 +39,8 @@
         #startup-screen.hidden { display: none !important; }
         .startup-brand { display: grid; justify-items: center; gap: 1rem; animation: startupBrandIn .65s cubic-bezier(.22, 1, .36, 1) both; }
         @keyframes startupBrandIn { from { opacity: 0; transform: translateY(10px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
-        .startup-logo { display: grid; place-items: center; width: 64px; height: 64px; border: 1px solid rgba(213,168,75,.75); border-radius: 14px; color: #f5d991; font-weight: 800; letter-spacing: .08em; }
+        .startup-logo { display: grid; place-items: center; width: 64px; height: 64px; border: 1px solid rgba(213,168,75,.75); border-radius: 14px; color: #f5d991; background: rgba(255,255,255,.06); }
+        .startup-logo svg { width: 36px; height: 36px; }
         .startup-spinner { width: 28px; height: 28px; border: 3px solid rgba(255,255,255,.18); border-top-color: #77d6c8; border-radius: 50%; animation: startupSpin 1.8s ease-in-out infinite; }
         @keyframes startupSpin {
             0% { transform: rotate(0deg); }
@@ -141,20 +142,17 @@
             backdrop-filter: blur(14px);
         }
         #app-content header h1 { font-size: 1rem; letter-spacing: -.02em; }
-        #app-content header h1::before {
-            content: 'MN';
-            display: inline-grid;
+        #app-content header .brand-icon {
+            display: grid;
             place-items: center;
-            width: 32px;
-            height: 32px;
-            margin-right: .7rem;
+            width: 36px;
+            height: 36px;
+            flex: 0 0 auto;
             border: 1px solid rgba(255,255,255,.35);
-            border-radius: 7px;
+            border-radius: 8px;
             color: #fff;
-            font-size: .65rem;
-            letter-spacing: .08em;
-            vertical-align: middle;
         }
+        #app-content header .brand-icon svg { width: 22px; height: 22px; }
         #app-content header button[aria-label="Abrir ajustes"] {
             background: rgba(255,255,255,.08);
             border: 1px solid rgba(255,255,255,.14);
@@ -301,7 +299,7 @@
             background: linear-gradient(120deg, var(--navy-deep), var(--navy));
             border-bottom: 3px solid var(--gold);
         }
-        #app-content header h1::before {
+        #app-content header .brand-icon {
             background: rgba(255,255,255,.08);
             border-color: rgba(213,168,75,.7);
             color: #f7dc9b;
@@ -483,6 +481,40 @@
             body { overscroll-behavior-y: none; }
         }
 
+        /* Modo oscuro configurable desde Ajustes. */
+        body.dark-mode { background: #07111b; color: #dbe7ee; }
+        body.dark-mode #app-content {
+            background:
+                radial-gradient(circle at 8% 0%, rgba(22,140,134,.13), transparent 28rem),
+                linear-gradient(180deg, #0b1825 0, #101d2a 280px);
+        }
+        body.dark-mode #app-content h2,
+        body.dark-mode #app-content h3,
+        body.dark-mode #app-content .text-gray-800,
+        body.dark-mode #app-content .text-gray-700 { color: #e5eef3 !important; }
+        body.dark-mode #app-content section > p,
+        body.dark-mode #app-content .text-gray-500,
+        body.dark-mode #app-content .text-gray-400 { color: #9fb0bd !important; }
+        body.dark-mode #app-content .bg-white { background-color: rgba(18, 34, 48, .96); border-color: #294153; }
+        body.dark-mode #app-content .bg-gray-50 { background-color: #172938 !important; }
+        body.dark-mode #app-content .border-gray-100,
+        body.dark-mode #app-content .border-gray-200 { border-color: #294153 !important; }
+        body.dark-mode input,
+        body.dark-mode select { background: #142534 !important; border-color: #355064 !important; color: #edf5f8; }
+        body.dark-mode input:focus,
+        body.dark-mode select:focus { background: #182c3d !important; }
+        body.dark-mode #app-content nav { background: rgba(14, 29, 42, .97); border-color: #355064; }
+        body.dark-mode #app-content nav .nav-btn.text-blue-600 { background: #173d3c; color: #79d8ce; }
+        body.dark-mode #lista-vender > div { background: #122230; border-color: #294153; }
+        body.dark-mode #menu-ajustes { background: #122230; border-color: #294153; }
+        .theme-switch { position: relative; width: 48px; height: 28px; flex: 0 0 auto; }
+        .theme-switch input { position: absolute; inset: 0; width: 100%; min-height: 0; margin: 0; opacity: 0; cursor: pointer; z-index: 1; }
+        .theme-slider { position: absolute; inset: 0; border-radius: 999px; background: #cbd5e1; transition: background .2s; }
+        .theme-slider::after { content: ''; position: absolute; width: 20px; height: 20px; left: 4px; top: 4px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(15,23,42,.25); transition: transform .2s; }
+        .theme-switch input:checked + .theme-slider { background: var(--teal); }
+        .theme-switch input:checked + .theme-slider::after { transform: translateX(20px); }
+        .theme-switch input:focus-visible + .theme-slider { outline: 3px solid rgba(22,140,134,.3); outline-offset: 2px; }
+
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
         }
@@ -493,7 +525,13 @@
     <!-- Evita mostrar brevemente el acceso mientras Firebase recupera la sesión. -->
     <div id="startup-screen" role="status" aria-live="polite" aria-label="Cargando aplicación">
         <div class="startup-brand">
-            <div class="startup-logo" aria-hidden="true">MN</div>
+            <div class="startup-logo" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 7.5 12 3l8 4.5-8 4.5-8-4.5Z"/>
+                    <path d="M4 7.5V16l8 5 8-5V7.5M12 12v9"/>
+                    <path d="m8 5.25 8 4.5"/>
+                </svg>
+            </div>
             <div class="startup-spinner" aria-hidden="true"></div>
             <p class="text-sm font-semibold tracking-wide">Cargando Mi Negocio…</p>
         </div>
@@ -528,28 +566,21 @@
     <div id="app-content" class="hidden pb-28">
         
         <header class="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-40 flex justify-between items-center">
-            <div class="flex items-center space-x-2">
+            <div class="flex items-center space-x-3">
+                <span class="brand-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 7.5 12 3l8 4.5-8 4.5-8-4.5Z"/>
+                        <path d="M4 7.5V16l8 5 8-5V7.5M12 12v9"/>
+                        <path d="m8 5.25 8 4.5"/>
+                    </svg>
+                </span>
                 <h1 class="text-xl font-bold tracking-wide">Mi Negocio</h1>
             </div>
             <div class="flex items-center space-x-3 relative">
                 <img id="user-avatar" src="" alt="Perfil" class="w-8 h-8 rounded-full border-2 border-white shadow-sm hidden">
-                <button onclick="alternarMenuAjustes()" aria-label="Abrir ajustes" class="w-9 h-9 bg-blue-700 hover:bg-blue-800 rounded-lg font-bold text-xl transition-colors">
+                <button onclick="cambiarTab('ajustes')" aria-label="Abrir ajustes" class="w-9 h-9 bg-blue-700 hover:bg-blue-800 rounded-lg font-bold text-xl transition-colors">
                     ⚙️
                 </button>
-                <div id="menu-ajustes" class="hidden absolute right-0 top-12 w-64 bg-white text-gray-700 rounded-xl shadow-xl border border-gray-100 overflow-hidden">
-                    <button onclick="exportarCSV(); cerrarMenuAjustes()" class="w-full text-left px-4 py-3 text-sm font-semibold hover:bg-gray-50 border-b border-gray-100">
-                        📊 Descargar inventario
-                    </button>
-                    <button onclick="abrirModalReportes(); cerrarMenuAjustes()" class="w-full text-left px-4 py-3 text-sm font-semibold hover:bg-teal-50 border-b border-gray-100">
-                        📄 Guardar reporte de ventas
-                    </button>
-                    <button onclick="limpiarTodo(); cerrarMenuAjustes()" class="w-full text-left px-4 py-3 text-sm font-semibold text-red-600 hover:bg-red-50 border-b border-gray-100">
-                        ⚠️ Borrar todo el sistema
-                    </button>
-                    <button onclick="cerrarSesion()" class="w-full text-left px-4 py-3 text-sm font-semibold hover:bg-gray-50">
-                        🚪 Salir
-                    </button>
-                </div>
             </div>
         </header>
 
@@ -666,6 +697,52 @@
                 </div>
             </section>
 
+            <!-- PESTAÑA: AJUSTES -->
+            <section id="tab-ajustes" class="fade-in hidden">
+                <button type="button" onclick="volverDesdeAjustes()" class="mb-5 inline-flex items-center gap-2 text-sm font-bold text-teal-700 hover:text-teal-900" aria-label="Regresar a la pantalla anterior">
+                    <span aria-hidden="true">←</span> Regresar
+                </button>
+                <h2 class="text-2xl font-bold mb-2 text-gray-800">Ajustes</h2>
+                <p class="text-sm text-gray-500 mb-6 font-medium">Administra el inventario, los reportes y tu sesión.</p>
+
+                <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                    <label for="interruptor-modo-oscuro" class="w-full flex items-center justify-between gap-4 px-5 py-4 border-b border-gray-100 cursor-pointer">
+                        <span class="flex items-center gap-4">
+                            <span class="text-2xl" aria-hidden="true">🌙</span>
+                            <span><strong class="block text-gray-800">Modo oscuro</strong><small class="text-gray-500">Usar colores oscuros en la aplicación</small></span>
+                        </span>
+                        <span class="theme-switch">
+                            <input id="interruptor-modo-oscuro" type="checkbox" onchange="cambiarModoOscuro(this.checked)" aria-label="Activar modo oscuro">
+                            <span class="theme-slider" aria-hidden="true"></span>
+                        </span>
+                    </label>
+                    <button onclick="exportarCSV()" class="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-gray-50 border-b border-gray-100">
+                        <span class="text-2xl" aria-hidden="true">📊</span>
+                        <span><strong class="block text-gray-800">Descargar inventario</strong><small class="text-gray-500">Exportar todos los productos en formato CSV</small></span>
+                    </button>
+                    <button onclick="abrirModalReportes()" class="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-teal-50 border-b border-gray-100">
+                        <span class="text-2xl" aria-hidden="true">📄</span>
+                        <span><strong class="block text-gray-800">Reporte de ventas</strong><small class="text-gray-500">Guardar y descargar informes en PDF</small></span>
+                    </button>
+                    <button onclick="cambiarTab('faltantes')" class="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-orange-50 border-b border-gray-100">
+                        <span class="text-2xl" aria-hidden="true">⚠️</span>
+                        <span><strong class="block text-gray-800">Alertas de stock</strong><small class="text-gray-500">Ver productos agotados o por terminarse</small></span>
+                    </button>
+                    <button onclick="cambiarTab('catalogo')" class="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-teal-50 border-b border-gray-100">
+                        <span class="text-2xl" aria-hidden="true">📦</span>
+                        <span><strong class="block text-gray-800">Catálogo de productos</strong><small class="text-gray-500">Editar productos y ajustar existencias</small></span>
+                    </button>
+                    <button onclick="limpiarTodo()" class="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-red-50 border-b border-gray-100">
+                        <span class="text-2xl" aria-hidden="true">🗑️</span>
+                        <span><strong class="block text-red-600">Borrar todo el sistema</strong><small class="text-gray-500">Eliminar inventario y ventas</small></span>
+                    </button>
+                    <button onclick="cerrarSesion()" class="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-gray-50">
+                        <span class="text-2xl" aria-hidden="true">🚪</span>
+                        <span><strong class="block text-gray-800">Cerrar sesión</strong><small class="text-gray-500">Salir de esta cuenta</small></span>
+                    </button>
+                </div>
+            </section>
+
             <!-- 6. PESTAÑA: NUEVO PRODUCTO -->
             <section id="tab-nuevo" class="fade-in hidden">
                 <h2 class="text-2xl font-bold mb-6 text-gray-800">Registrar Producto</h2>
@@ -696,26 +773,30 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-600 mb-2">Cantidad (Stock)</label>
-                                <input type="number" id="nuevo-stock" required min="0" step="0.01" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg" placeholder="0">
+                                <label class="block text-sm font-medium text-gray-600 mb-2">Unidades que trae</label>
+                                <input type="number" id="nuevo-stock" required min="0.01" step="0.01" oninput="actualizarCostoUnitario()" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg" placeholder="Ej. 12">
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-4 mb-8">
+                        <div class="grid grid-cols-2 gap-4 mb-3">
                             <div>
-                                <label class="block text-sm font-medium text-gray-600 mb-2">Costo (Compra)</label>
+                                <label class="block text-sm font-medium text-gray-600 mb-2">Costo total del paquete</label>
                                 <div class="relative">
                                     <span class="absolute left-4 top-4 text-gray-500 font-bold">Q</span>
-                                    <input type="number" id="nuevo-costo" required min="0" step="0.01" class="w-full p-4 pl-9 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg" placeholder="0.00">
+                                    <input type="number" id="nuevo-costo" required min="0" step="0.01" oninput="actualizarCostoUnitario()" class="w-full p-4 pl-9 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg" placeholder="Ej. 95.00">
                                 </div>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-600 mb-2">Precio (Venta)</label>
+                                <label class="block text-sm font-medium text-gray-600 mb-2">Precio de venta por unidad</label>
                                 <div class="relative">
                                     <span class="absolute left-4 top-4 text-gray-500 font-bold">Q</span>
-                                    <input type="number" id="nuevo-precio" required min="0" step="0.01" class="w-full p-4 pl-9 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg" placeholder="0.00">
+                                    <input type="number" id="nuevo-precio" required min="0" step="0.01" class="w-full p-4 pl-9 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg" placeholder="Ej. 13.00">
                                 </div>
                             </div>
+                        </div>
+
+                        <div class="mb-8 rounded-lg border border-teal-100 bg-teal-50 p-3 text-sm text-teal-800">
+                            Costo calculado por unidad: <strong id="nuevo-costo-unitario">Q0.00</strong>
                         </div>
 
                         <button type="submit" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-md hover:bg-blue-700 active:bg-blue-800 text-lg transition-transform transform active:scale-95">
@@ -729,13 +810,13 @@
 
         <nav class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.1)] z-40">
             <div class="max-w-4xl mx-auto flex justify-between items-center px-2 py-2">
-                <button onclick="cambiarTab('resumen', this)" class="nav-btn flex-1 flex flex-col items-center p-2 text-blue-600 transition-colors">
-                    <span class="text-2xl mb-1">📊</span>
-                    <span class="text-[10px] font-semibold text-center w-full">Resumen</span>
-                </button>
                 <button onclick="cambiarTab('vender', this)" class="nav-btn flex-1 flex flex-col items-center p-2 text-gray-400 transition-colors">
                     <span class="text-2xl mb-1">🛒</span>
                     <span class="text-[10px] font-medium text-center w-full">Vender</span>
+                </button>
+                <button onclick="cambiarTab('resumen', this)" class="nav-btn flex-1 flex flex-col items-center p-2 text-blue-600 transition-colors">
+                    <span class="text-2xl mb-1">📊</span>
+                    <span class="text-[10px] font-semibold text-center w-full">Resumen</span>
                 </button>
                 <button onclick="cambiarTab('graficos', this)" class="nav-btn flex-1 flex flex-col items-center p-2 text-gray-400 transition-colors">
                     <span class="text-2xl mb-1">📈</span>
@@ -745,20 +826,21 @@
                     <span class="text-2xl mb-1">➕</span>
                     <span class="text-[10px] font-medium text-center w-full">Nuevo</span>
                 </button>
-                <!-- BOTÓN NUEVO: FALTANTES -->
-                <button onclick="cambiarTab('faltantes', this)" class="nav-btn flex-1 flex flex-col items-center p-2 text-gray-400 transition-colors">
-                    <span class="text-2xl mb-1">⚠️</span>
-                    <span class="text-[10px] font-medium text-center w-full">Alertas</span>
-                </button>
-                <button onclick="cambiarTab('catalogo', this)" class="nav-btn flex-1 flex flex-col items-center p-2 text-gray-400 transition-colors">
-                    <span class="text-2xl mb-1">📦</span>
-                    <span class="text-[10px] font-medium text-center w-full">Catálogo</span>
-                </button>
             </div>
         </nav>
     </div>
 
     <!-- MODALES OCULTOS -->
+    <div id="modal-producto-agregado" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden p-4" role="dialog" aria-modal="true" aria-labelledby="titulo-producto-agregado">
+        <div class="bg-white p-6 rounded-2xl w-full max-w-sm text-center shadow-2xl">
+            <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl" aria-hidden="true">✓</div>
+            <p class="text-xs font-bold uppercase tracking-wider text-teal-600 mb-1">Inventario actualizado</p>
+            <h3 id="titulo-producto-agregado" class="text-xl font-bold text-gray-800">Producto agregado</h3>
+            <p id="nombre-producto-agregado" class="text-sm text-gray-500 mt-2 mb-6"></p>
+            <button type="button" onclick="cerrarProductoAgregado()" class="w-full bg-teal-600 hover:bg-teal-700 text-white py-3 font-bold">Agregar otro producto</button>
+        </div>
+    </div>
+
     <div id="modal-lector" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 hidden p-4" role="dialog" aria-modal="true" aria-labelledby="titulo-lector">
         <div class="scanner-panel w-full max-w-md text-white shadow-2xl">
             <div class="flex items-start justify-between p-4">
@@ -922,6 +1004,10 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
 
     <script>
+        const modoOscuroGuardado = localStorage.getItem('modoOscuro') === 'true';
+        document.body.classList.toggle('dark-mode', modoOscuroGuardado);
+        document.getElementById('interruptor-modo-oscuro').checked = modoOscuroGuardado;
+
         const firebaseConfig = {
             apiKey: "AIzaSyC43cEVLZ106chtuuXlQ-HoWkUp34kzauE",
             authDomain: "negocio-69f46.firebaseapp.com",
@@ -1232,38 +1318,48 @@
             temporizadorGraficos = setTimeout(renderizarGraficos, 150);
         });
 
-        function alternarMenuAjustes() {
-            document.getElementById('menu-ajustes').classList.toggle('hidden');
-        }
-
         function cerrarMenuAjustes() {
-            document.getElementById('menu-ajustes').classList.add('hidden');
+            // Ajustes ahora es una sección completa; se conserva por compatibilidad.
         }
 
-        // Cierra ajustes al tocar cualquier punto fuera del botón y del menú.
-        document.addEventListener('click', (event) => {
-            const menu = document.getElementById('menu-ajustes');
-            const botonAjustes = event.target.closest('button[onclick="alternarMenuAjustes()"]');
-            if (!menu.contains(event.target) && !botonAjustes) cerrarMenuAjustes();
-        });
+        let tabAnteriorAjustes = 'resumen';
+
+        function volverDesdeAjustes() {
+            const destino = tabAnteriorAjustes || 'resumen';
+            const boton = document.querySelector(`.nav-btn[onclick*="'${destino}'"]`);
+            cambiarTab(destino, boton || undefined);
+        }
+
+        function cambiarModoOscuro(activar) {
+            document.body.classList.toggle('dark-mode', activar);
+            localStorage.setItem('modoOscuro', activar ? 'true' : 'false');
+        }
 
         function cambiarTab(tabId, elementoBtn) {
+            const seccionActual = document.querySelector('main > section:not(.hidden)');
+            if (tabId === 'ajustes' && seccionActual?.id !== 'tab-ajustes') {
+                tabAnteriorAjustes = seccionActual?.id.replace('tab-', '') || 'resumen';
+            }
             cerrarMenuAjustes();
             cerrarLectorCodigo();
             document.querySelectorAll('main > section').forEach(sec => sec.classList.add('hidden'));
             document.getElementById('tab-' + tabId).classList.remove('hidden');
             if (tabId === 'graficos') renderizarGraficos();
-            
+
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.classList.remove('text-blue-600');
                 btn.classList.add('text-gray-400');
                 btn.querySelector('span:last-child').classList.remove('font-semibold');
                 btn.querySelector('span:last-child').classList.add('font-medium');
             });
-            elementoBtn.classList.remove('text-gray-400');
-            elementoBtn.classList.add('text-blue-600');
-            elementoBtn.querySelector('span:last-child').classList.remove('font-medium');
-            elementoBtn.querySelector('span:last-child').classList.add('font-semibold');
+
+            // Las secciones abiertas desde Ajustes no tienen botón inferior.
+            if (elementoBtn) {
+                elementoBtn.classList.remove('text-gray-400');
+                elementoBtn.classList.add('text-blue-600');
+                elementoBtn.querySelector('span:last-child').classList.remove('font-medium');
+                elementoBtn.querySelector('span:last-child').classList.add('font-semibold');
+            }
         }
 
         function actualizarResumen() {
@@ -1623,6 +1719,13 @@
             if (document.hidden) cerrarLectorCodigo();
         });
 
+        function actualizarCostoUnitario() {
+            const unidades = parseFloat(document.getElementById('nuevo-stock').value) || 0;
+            const costoPaquete = parseFloat(document.getElementById('nuevo-costo').value) || 0;
+            const costoUnitario = unidades > 0 ? costoPaquete / unidades : 0;
+            document.getElementById('nuevo-costo-unitario').textContent = `Q${costoUnitario.toFixed(2)}`;
+        }
+
         async function guardarProducto(e) {
             e.preventDefault();
             const codigo = document.getElementById('nuevo-codigo').value.trim();
@@ -1632,25 +1735,41 @@
                 return;
             }
 
+            const stock = parseFloat(document.getElementById('nuevo-stock').value);
+            const costoPaquete = parseFloat(document.getElementById('nuevo-costo').value);
+            const precio = parseFloat(document.getElementById('nuevo-precio').value);
+            if (!Number.isFinite(stock) || stock <= 0 || !Number.isFinite(costoPaquete) || costoPaquete < 0 || !Number.isFinite(precio) || precio < 0) {
+                alert('Ingresa unidades, costo del paquete y precio válidos.');
+                return;
+            }
+
             const nuevo = {
                 codigo,
                 nombre: document.getElementById('nuevo-nombre').value.trim(),
                 categoria: document.getElementById('nuevo-categoria').value,
-                costo: parseFloat(document.getElementById('nuevo-costo').value),
-                precio: parseFloat(document.getElementById('nuevo-precio').value),
-                stock: parseFloat(document.getElementById('nuevo-stock').value)
+                costo: costoPaquete / stock,
+                costoPaquete,
+                precio,
+                stock
             };
 
             try {
                 await coleccionUsuario("productos").add(nuevo);
                 document.getElementById('form-nuevo').reset();
+                actualizarCostoUnitario();
                 const estado = document.getElementById('estado-codigo');
                 estado.textContent = 'Puedes usar la cámara trasera o escribir el número.';
                 estado.className = 'mt-2 text-xs text-gray-500';
-                cambiarTab('catalogo', document.querySelectorAll('.nav-btn')[5]);
+                document.getElementById('nombre-producto-agregado').textContent = `“${nuevo.nombre}” se guardó correctamente.`;
+                document.getElementById('modal-producto-agregado').classList.remove('hidden');
             } catch (error) {
                 alert('No se pudo guardar el producto: ' + error.message);
             }
+        }
+
+        function cerrarProductoAgregado() {
+            document.getElementById('modal-producto-agregado').classList.add('hidden');
+            document.getElementById('nuevo-codigo').focus();
         }
 
         function renderizarListaVenta() {

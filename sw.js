@@ -1,5 +1,5 @@
 // Aumentamos a v36 para forzar al navegador a notar el cambio
-const CACHE_NAME = 'mi-negocio-cache-v36'; 
+const CACHE_NAME = 'mi-negocio-cache-v37'; 
 const urlsToCache = [
   './',
   './index.html',

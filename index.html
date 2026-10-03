@@ -911,16 +911,20 @@
                 <button type="button" onclick="cerrarModalEditar()" aria-label="Cerrar" class="text-gray-400 hover:text-gray-700 text-2xl">×</button>
             </div>
             <form id="form-editar" onsubmit="guardarEdicionProducto(event)">
-                <label for="editar-codigo" class="block text-sm mb-2">Código de barras</label>
-                <input type="text" id="editar-codigo" inputmode="numeric" autocomplete="off" class="w-full p-3 border border-gray-200 mb-4" placeholder="Sin código">
+                <div class="mb-5">
+                    <label for="editar-codigo" class="block text-sm font-medium text-gray-600 mb-2">Código de barras</label>
+                    <input type="text" id="editar-codigo" inputmode="numeric" autocomplete="off" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-lg" placeholder="Sin código">
+                </div>
 
-                <label for="editar-nombre" class="block text-sm mb-2">Nombre del producto</label>
-                <input type="text" id="editar-nombre" required class="w-full p-3 border border-gray-200 mb-4">
+                <div class="mb-5">
+                    <label for="editar-nombre" class="block text-sm font-medium text-gray-600 mb-2">Nombre del Producto</label>
+                    <input type="text" id="editar-nombre" required class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-lg" placeholder="Ej. Tomate (Unidad)">
+                </div>
 
-                <div class="grid grid-cols-2 gap-3 mb-4">
+                <div class="grid grid-cols-2 gap-4 mb-5">
                     <div>
-                        <label for="editar-categoria" class="block text-sm mb-2">Categoría</label>
-                        <select id="editar-categoria" class="w-full p-3 border border-gray-200">
+                        <label for="editar-categoria" class="block text-sm font-medium text-gray-600 mb-2">Categoría</label>
+                        <select id="editar-categoria" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-lg">
                             <option value="Verduras">Verduras</option>
                             <option value="Abarrotes">Abarrotes</option>
                             <option value="Limpieza">Limpieza</option>
@@ -928,25 +932,35 @@
                         </select>
                     </div>
                     <div>
-                        <label for="editar-stock" class="block text-sm mb-2">Stock</label>
-                        <input type="number" id="editar-stock" required min="0" step="0.01" class="w-full p-3 border border-gray-200">
+                        <label for="editar-stock" class="block text-sm font-medium text-gray-600 mb-2">Unidades disponibles</label>
+                        <input type="number" id="editar-stock" required min="0" step="0.01" oninput="actualizarCostoUnitarioEdicion()" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-lg" placeholder="Ej. 12">
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3 mb-6">
+                <div class="grid grid-cols-2 gap-4 mb-3">
                     <div>
-                        <label for="editar-costo" class="block text-sm mb-2">Costo (Q)</label>
-                        <input type="number" id="editar-costo" required min="0" step="0.01" class="w-full p-3 border border-gray-200">
+                        <label for="editar-costo" class="block text-sm font-medium text-gray-600 mb-2">Costo total del paquete</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-4 text-gray-500 font-bold">Q</span>
+                            <input type="number" id="editar-costo" required min="0" step="0.01" oninput="actualizarCostoUnitarioEdicion()" class="w-full p-4 pl-9 bg-gray-50 border border-gray-200 rounded-xl text-lg" placeholder="Ej. 95.00">
+                        </div>
                     </div>
                     <div>
-                        <label for="editar-precio" class="block text-sm mb-2">Precio (Q)</label>
-                        <input type="number" id="editar-precio" required min="0" step="0.01" class="w-full p-3 border border-gray-200">
+                        <label for="editar-precio" class="block text-sm font-medium text-gray-600 mb-2">Precio de venta por unidad</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-4 text-gray-500 font-bold">Q</span>
+                            <input type="number" id="editar-precio" required min="0" step="0.01" class="w-full p-4 pl-9 bg-gray-50 border border-gray-200 rounded-xl text-lg" placeholder="Ej. 13.00">
+                        </div>
                     </div>
+                </div>
+
+                <div class="mb-6 rounded-lg border border-teal-100 bg-teal-50 p-3 text-sm text-teal-800">
+                    Costo calculado por unidad: <strong id="editar-costo-unitario">Q0.00</strong>
                 </div>
 
                 <div class="flex gap-3">
                     <button type="button" onclick="cerrarModalEditar()" class="flex-1 bg-gray-100 text-gray-700 py-3 font-bold">Cancelar</button>
-                    <button id="btn-guardar-edicion" type="submit" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white py-3 font-bold">Guardar cambios</button>
+                    <button id="btn-guardar-edicion" type="submit" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white py-3 font-bold">Actualizar producto</button>
                 </div>
             </form>
         </div>
@@ -1474,9 +1488,12 @@
             productoAEditar = id;
             document.getElementById('editar-codigo').value = producto.codigo || '';
             document.getElementById('editar-nombre').value = producto.nombre || '';
-            document.getElementById('editar-stock').value = Number(producto.stock) || 0;
-            document.getElementById('editar-costo').value = Number(producto.costo) || 0;
+            const stock = Number(producto.stock) || 0;
+            const costoUnitario = Number(producto.costo) || 0;
+            document.getElementById('editar-stock').value = stock;
+            document.getElementById('editar-costo').value = costoUnitario * stock;
             document.getElementById('editar-precio').value = Number(producto.precio) || 0;
+            actualizarCostoUnitarioEdicion();
 
             const selectorCategoria = document.getElementById('editar-categoria');
             const categoria = producto.categoria || 'Otros';
@@ -1506,15 +1523,19 @@
                 return;
             }
 
+            const stock = parseFloat(document.getElementById('editar-stock').value);
+            const costoPaquete = parseFloat(document.getElementById('editar-costo').value);
+            const precio = parseFloat(document.getElementById('editar-precio').value);
             const cambios = {
                 codigo,
                 nombre: document.getElementById('editar-nombre').value.trim(),
                 categoria: document.getElementById('editar-categoria').value,
-                stock: parseFloat(document.getElementById('editar-stock').value),
-                costo: parseFloat(document.getElementById('editar-costo').value),
-                precio: parseFloat(document.getElementById('editar-precio').value)
+                stock,
+                costoPaquete,
+                costo: stock > 0 ? costoPaquete / stock : 0,
+                precio
             };
-            if (!cambios.nombre || [cambios.stock, cambios.costo, cambios.precio].some(valor => !Number.isFinite(valor) || valor < 0)) {
+            if (!cambios.nombre || !Number.isFinite(stock) || stock < 0 || !Number.isFinite(costoPaquete) || costoPaquete < 0 || !Number.isFinite(precio) || precio < 0) {
                 alert('Completa todos los campos con valores válidos.');
                 return;
             }
@@ -1724,6 +1745,13 @@
             const costoPaquete = parseFloat(document.getElementById('nuevo-costo').value) || 0;
             const costoUnitario = unidades > 0 ? costoPaquete / unidades : 0;
             document.getElementById('nuevo-costo-unitario').textContent = `Q${costoUnitario.toFixed(2)}`;
+        }
+
+        function actualizarCostoUnitarioEdicion() {
+            const unidades = parseFloat(document.getElementById('editar-stock').value) || 0;
+            const costoPaquete = parseFloat(document.getElementById('editar-costo').value) || 0;
+            const costoUnitario = unidades > 0 ? costoPaquete / unidades : 0;
+            document.getElementById('editar-costo-unitario').textContent = `Q${costoUnitario.toFixed(2)}`;
         }
 
         async function guardarProducto(e) {

@@ -1,56 +1,71 @@
-// Aumentamos a v36 para forzar al navegador a notar el cambio
-const CACHE_NAME = 'mi-negocio-cache-v46'; 
-const urlsToCache = [
-  './',
-  './index.html',
-  './manifest.json?v=5',
-  './icon.svg'
+const CACHE_NAME = 'mi-negocio-v47';
+const APP_SHELL = ['./', './index.html', './manifest.json', './icon.svg'];
+const RECURSOS_EXTERNOS = [
+  'https://cdn.tailwindcss.com',
+  'https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js',
+  'https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js',
+  'https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js'
 ];
 
 self.addEventListener('install', event => {
-  // Obliga al Service Worker nuevo a instalarse de inmediato y patear al viejo
-  self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
+    caches.open(CACHE_NAME).then(async cache => {
+      await cache.addAll(APP_SHELL);
+      // Los recursos externos se intentan guardar, pero no bloquean la instalación.
+      await Promise.allSettled(RECURSOS_EXTERNOS.map(url => cache.add(url)));
+    })
   );
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheName !== CACHE_NAME) {
-            console.log('Borrando caché antigua:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    }).then(() => self.clients.claim()) // Toma el control de la página al instante
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))))
+      .then(() => self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', event => {
-  // Omitimos interceptar a Firebase
-  if (event.request.url.includes('firestore.googleapis.com') || 
-      event.request.url.includes('identitytoolkit.googleapis.com')) {
-      return;
+  if (event.request.method !== 'GET') return;
+
+  const url = new URL(event.request.url);
+  const esNavegacion = event.request.mode === 'navigate';
+  const esRecursoApp = url.origin === self.location.origin;
+  const esDependencia = RECURSOS_EXTERNOS.includes(url.href);
+
+  if (esNavegacion) {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          if (response.ok) {
+            const copia = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put('./index.html', copia));
+          }
+          return response;
+        })
+        .catch(() => caches.match('./index.html'))
+    );
+    return;
   }
 
-  // ESTRATEGIA CORREGIDA: Network First (Red primero, si falla va a la caché)
-  event.respondWith(
-    fetch(event.request)
-      .then(networkResponse => {
-        // Si hay internet y Netlify responde con código nuevo, actualizamos la caché en silencio
-        return caches.open(CACHE_NAME).then(cache => {
-          cache.put(event.request, networkResponse.clone());
-          return networkResponse;
+  if (esRecursoApp || esDependencia) {
+    event.respondWith(
+      caches.match(event.request).then(cached => {
+        const actualizar = fetch(event.request).then(response => {
+          if (response.ok) {
+            const copia = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, copia));
+          }
+          return response;
         });
+
+        if (cached) {
+          event.waitUntil(actualizar.catch(() => undefined));
+          return cached;
+        }
+        return actualizar.catch(() => Response.error());
       })
-      .catch(() => {
-        // Si no hay internet (offline), entonces sí sacamos los archivos de la caché
-        return caches.match(event.request);
-      })
-  );
+    );
+  }
 });

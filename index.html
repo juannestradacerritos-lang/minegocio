@@ -609,7 +609,12 @@
             <section id="tab-vender" class="fade-in hidden">
                 <h2 class="text-2xl font-bold mb-4 text-gray-800">Caja Registradora</h2>
                 
-                <p class="text-sm text-gray-500 mb-2 font-semibold">Toca un producto para vender:</p>
+                <div class="flex items-center justify-between gap-3 mb-3">
+                    <p class="text-sm text-gray-500 font-semibold">Toca un producto o escanea su código:</p>
+                    <button type="button" onclick="abrirLectorCodigo('vender')" class="shrink-0 bg-teal-600 hover:bg-teal-700 text-white px-4 py-3 font-bold" aria-label="Escanear producto para vender">
+                        Escanear
+                    </button>
+                </div>
                 <div class="flex overflow-x-auto space-x-3 pb-4 mb-2" id="lista-vender"></div>
 
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
@@ -770,6 +775,21 @@
             <div class="p-4 text-xs text-slate-300 flex items-center justify-between gap-3">
                 <span>Centra el código, evita reflejos y mantén el teléfono firme.</span>
                 <button id="btn-linterna" type="button" onclick="alternarLinterna()" class="hidden shrink-0 border border-slate-500 px-3 py-2 font-bold">🔦 Luz</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-producto-escaneado" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden p-4" role="dialog" aria-modal="true" aria-labelledby="titulo-producto-escaneado">
+        <div class="bg-white p-6 rounded-2xl w-full max-w-sm text-center shadow-2xl">
+            <div class="w-16 h-16 bg-teal-50 text-teal-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl" aria-hidden="true">▦</div>
+            <p class="text-xs font-bold uppercase tracking-wider text-teal-600 mb-1">Producto encontrado</p>
+            <h3 id="titulo-producto-escaneado" class="text-xl font-bold text-gray-800"></h3>
+            <p id="codigo-producto-escaneado" class="text-xs text-gray-400 mt-1"></p>
+            <p id="precio-producto-escaneado" class="text-4xl font-black text-teal-600 my-5"></p>
+            <p id="stock-producto-escaneado" class="text-sm text-gray-500 mb-6"></p>
+            <div class="flex gap-3">
+                <button type="button" onclick="cerrarProductoEscaneado()" class="flex-1 bg-gray-100 text-gray-700 py-3 font-bold">Cancelar</button>
+                <button id="btn-agregar-escaneado" type="button" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white py-3 font-bold">Agregar al carrito</button>
             </div>
         </div>
     </div>
@@ -1319,8 +1339,10 @@
         let lectorActivo = false;
         let linternaActiva = false;
         let cuadroLector = null;
+        let destinoLector = 'nuevo';
 
-        async function abrirLectorCodigo() {
+        async function abrirLectorCodigo(destino = 'nuevo') {
+            destinoLector = destino;
             const modal = document.getElementById('modal-lector');
             const estado = document.getElementById('estado-lector');
 
@@ -1391,6 +1413,19 @@
             const codigo = String(valor).trim();
             if (!codigo) return;
             const existente = inventario.find(producto => String(producto.codigo || '') === codigo);
+            cerrarLectorCodigo();
+
+            if (destinoLector === 'vender') {
+                if (!existente) {
+                    navigator.vibrate?.([100, 60, 100]);
+                    alert(`No se encontró ningún producto con el código ${codigo}.`);
+                    return;
+                }
+                mostrarProductoEscaneado(existente);
+                navigator.vibrate?.(100);
+                return;
+            }
+
             document.getElementById('nuevo-codigo').value = codigo;
             const estado = document.getElementById('estado-codigo');
             if (existente) {
@@ -1402,7 +1437,29 @@
                 estado.className = 'mt-2 text-xs text-green-600 font-semibold';
                 navigator.vibrate?.(100);
             }
-            cerrarLectorCodigo();
+        }
+
+        function mostrarProductoEscaneado(producto) {
+            document.getElementById('titulo-producto-escaneado').textContent = producto.nombre;
+            document.getElementById('codigo-producto-escaneado').textContent = `Código: ${producto.codigo}`;
+            document.getElementById('precio-producto-escaneado').textContent = `Q${Number(producto.precio).toFixed(2)}`;
+            document.getElementById('stock-producto-escaneado').textContent = producto.stock > 0
+                ? `Disponible: ${producto.stock}`
+                : 'Producto agotado';
+
+            const boton = document.getElementById('btn-agregar-escaneado');
+            boton.disabled = producto.stock <= 0;
+            boton.classList.toggle('opacity-50', producto.stock <= 0);
+            boton.classList.toggle('cursor-not-allowed', producto.stock <= 0);
+            boton.onclick = () => {
+                agregarAlCarrito(producto.id);
+                cerrarProductoEscaneado();
+            };
+            document.getElementById('modal-producto-escaneado').classList.remove('hidden');
+        }
+
+        function cerrarProductoEscaneado() {
+            document.getElementById('modal-producto-escaneado').classList.add('hidden');
         }
 
         async function alternarLinterna() {

@@ -268,8 +268,8 @@
         #app-content nav .nav-btn.text-blue-600::before { display: none; }
         #app-content nav .nav-btn.text-blue-600 > span:first-child { transform: translateY(-2px); }
 
-        #modal-eliminar, #modal-cobrar, #modal-reportes { backdrop-filter: blur(4px); background: rgba(15,23,42,.45); }
-        #modal-eliminar > div, #modal-cobrar > div, #modal-reportes > div { border: 1px solid #dce4ec; border-radius: .75rem; box-shadow: 0 24px 70px rgba(15,23,42,.22); }
+        #modal-eliminar, #modal-editar, #modal-cobrar, #modal-reportes { backdrop-filter: blur(4px); background: rgba(15,23,42,.45); }
+        #modal-eliminar > div, #modal-editar > div, #modal-cobrar > div, #modal-reportes > div { border: 1px solid #dce4ec; border-radius: .75rem; box-shadow: 0 24px 70px rgba(15,23,42,.22); }
         .reporte-periodo.activo { background: var(--teal); border-color: var(--teal); color: #fff; }
 
         @media (max-width: 560px) {
@@ -416,7 +416,7 @@
             padding-bottom: calc(7rem + env(safe-area-inset-bottom));
         }
         #app-content nav { bottom: max(.5rem, env(safe-area-inset-bottom)); }
-        #modal-eliminar, #modal-cobrar, #modal-reportes {
+        #modal-eliminar, #modal-editar, #modal-cobrar, #modal-reportes {
             padding-top: max(1rem, env(safe-area-inset-top));
             padding-right: max(1rem, env(safe-area-inset-right));
             padding-bottom: max(1rem, env(safe-area-inset-bottom));
@@ -433,7 +433,7 @@
             #tab-vender .bg-white, #tab-nuevo .bg-white, #tab-graficos .bg-white { padding: 1rem; }
             #tab-nuevo .grid { grid-template-columns: 1fr; }
             #tab-nuevo .grid > div + div { margin-top: .25rem; }
-            #modal-reportes > div, #modal-eliminar > div, #modal-cobrar > div {
+            #modal-reportes > div, #modal-eliminar > div, #modal-editar > div, #modal-cobrar > div {
                 max-height: calc(100dvh - 2rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
                 overflow-y: auto;
             }
@@ -819,6 +819,57 @@
         </div>
     </div>
 
+    <div id="modal-editar" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden transition-opacity p-4" role="dialog" aria-modal="true" aria-labelledby="titulo-editar">
+        <div class="bg-white p-6 rounded-2xl w-full max-w-md shadow-2xl">
+            <div class="flex items-start justify-between mb-5">
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-wider text-teal-600">Catálogo</p>
+                    <h3 id="titulo-editar" class="text-xl font-bold text-gray-800 mt-1">Editar producto</h3>
+                </div>
+                <button type="button" onclick="cerrarModalEditar()" aria-label="Cerrar" class="text-gray-400 hover:text-gray-700 text-2xl">×</button>
+            </div>
+            <form id="form-editar" onsubmit="guardarEdicionProducto(event)">
+                <label for="editar-codigo" class="block text-sm mb-2">Código de barras</label>
+                <input type="text" id="editar-codigo" inputmode="numeric" autocomplete="off" class="w-full p-3 border border-gray-200 mb-4" placeholder="Sin código">
+
+                <label for="editar-nombre" class="block text-sm mb-2">Nombre del producto</label>
+                <input type="text" id="editar-nombre" required class="w-full p-3 border border-gray-200 mb-4">
+
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <div>
+                        <label for="editar-categoria" class="block text-sm mb-2">Categoría</label>
+                        <select id="editar-categoria" class="w-full p-3 border border-gray-200">
+                            <option value="Verduras">Verduras</option>
+                            <option value="Abarrotes">Abarrotes</option>
+                            <option value="Limpieza">Limpieza</option>
+                            <option value="Otros">Otros</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="editar-stock" class="block text-sm mb-2">Stock</label>
+                        <input type="number" id="editar-stock" required min="0" step="0.01" class="w-full p-3 border border-gray-200">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mb-6">
+                    <div>
+                        <label for="editar-costo" class="block text-sm mb-2">Costo (Q)</label>
+                        <input type="number" id="editar-costo" required min="0" step="0.01" class="w-full p-3 border border-gray-200">
+                    </div>
+                    <div>
+                        <label for="editar-precio" class="block text-sm mb-2">Precio (Q)</label>
+                        <input type="number" id="editar-precio" required min="0" step="0.01" class="w-full p-3 border border-gray-200">
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    <button type="button" onclick="cerrarModalEditar()" class="flex-1 bg-gray-100 text-gray-700 py-3 font-bold">Cancelar</button>
+                    <button id="btn-guardar-edicion" type="submit" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white py-3 font-bold">Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div id="modal-eliminar" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden transition-opacity">
         <div class="bg-white p-6 rounded-2xl w-11/12 max-w-sm text-center shadow-2xl">
             <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -887,6 +938,13 @@
         const auth = firebase.auth();
         const provider = new firebase.auth.GoogleAuthProvider();
 
+        // Cada cuenta guarda sus datos en una ruta independiente.
+        function coleccionUsuario(nombre) {
+            const usuario = auth.currentUser;
+            if (!usuario) throw new Error('Debes iniciar sesión para acceder a los datos.');
+            return db.collection('usuarios').doc(usuario.uid).collection(nombre);
+        }
+
         // Conserva en el dispositivo los datos ya sincronizados para poder consultarlos sin conexión.
         const persistenciaFirestore = db.enablePersistence({ synchronizeTabs: true }).catch((error) => {
             if (error.code === 'failed-precondition') {
@@ -901,6 +959,7 @@
         let inventario = [];
         let carrito = [];
         let productoAEliminar = null;
+        let productoAEditar = null;
         let totalVentaActual = 0; 
         let unsubscribeFirestore = null;
         let unsubscribeVentas = null;
@@ -973,7 +1032,7 @@
         }
 
         function iniciarLecturaInventario() {
-            unsubscribeFirestore = db.collection("productos").onSnapshot((querySnapshot) => {
+            unsubscribeFirestore = coleccionUsuario("productos").onSnapshot((querySnapshot) => {
                 inventario = [];
                 querySnapshot.forEach((doc) => {
                     inventario.push({ id: doc.id, ...doc.data() });
@@ -988,7 +1047,7 @@
         }
 
         function iniciarLecturaVentas() {
-            unsubscribeVentas = db.collection("ventas").onSnapshot((querySnapshot) => {
+            unsubscribeVentas = coleccionUsuario("ventas").onSnapshot((querySnapshot) => {
                 ventas = [];
                 querySnapshot.forEach((doc) => ventas.push({ id: doc.id, ...doc.data() }));
                 renderizarGraficos();
@@ -1279,14 +1338,20 @@
                 
                 contenedor.innerHTML += `
                     <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-                        <div class="flex justify-between items-start mb-3">
-                            <div>
-                                <span class="text-xs font-bold uppercase text-gray-400 tracking-wider">${p.categoria}</span>
-                                <h3 class="font-bold text-gray-800 text-lg leading-tight mt-1">${p.nombre}</h3>
+                        <div class="flex justify-between items-start mb-3 gap-3">
+                            <div class="min-w-0">
+                                <span class="text-xs font-bold uppercase text-gray-400 tracking-wider">${escaparHTML(p.categoria || 'Otros')}</span>
+                                <h3 class="font-bold text-gray-800 text-lg leading-tight mt-1">${escaparHTML(p.nombre)}</h3>
+                                <p class="text-xs text-gray-500 mt-2 font-mono break-all">Código: ${escaparHTML(p.codigo || 'Sin código')}</p>
                             </div>
-                            <button onclick="abrirModalEliminar('${p.id}')" class="text-gray-300 hover:text-red-500 transition-colors text-xl">
-                                🗑
-                            </button>
+                            <div class="flex gap-1 shrink-0">
+                                <button onclick="abrirModalEditar('${p.id}')" class="w-9 h-9 text-blue-500 hover:bg-blue-50 transition-colors" aria-label="Editar ${escaparHTML(p.nombre)}" title="Editar producto">
+                                    ✏️
+                                </button>
+                                <button onclick="abrirModalEliminar('${p.id}')" class="w-9 h-9 text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors" aria-label="Eliminar ${escaparHTML(p.nombre)}" title="Eliminar producto">
+                                    🗑
+                                </button>
+                            </div>
                         </div>
                         
                         <div class="flex justify-between items-center mb-4">
@@ -1306,13 +1371,79 @@
             });
         }
 
+        function abrirModalEditar(id) {
+            const producto = inventario.find(p => p.id === id);
+            if (!producto) return;
+
+            productoAEditar = id;
+            document.getElementById('editar-codigo').value = producto.codigo || '';
+            document.getElementById('editar-nombre').value = producto.nombre || '';
+            document.getElementById('editar-stock').value = Number(producto.stock) || 0;
+            document.getElementById('editar-costo').value = Number(producto.costo) || 0;
+            document.getElementById('editar-precio').value = Number(producto.precio) || 0;
+
+            const selectorCategoria = document.getElementById('editar-categoria');
+            const categoria = producto.categoria || 'Otros';
+            if (![...selectorCategoria.options].some(opcion => opcion.value === categoria)) {
+                selectorCategoria.add(new Option(categoria, categoria));
+            }
+            selectorCategoria.value = categoria;
+            document.getElementById('modal-editar').classList.remove('hidden');
+        }
+
+        function cerrarModalEditar() {
+            productoAEditar = null;
+            document.getElementById('modal-editar').classList.add('hidden');
+            document.getElementById('form-editar').reset();
+        }
+
+        async function guardarEdicionProducto(event) {
+            event.preventDefault();
+            if (!productoAEditar) return;
+
+            const codigo = document.getElementById('editar-codigo').value.trim();
+            const codigoDuplicado = codigo && inventario.find(producto =>
+                producto.id !== productoAEditar && String(producto.codigo || '') === codigo
+            );
+            if (codigoDuplicado) {
+                alert(`El código ${codigo} ya pertenece a “${codigoDuplicado.nombre}”.`);
+                return;
+            }
+
+            const cambios = {
+                codigo,
+                nombre: document.getElementById('editar-nombre').value.trim(),
+                categoria: document.getElementById('editar-categoria').value,
+                stock: parseFloat(document.getElementById('editar-stock').value),
+                costo: parseFloat(document.getElementById('editar-costo').value),
+                precio: parseFloat(document.getElementById('editar-precio').value)
+            };
+            if (!cambios.nombre || [cambios.stock, cambios.costo, cambios.precio].some(valor => !Number.isFinite(valor) || valor < 0)) {
+                alert('Completa todos los campos con valores válidos.');
+                return;
+            }
+
+            const boton = document.getElementById('btn-guardar-edicion');
+            boton.disabled = true;
+            boton.classList.add('opacity-50');
+            try {
+                await coleccionUsuario('productos').doc(productoAEditar).update(cambios);
+                cerrarModalEditar();
+            } catch (error) {
+                alert('No se pudo actualizar el producto: ' + error.message);
+            } finally {
+                boton.disabled = false;
+                boton.classList.remove('opacity-50');
+            }
+        }
+
         function ajustarStock(id, cantidad) {
             const prod = inventario.find(p => p.id === id);
             if(prod) {
                 let nuevoStock = prod.stock + cantidad;
                 if(nuevoStock < 0) nuevoStock = 0;
                 
-                db.collection("productos").doc(id).update({ stock: nuevoStock });
+                coleccionUsuario("productos").doc(id).update({ stock: nuevoStock });
             }
         }
 
@@ -1328,7 +1459,7 @@
 
         document.getElementById('btn-confirmar-eliminar').addEventListener('click', () => {
             if(productoAEliminar) {
-                db.collection("productos").doc(productoAEliminar).delete().then(() => {
+                coleccionUsuario("productos").doc(productoAEliminar).delete().then(() => {
                     cerrarModalEliminar();
                 });
             }
@@ -1511,7 +1642,7 @@
             };
 
             try {
-                await db.collection("productos").add(nuevo);
+                await coleccionUsuario("productos").add(nuevo);
                 document.getElementById('form-nuevo').reset();
                 const estado = document.getElementById('estado-codigo');
                 estado.textContent = 'Puedes usar la cámara trasera o escribir el número.';
@@ -1654,11 +1785,11 @@
 
             const batch = db.batch();
             carrito.forEach(itemVenta => {
-                const prodRef = db.collection("productos").doc(itemVenta.id);
+                const prodRef = coleccionUsuario("productos").doc(itemVenta.id);
                 const prodReal = inventario.find(p => p.id === itemVenta.id);
                 if(prodReal) batch.update(prodRef, { stock: Math.max(0, prodReal.stock - itemVenta.cantidad) });
             });
-            batch.set(db.collection("ventas").doc(), venta);
+            batch.set(coleccionUsuario("ventas").doc(), venta);
 
             batch.commit().then(() => {
                 carrito = [];
@@ -1933,7 +2064,7 @@
             descargarReportePDF(reporte);
 
             try {
-                await db.collection('reportesVentas').add(reporte);
+                await coleccionUsuario('reportesVentas').add(reporte);
                 estado.textContent = '✓ PDF descargado y reporte guardado en la nube.';
             } catch (error) {
                 estado.textContent = 'El PDF se descargó, pero no se pudo guardar en la nube.';
@@ -1960,7 +2091,7 @@
         }
 
         function borrarColeccion(nombreColeccion) {
-            return db.collection(nombreColeccion).get().then((querySnapshot) => {
+            return coleccionUsuario(nombreColeccion).get().then((querySnapshot) => {
                 const documentos = querySnapshot.docs;
                 const eliminaciones = [];
 

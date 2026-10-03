@@ -433,7 +433,7 @@
             });
         }
 
-        // FIX 2: Usar signInWithPopup y capturar errores detallados
+        // FIX 2: Usar signInWithRedirect para evitar bloqueos de popups en móviles
         function loginConGoogle(event) {
             if (event) event.preventDefault();
             const btn = document.getElementById('btn-login');
@@ -446,22 +446,13 @@
 
             btn.disabled = true;
             btn.style.opacity = '0.6';
-            texto.innerText = "Conectando...";
+            texto.innerText = "Redirigiendo...";
 
-            auth.signInWithPopup(provider).then(() => {
+            auth.signInWithRedirect(provider).catch((error) => {
                 btn.disabled = false;
                 btn.style.opacity = '1';
                 texto.innerText = "Continuar con Google";
-            }).catch((error) => {
-                btn.disabled = false;
-                btn.style.opacity = '1';
-                texto.innerText = "Continuar con Google";
-                
-                if (error.code === 'auth/popup-blocked') {
-                    alert("Tu navegador bloqueó la pestaña emergente. Por favor, permite las ventanas emergentes para iniciar sesión.");
-                } else if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
-                    alert("Error al iniciar sesión: " + error.message);
-                }
+                alert("Error al iniciar sesión: " + error.message);
             });
         }
 

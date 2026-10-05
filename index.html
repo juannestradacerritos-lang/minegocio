@@ -1295,6 +1295,14 @@
                         </div>
 
                         <div class="mb-5">
+                            <label class="block text-sm font-medium text-gray-600 mb-2">Tamaños disponibles</label>
+                            <select id="nuevo-tamanos" onchange="actualizarCamposTamanos('nuevo')" class="w-full p-4 bg-gray-50 border border-gray-200 text-lg">
+                                <option value="no">Un solo tamaño</option>
+                                <option value="si">Mediano y grande</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-5">
                             <label id="nuevo-stock-label" class="block text-sm font-medium text-gray-600 mb-2">Unidades que trae</label>
                             <input type="number" id="nuevo-stock" required min="0.01" step="0.01" oninput="actualizarCostoUnitario()" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg" placeholder="Ej. 12">
                             <p id="nuevo-unidad-ayuda" class="mt-2 text-xs text-gray-500">Existencias disponibles en unidades.</p>
@@ -1308,11 +1316,28 @@
                                     <input type="number" id="nuevo-costo" required min="0" step="0.01" oninput="actualizarCostoUnitario()" class="w-full p-4 pl-9 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg" placeholder="Ej. 95.00">
                                 </div>
                             </div>
-                            <div>
+                            <div id="nuevo-precio-base-wrap">
                                 <label id="nuevo-precio-label" class="block text-sm font-medium text-gray-600 mb-2">Precio de venta por unidad</label>
                                 <div class="relative">
                                     <span class="absolute left-4 top-4 text-gray-500 font-bold">Q</span>
                                     <input type="number" id="nuevo-precio" required min="0" step="0.01" class="w-full p-4 pl-9 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg" placeholder="Ej. 13.00">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="nuevo-precios-tamanos" class="hidden grid grid-cols-2 gap-4 mb-5">
+                            <div>
+                                <label for="nuevo-precio-mediano" class="block text-sm font-medium text-gray-600 mb-2">Precio mediano</label>
+                                <div class="relative">
+                                    <span class="absolute left-4 top-4 text-gray-500 font-bold">Q</span>
+                                    <input type="number" id="nuevo-precio-mediano" min="0" step="0.01" class="w-full p-4 pl-9 bg-gray-50 border border-gray-200 text-lg" placeholder="Ej. 2.00">
+                                </div>
+                            </div>
+                            <div>
+                                <label for="nuevo-precio-grande" class="block text-sm font-medium text-gray-600 mb-2">Precio grande</label>
+                                <div class="relative">
+                                    <span class="absolute left-4 top-4 text-gray-500 font-bold">Q</span>
+                                    <input type="number" id="nuevo-precio-grande" min="0" step="0.01" class="w-full p-4 pl-9 bg-gray-50 border border-gray-200 text-lg" placeholder="Ej. 3.00">
                                 </div>
                             </div>
                         </div>
@@ -1414,6 +1439,10 @@
                 <button id="btn-agregar-libra-escaneada" type="button" class="bg-teal-600 hover:bg-teal-700 text-white py-3 font-bold">Vender por libra</button>
                 <button id="btn-agregar-unidad-escaneada" type="button" class="bg-blue-600 hover:bg-blue-700 text-white py-3 font-bold">Vender por unidad</button>
             </div>
+            <div id="opciones-tamano-escaneado" class="hidden grid grid-cols-2 gap-3 mb-3">
+                <button id="btn-agregar-mediano-escaneado" type="button" class="bg-blue-600 hover:bg-blue-700 text-white py-3 font-bold">Mediano</button>
+                <button id="btn-agregar-grande-escaneado" type="button" class="bg-teal-600 hover:bg-teal-700 text-white py-3 font-bold">Grande</button>
+            </div>
             <div class="flex gap-3">
                 <button type="button" onclick="cerrarProductoEscaneado()" class="flex-1 bg-gray-100 text-gray-700 py-3 font-bold">Cancelar</button>
                 <button id="btn-agregar-escaneado" type="button" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white py-3 font-bold">Agregar al carrito</button>
@@ -1481,8 +1510,17 @@
                         <select id="editar-unidad-venta" onchange="actualizarEtiquetasUnidadEdicion()" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-lg">
                             <option value="unidad">Unidad</option>
                             <option value="libra">Libra</option>
+                            <option value="ambas">Unidad y libra</option>
                         </select>
                     </div>
+                </div>
+
+                <div class="mb-5">
+                    <label for="editar-tamanos" class="block text-sm font-medium text-gray-600 mb-2">Tamaños disponibles</label>
+                    <select id="editar-tamanos" onchange="actualizarCamposTamanos('editar')" class="w-full p-4 bg-gray-50 border border-gray-200 text-lg">
+                        <option value="no">Un solo tamaño</option>
+                        <option value="si">Mediano y grande</option>
+                    </select>
                 </div>
 
                 <div class="mb-5">
@@ -1498,11 +1536,28 @@
                             <input type="number" id="editar-costo" required min="0" step="0.01" oninput="actualizarCostoUnitarioEdicion()" class="w-full p-4 pl-9 bg-gray-50 border border-gray-200 rounded-xl text-lg" placeholder="Ej. 95.00">
                         </div>
                     </div>
-                    <div>
+                    <div id="editar-precio-base-wrap">
                         <label id="editar-precio-label" for="editar-precio" class="block text-sm font-medium text-gray-600 mb-2">Precio de venta por unidad</label>
                         <div class="relative">
                             <span class="absolute left-4 top-4 text-gray-500 font-bold">Q</span>
                             <input type="number" id="editar-precio" required min="0" step="0.01" class="w-full p-4 pl-9 bg-gray-50 border border-gray-200 rounded-xl text-lg" placeholder="Ej. 13.00">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="editar-precios-tamanos" class="hidden grid grid-cols-2 gap-4 mb-5">
+                    <div>
+                        <label for="editar-precio-mediano" class="block text-sm font-medium text-gray-600 mb-2">Precio mediano</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-4 text-gray-500 font-bold">Q</span>
+                            <input type="number" id="editar-precio-mediano" min="0" step="0.01" class="w-full p-4 pl-9 bg-gray-50 border border-gray-200 text-lg">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="editar-precio-grande" class="block text-sm font-medium text-gray-600 mb-2">Precio grande</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-4 text-gray-500 font-bold">Q</span>
+                            <input type="number" id="editar-precio-grande" min="0" step="0.01" class="w-full p-4 pl-9 bg-gray-50 border border-gray-200 text-lg">
                         </div>
                     </div>
                 </div>
@@ -2068,7 +2123,7 @@
                         
                         <div class="flex justify-between items-center mb-4">
                             <span class="text-sm text-gray-500">Costo: Q${p.costo.toFixed(2)}</span>
-                            <span class="font-black text-blue-600 text-lg">${p.unidadVenta === 'ambas' ? `Q${p.precio.toFixed(2)}/lb · Q${Number(p.precioUnidad).toFixed(2)}/unidad` : `Q${p.precio.toFixed(2)} / ${p.unidadVenta === 'libra' ? 'lb' : 'unidad'}`}</span>
+                            <span class="font-black text-blue-600 text-lg">${p.tieneTamanos ? `Med. Q${Number(p.precioMediano).toFixed(2)} · Gde. Q${Number(p.precioGrande).toFixed(2)}` : p.unidadVenta === 'ambas' ? `Q${p.precio.toFixed(2)}/lb · Q${Number(p.precioUnidad).toFixed(2)}/unidad` : `Q${p.precio.toFixed(2)} / ${p.unidadVenta === 'libra' ? 'lb' : 'unidad'}`}</span>
                         </div>
 
                         <div class="flex justify-between items-center bg-gray-50 p-2 rounded-xl">
@@ -2099,6 +2154,10 @@
             document.getElementById('editar-precio').value = Number(producto.precio) || 0;
             document.getElementById('editar-precio-unidad').value = Number(producto.precioUnidad) || '';
             document.getElementById('editar-peso-unidad').value = Number(producto.pesoUnidad) || '';
+            document.getElementById('editar-tamanos').value = producto.tieneTamanos ? 'si' : 'no';
+            document.getElementById('editar-precio-mediano').value = Number(producto.precioMediano) || '';
+            document.getElementById('editar-precio-grande').value = Number(producto.precioGrande) || '';
+            actualizarCamposTamanos('editar');
             actualizarCostoUnitarioEdicion();
 
             const selectorCategoria = document.getElementById('editar-categoria');
@@ -2135,6 +2194,9 @@
             const unidadVenta = document.getElementById('editar-unidad-venta').value;
             const precioUnidad = parseFloat(document.getElementById('editar-precio-unidad').value);
             const pesoUnidad = parseFloat(document.getElementById('editar-peso-unidad').value);
+            const tieneTamanos = document.getElementById('editar-tamanos').value === 'si';
+            const precioMediano = parseFloat(document.getElementById('editar-precio-mediano').value);
+            const precioGrande = parseFloat(document.getElementById('editar-precio-grande').value);
             const cambios = {
                 codigo,
                 nombre: document.getElementById('editar-nombre').value.trim(),
@@ -2143,12 +2205,17 @@
                 stock,
                 costoPaquete,
                 costo: stock > 0 ? costoPaquete / stock : 0,
-                precio,
+                precio: tieneTamanos ? precioMediano : precio,
+                tieneTamanos,
+                precioMediano: tieneTamanos ? precioMediano : null,
+                precioGrande: tieneTamanos ? precioGrande : null,
                 precioUnidad: unidadVenta === 'ambas' ? precioUnidad : null,
                 pesoUnidad: unidadVenta === 'ambas' ? pesoUnidad : null
             };
             const datosAmbosInvalidos = unidadVenta === 'ambas' && (!Number.isFinite(precioUnidad) || precioUnidad < 0 || !Number.isFinite(pesoUnidad) || pesoUnidad <= 0);
-            if (!cambios.nombre || !Number.isFinite(stock) || stock < 0 || !Number.isFinite(costoPaquete) || costoPaquete < 0 || !Number.isFinite(precio) || precio < 0 || datosAmbosInvalidos) {
+            const tamanosInvalidos = tieneTamanos && (!Number.isFinite(precioMediano) || precioMediano < 0 || !Number.isFinite(precioGrande) || precioGrande < 0);
+            const precioBaseInvalido = !tieneTamanos && (!Number.isFinite(precio) || precio < 0);
+            if (!cambios.nombre || !Number.isFinite(stock) || stock < 0 || !Number.isFinite(costoPaquete) || costoPaquete < 0 || precioBaseInvalido || tamanosInvalidos || datosAmbosInvalidos) {
                 alert('Completa todos los campos con valores válidos.');
                 return;
             }
@@ -2305,9 +2372,12 @@
             document.getElementById('titulo-producto-escaneado').textContent = producto.nombre;
             document.getElementById('codigo-producto-escaneado').textContent = `Código: ${producto.codigo || 'Sin código'}`;
             const ventaDoble = producto.unidadVenta === 'ambas';
-            document.getElementById('precio-producto-escaneado').innerHTML = ventaDoble
-                ? `Q${Number(producto.precio).toFixed(2)} / lb<br><span class="text-2xl text-blue-600">Q${Number(producto.precioUnidad).toFixed(2)} / unidad</span>`
-                : `Q${Number(producto.precio).toFixed(2)} / ${producto.unidadVenta === 'libra' ? 'libra' : 'unidad'}`;
+            const tieneTamanos = Boolean(producto.tieneTamanos);
+            document.getElementById('precio-producto-escaneado').innerHTML = tieneTamanos
+                ? `Mediano Q${Number(producto.precioMediano).toFixed(2)}<br><span class="text-2xl text-blue-600">Grande Q${Number(producto.precioGrande).toFixed(2)}</span>`
+                : ventaDoble
+                    ? `Q${Number(producto.precio).toFixed(2)} / lb<br><span class="text-2xl text-blue-600">Q${Number(producto.precioUnidad).toFixed(2)} / unidad</span>`
+                    : `Q${Number(producto.precio).toFixed(2)} / ${producto.unidadVenta === 'libra' ? 'libra' : 'unidad'}`;
             document.getElementById('stock-producto-escaneado').textContent = producto.stock > 0
                 ? `Disponible: ${producto.stock} ${producto.unidadVenta === 'unidad' ? 'unidades' : 'lb'}`
                 : 'Producto agotado';
@@ -2328,12 +2398,21 @@
 
             const boton = document.getElementById('btn-agregar-escaneado');
             const opciones = document.getElementById('opciones-producto-escaneado');
-            opciones.classList.toggle('hidden', !ventaDoble);
-            boton.classList.toggle('hidden', ventaDoble);
+            const opcionesTamano = document.getElementById('opciones-tamano-escaneado');
+            opciones.classList.toggle('hidden', !ventaDoble || tieneTamanos);
+            opcionesTamano.classList.toggle('hidden', !tieneTamanos);
+            boton.classList.toggle('hidden', ventaDoble || tieneTamanos);
             boton.onclick = () => agregarEscaneado(producto.id, producto.unidadVenta);
 
             document.getElementById('btn-agregar-libra-escaneada').onclick = () => agregarEscaneado(producto.id, 'libra');
             document.getElementById('btn-agregar-unidad-escaneada').onclick = () => agregarEscaneado(producto.id, 'unidad');
+            const modoTamano = producto.unidadVenta === 'ambas' ? 'unidad' : producto.unidadVenta;
+            const botonMediano = document.getElementById('btn-agregar-mediano-escaneado');
+            const botonGrande = document.getElementById('btn-agregar-grande-escaneado');
+            botonMediano.textContent = `Mediano · Q${Number(producto.precioMediano).toFixed(2)}`;
+            botonGrande.textContent = `Grande · Q${Number(producto.precioGrande).toFixed(2)}`;
+            botonMediano.onclick = () => agregarEscaneado(producto.id, modoTamano, 'mediano');
+            botonGrande.onclick = () => agregarEscaneado(producto.id, modoTamano, 'grande');
             validarCantidadEscaneada();
             document.getElementById('modal-producto-escaneado').classList.remove('hidden');
             setTimeout(() => cantidad.focus(), 100);
@@ -2366,7 +2445,7 @@
             const cantidad = Number(campo.value);
             const maximo = Number(campo.max);
             const valida = producto.stock > 0 && Number.isFinite(cantidad) && cantidad >= Number(campo.min) && cantidad <= maximo;
-            ['btn-agregar-escaneado', 'btn-agregar-libra-escaneada', 'btn-agregar-unidad-escaneada'].forEach(id => {
+            ['btn-agregar-escaneado', 'btn-agregar-libra-escaneada', 'btn-agregar-unidad-escaneada', 'btn-agregar-mediano-escaneado', 'btn-agregar-grande-escaneado'].forEach(id => {
                 const boton = document.getElementById(id);
                 boton.disabled = !valida;
                 boton.classList.toggle('opacity-50', !valida);
@@ -2375,14 +2454,14 @@
             return valida;
         }
 
-        function agregarEscaneado(id, modoVenta) {
+        function agregarEscaneado(id, modoVenta, tamano = '') {
             configurarCantidadEscaneada(modoVenta);
             if (!validarCantidadEscaneada()) {
                 alert('Ingresa una cantidad válida que no supere las existencias.');
                 return;
             }
             const cantidad = Number(document.getElementById('cantidad-producto-escaneado').value);
-            agregarAlCarrito(id, modoVenta, cantidad);
+            agregarAlCarrito(id, modoVenta, cantidad, tamano);
             cerrarProductoEscaneado();
         }
 
@@ -2420,6 +2499,15 @@
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) cerrarLectorCodigo();
         });
+
+        function actualizarCamposTamanos(prefijo) {
+            const tieneTamanos = document.getElementById(`${prefijo}-tamanos`).value === 'si';
+            document.getElementById(`${prefijo}-precios-tamanos`).classList.toggle('hidden', !tieneTamanos);
+            document.getElementById(`${prefijo}-precio-base-wrap`).classList.toggle('hidden', tieneTamanos);
+            document.getElementById(`${prefijo}-precio`).required = !tieneTamanos;
+            document.getElementById(`${prefijo}-precio-mediano`).required = tieneTamanos;
+            document.getElementById(`${prefijo}-precio-grande`).required = tieneTamanos;
+        }
 
         function actualizarEtiquetasUnidad() {
             const tipo = document.getElementById('nuevo-unidad-venta').value;
@@ -2471,8 +2559,13 @@
             const unidadVenta = document.getElementById('nuevo-unidad-venta').value;
             const precioUnidad = parseFloat(document.getElementById('nuevo-precio-unidad').value);
             const pesoUnidad = parseFloat(document.getElementById('nuevo-peso-unidad').value);
+            const tieneTamanos = document.getElementById('nuevo-tamanos').value === 'si';
+            const precioMediano = parseFloat(document.getElementById('nuevo-precio-mediano').value);
+            const precioGrande = parseFloat(document.getElementById('nuevo-precio-grande').value);
             const datosAmbosInvalidos = unidadVenta === 'ambas' && (!Number.isFinite(precioUnidad) || precioUnidad < 0 || !Number.isFinite(pesoUnidad) || pesoUnidad <= 0);
-            if (!Number.isFinite(stock) || stock <= 0 || !Number.isFinite(costoPaquete) || costoPaquete < 0 || !Number.isFinite(precio) || precio < 0 || datosAmbosInvalidos) {
+            const tamanosInvalidos = tieneTamanos && (!Number.isFinite(precioMediano) || precioMediano < 0 || !Number.isFinite(precioGrande) || precioGrande < 0);
+            const precioBaseInvalido = !tieneTamanos && (!Number.isFinite(precio) || precio < 0);
+            if (!Number.isFinite(stock) || stock <= 0 || !Number.isFinite(costoPaquete) || costoPaquete < 0 || precioBaseInvalido || tamanosInvalidos || datosAmbosInvalidos) {
                 alert('Ingresa existencias, costo y precios válidos.');
                 return;
             }
@@ -2484,7 +2577,10 @@
                 unidadVenta,
                 costo: costoPaquete / stock,
                 costoPaquete,
-                precio,
+                precio: tieneTamanos ? precioMediano : precio,
+                tieneTamanos,
+                precioMediano: tieneTamanos ? precioMediano : null,
+                precioGrande: tieneTamanos ? precioGrande : null,
                 precioUnidad: unidadVenta === 'ambas' ? precioUnidad : null,
                 pesoUnidad: unidadVenta === 'ambas' ? pesoUnidad : null,
                 stock
@@ -2496,6 +2592,7 @@
                 await coleccionUsuario("productos").add(nuevo);
                 document.getElementById('form-nuevo').reset();
                 actualizarEtiquetasUnidad();
+                actualizarCamposTamanos('nuevo');
                 actualizarCostoUnitario();
                 const estado = document.getElementById('estado-codigo');
                 estado.textContent = 'Puedes usar la cámara trasera o escribir el número.';
@@ -2530,23 +2627,25 @@
 
             conStock.forEach(p => {
                 const ventaDoble = p.unidadVenta === 'ambas';
+                const requiereEleccion = ventaDoble || p.tieneTamanos;
                 const unidad = p.unidadVenta === 'libra' ? 'lb' : 'unidad';
                 contenedor.innerHTML += `
-                    <div onclick="${ventaDoble ? `mostrarProductoEscaneado(inventario.find(producto => producto.id === '${p.id}'))` : `agregarAlCarrito('${p.id}')`}" class="flex-shrink-0 w-36 bg-white border border-gray-200 rounded-xl p-3 text-center shadow-sm active:border-blue-500 cursor-pointer">
+                    <div onclick="${requiereEleccion ? `mostrarProductoEscaneado(inventario.find(producto => producto.id === '${p.id}'))` : `agregarAlCarrito('${p.id}')`}" class="flex-shrink-0 w-36 bg-white border border-gray-200 rounded-xl p-3 text-center shadow-sm active:border-blue-500 cursor-pointer">
                         <p class="text-sm font-bold text-gray-700 truncate">${p.nombre}</p>
-                        <p class="text-blue-600 font-black mt-1">${ventaDoble ? `Q${p.precio.toFixed(2)}/lb<br>Q${Number(p.precioUnidad).toFixed(2)}/unidad` : `Q${p.precio.toFixed(2)} / ${unidad}`}</p>
+                        <p class="text-blue-600 font-black mt-1">${p.tieneTamanos ? `Med. Q${Number(p.precioMediano).toFixed(2)}<br>Gde. Q${Number(p.precioGrande).toFixed(2)}` : ventaDoble ? `Q${p.precio.toFixed(2)}/lb<br>Q${Number(p.precioUnidad).toFixed(2)}/unidad` : `Q${p.precio.toFixed(2)} / ${unidad}`}</p>
                         <p class="text-[10px] text-gray-400 mt-1">Disp: ${p.stock} ${p.unidadVenta === 'unidad' ? '' : 'lb'}</p>
                     </div>
                 `;
             });
         }
 
-        function agregarAlCarrito(id, modoVenta, cantidadSolicitada = 1) {
+        function agregarAlCarrito(id, modoVenta, cantidadSolicitada = 1, tamano = '') {
             const prod = inventario.find(p => p.id === id);
             if(!prod || prod.stock <= 0) return;
+            if (prod.tieneTamanos && !['mediano', 'grande'].includes(tamano)) return mostrarProductoEscaneado(prod);
             const modo = prod.unidadVenta === 'ambas' ? modoVenta : prod.unidadVenta;
             if (prod.unidadVenta === 'ambas' && !['libra', 'unidad'].includes(modo)) return mostrarProductoEscaneado(prod);
-            const claveCarrito = `${id}-${modo}`;
+            const claveCarrito = `${id}-${modo}-${tamano || 'normal'}`;
             const itemExistente = carrito.find(item => item.claveCarrito === claveCarrito);
             const descuentoStock = modo === 'unidad' && prod.unidadVenta === 'ambas' ? Number(prod.pesoUnidad) : 1;
             const cantidad = Number(cantidadSolicitada);
@@ -2565,8 +2664,13 @@
                     ...prod,
                     claveCarrito,
                     modoVenta: modo,
+                    tamano,
                     cantidad: incremento,
-                    precio: modo === 'unidad' && prod.unidadVenta === 'ambas' ? Number(prod.precioUnidad) : Number(prod.precio),
+                    precio: tamano === 'grande'
+                        ? Number(prod.precioGrande)
+                        : tamano === 'mediano'
+                            ? Number(prod.precioMediano)
+                            : modo === 'unidad' && prod.unidadVenta === 'ambas' ? Number(prod.precioUnidad) : Number(prod.precio),
                     descuentoStock
                 });
             } else {
@@ -2606,7 +2710,7 @@
                 contenedor.innerHTML += `
                     <div class="flex justify-between items-center gap-3 py-3 border-b border-gray-100 last:border-0">
                         <div class="min-w-0">
-                            <p class="font-bold text-gray-700 text-sm">${item.nombre}</p>
+                            <p class="font-bold text-gray-700 text-sm">${item.nombre}${item.tamano ? ` · ${item.tamano[0].toUpperCase()}${item.tamano.slice(1)}` : ''}</p>
                             ${esLibra ? `
                                 <label class="text-xs text-gray-500">Peso vendido (lb)</label>
                                 <input type="number" min="0.01" max="${item.stock}" step="0.01" value="${item.cantidad}" onchange="cambiarCantidadCarrito(${index}, this.value)" class="mt-1 w-24 h-9 min-h-0 px-2 text-sm">
@@ -2686,10 +2790,11 @@
                 total: totalVentaActual,
                 fecha: firebase.firestore.FieldValue.serverTimestamp(),
                 items: carrito.map(item => ({
-                    nombre: item.nombre,
+                    nombre: item.tamano ? `${item.nombre} (${item.tamano})` : item.nombre,
                     precio: item.precio,
                     cantidad: item.cantidad,
-                    unidadVenta: item.modoVenta || item.unidadVenta || 'unidad'
+                    unidadVenta: item.modoVenta || item.unidadVenta || 'unidad',
+                    tamano: item.tamano || null
                 }))
             };
 

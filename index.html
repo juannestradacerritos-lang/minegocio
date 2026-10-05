@@ -518,9 +518,467 @@
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
         }
+
+        /* UI final: jerarquía clara, superficies consistentes y acciones fáciles de identificar. */
+        :root {
+            --ui-primary: #0f766e;
+            --ui-primary-dark: #115e59;
+            --ui-navy: #102a43;
+            --ui-bg: #f3f7f9;
+            --ui-card: #ffffff;
+            --ui-border: #dce6eb;
+            --ui-muted: #64748b;
+            --ui-radius: 16px;
+            --ui-shadow: 0 10px 30px rgba(15, 42, 67, .07);
+        }
+
+        #app-content {
+            background:
+                radial-gradient(circle at 100% 0, rgba(20, 184, 166, .09), transparent 30rem),
+                var(--ui-bg);
+        }
+        #app-content header {
+            min-height: 72px;
+            background: rgba(16, 42, 67, .97);
+            border-bottom: 1px solid rgba(255,255,255,.12);
+            box-shadow: 0 8px 24px rgba(15, 42, 67, .12);
+        }
+        .brand-copy { min-width: 0; }
+        .brand-copy h1 { line-height: 1.1; }
+        .brand-copy p { margin-top: .2rem; color: #a9c5d4; font-size: .7rem; letter-spacing: .02em; }
+
+        #app-content main { max-width: 1180px; }
+        #app-content main > section { width: 100%; }
+        #app-content h2 {
+            margin-bottom: .5rem;
+            font-size: clamp(1.75rem, 4vw, 2.5rem);
+            letter-spacing: -.045em;
+        }
+        #app-content h2::after { width: 34px; margin-top: .65rem; }
+        #app-content section > h2 + p { margin-top: .85rem; margin-bottom: 1.5rem; }
+
+        #app-content .bg-white,
+        #lista-vender > div {
+            border: 1px solid var(--ui-border);
+            border-radius: var(--ui-radius) !important;
+            box-shadow: 0 2px 4px rgba(15, 42, 67, .025);
+        }
+        #tab-vender > .bg-white,
+        #tab-nuevo > .bg-white,
+        #tab-ajustes > .bg-white,
+        .chart-card { box-shadow: var(--ui-shadow); }
+
+        /* Resumen legible: dato principal arriba y métricas secundarias equilibradas. */
+        #tab-resumen > .bg-white:first-of-type {
+            min-height: 230px;
+            border-radius: 20px !important;
+            box-shadow: 0 18px 42px rgba(16, 42, 67, .18);
+        }
+        #tab-resumen > .bg-white:first-of-type p:first-child { font-size: .72rem; letter-spacing: .1em; }
+        #tab-resumen .grid > div {
+            min-height: 112px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border-radius: 14px !important;
+            box-shadow: 0 6px 18px rgba(15, 42, 67, .05);
+        }
+
+        /* Formularios con campos amplios y separación uniforme. */
+        #tab-nuevo form > div { margin-bottom: 1.35rem; }
+        #tab-nuevo form > div:last-of-type { margin-bottom: 1.75rem; }
+        label { margin-bottom: .45rem !important; font-size: .78rem !important; letter-spacing: .01em; }
+        input, select {
+            min-height: 50px;
+            border-radius: 10px !important;
+            box-shadow: inset 0 1px 2px rgba(15, 42, 67, .025);
+        }
+        input::placeholder { color: #9aa9b8; }
+        button { border-radius: 10px !important; }
+        #tab-nuevo button[type="submit"],
+        #tab-vender button[onclick="abrirModalCobro()"] {
+            min-height: 54px;
+            background: linear-gradient(135deg, #0f766e, #0d9488);
+            box-shadow: 0 9px 20px rgba(15,118,110,.2);
+        }
+
+        /* Caja: herramientas primero, productos después y cobro bien destacado. */
+        #tab-vender > .flex.items-center { margin-bottom: .75rem; }
+        #buscar-venta, #buscar-producto { padding-left: 2.75rem; }
+        #lista-vender {
+            gap: .75rem;
+            padding: .2rem .1rem 1rem;
+            scroll-snap-type: x proximity;
+        }
+        #lista-vender > div {
+            width: 150px;
+            min-height: 126px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border-top: 0;
+            border-left: 4px solid var(--ui-primary);
+            scroll-snap-align: start;
+            transition: transform .18s, border-color .18s, box-shadow .18s;
+        }
+        #lista-vender > div:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 22px rgba(15,42,67,.09);
+        }
+        #tab-vender .bg-white h3 { font-size: 1rem; color: var(--ui-navy); }
+        #carrito-total { color: var(--ui-primary) !important; }
+
+        /* Catálogo y ajustes: elementos separados y acciones reconocibles. */
+        #lista-catalogo > div, #lista-faltantes > div {
+            border-radius: 14px !important;
+            box-shadow: 0 6px 20px rgba(15,42,67,.045);
+        }
+        .settings-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1.75rem;
+        }
+        .settings-back {
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+            min-height: 42px;
+            padding: .55rem .85rem;
+            border: 1px solid #cfe0e3;
+            background: rgba(255,255,255,.72);
+            color: var(--ui-primary-dark);
+            font-size: .82rem;
+            font-weight: 800;
+        }
+        .settings-back:hover { background: #fff; border-color: #9fcac5; }
+        .settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+        .settings-panel {
+            overflow: hidden;
+            border: 1px solid var(--ui-border);
+            border-radius: var(--ui-radius);
+            background: rgba(255,255,255,.94);
+            box-shadow: 0 8px 26px rgba(15,42,67,.055);
+        }
+        .settings-panel-wide { grid-column: 1 / -1; }
+        .settings-panel-heading { padding: 1.1rem 1.2rem .8rem; border-bottom: 1px solid #e8eef1; }
+        .settings-panel-heading span { display: block; color: var(--ui-navy); font-size: .92rem; font-weight: 800; }
+        .settings-panel-heading small { display: block; margin-top: .2rem; color: var(--ui-muted); font-size: .73rem; }
+        .settings-action {
+            width: 100%;
+            min-height: 76px;
+            display: flex;
+            align-items: center;
+            gap: .9rem;
+            padding: .9rem 1.1rem;
+            border-radius: 0 !important;
+            text-align: left;
+            transition: background .18s ease, color .18s ease;
+        }
+        .settings-action + .settings-action { border-top: 1px solid #e8eef1; }
+        .settings-action:hover { background: #f2f8f7; transform: none !important; }
+        .settings-action-icon {
+            display: grid;
+            place-items: center;
+            width: 42px;
+            height: 42px;
+            flex: 0 0 auto;
+            border-radius: 12px;
+            background: #e7f4f2;
+            color: #0f766e;
+            font-size: 1.15rem;
+        }
+        .settings-action-copy { min-width: 0; flex: 1; }
+        .settings-action-copy strong { display: block; color: #23384b; font-size: .9rem; }
+        .settings-action-copy small { display: block; margin-top: .18rem; color: var(--ui-muted); font-size: .75rem; line-height: 1.35; }
+        .settings-action-arrow { color: #9aabb7; font-size: 1.15rem; }
+        .settings-action-control { justify-content: space-between; cursor: pointer; }
+        .settings-danger { border-color: #f1d2d5; }
+        .settings-danger .settings-panel-heading { background: #fff8f8; border-color: #f5dfe1; }
+        .settings-action-danger .settings-action-icon { background: #fdebec; color: #c2414d; }
+        .settings-action-danger .settings-action-copy strong { color: #b4232f; }
+        .settings-action-danger:hover { background: #fff4f4; }
+
+        /* Navegación con iconos y estados activos más evidentes. */
+        #app-content nav {
+            border-radius: 18px !important;
+            box-shadow: 0 16px 44px rgba(15,42,67,.16);
+        }
+        #app-content nav .nav-btn { position: relative; color: #718096; }
+        #app-content nav .nav-btn.text-blue-600 {
+            background: #e5f5f2;
+            color: var(--ui-primary-dark);
+        }
+        #app-content nav .nav-btn.text-blue-600 > span:first-child {
+            background: #fff;
+            border-color: #b9ded8;
+            box-shadow: 0 4px 10px rgba(15,118,110,.12);
+        }
+
+        /* Modales homogéneos y fáciles de leer. */
+        [id^="modal-"] > div:not(.scanner-panel) { border-radius: 18px !important; }
+        [id^="modal-"] h3 { color: var(--ui-navy); }
+
+        body.dark-mode {
+            --ui-bg: #091722;
+            --ui-card: #122230;
+            --ui-border: #294153;
+            --ui-muted: #9fb0bd;
+        }
+        body.dark-mode #app-content { background: #091722; }
+        body.dark-mode .settings-back { background: #102331; border-color: #315064; color: #84ded4; }
+        body.dark-mode .settings-panel { background: #102331; border-color: #294354; box-shadow: 0 12px 30px rgba(0,0,0,.18); }
+        body.dark-mode .settings-panel-heading,
+        body.dark-mode .settings-action + .settings-action { border-color: #294354; }
+        body.dark-mode .settings-panel-heading span,
+        body.dark-mode .settings-action-copy strong { color: #edf6f8; }
+        body.dark-mode .settings-action:hover { background: #162d3b; }
+        body.dark-mode .settings-action-icon { background: #153d3b; color: #84ded4; }
+        body.dark-mode .settings-danger { border-color: #573139; }
+        body.dark-mode .settings-danger .settings-panel-heading { background: #2a1a21; border-color: #573139; }
+        body.dark-mode .settings-action-danger:hover { background: #301c23; }
+        body.dark-mode .settings-action-danger .settings-action-icon { background: #452329; color: #f29ba4; }
+        body.dark-mode .settings-action-danger .settings-action-copy strong { color: #ffabb3; }
+
+        @media (max-width: 640px) {
+            #app-content header { min-height: 66px; }
+            .brand-copy p { display: none; }
+            #app-content main { padding-top: 1.35rem; }
+            #app-content h2 { font-size: 1.7rem; }
+            #tab-resumen > .bg-white:first-of-type { min-height: 190px; }
+            #tab-resumen .grid > div { min-height: 104px; }
+            #tab-vender > .flex.items-center { align-items: flex-end; }
+            #tab-vender > .flex.items-center p { line-height: 1.35; }
+            #tab-nuevo > .bg-white { padding: 1rem; }
+            #tab-nuevo .grid.grid-cols-2 { gap: .75rem; }
+            #tab-nuevo .grid.grid-cols-2 label { min-height: 2.25rem; display: flex; align-items: flex-end; }
+            .settings-header { display: block; margin-bottom: 1.25rem; }
+            .settings-header .settings-back { margin-bottom: 1.25rem; }
+            .settings-grid { grid-template-columns: 1fr; gap: .8rem; }
+            .settings-panel-wide { grid-column: auto; }
+            .settings-action { min-height: 72px; padding: .85rem 1rem; }
+            .settings-action-icon { width: 40px; height: 40px; }
+        }
+
+        @media (min-width: 1024px) {
+            #app-content main { padding-top: 3rem; }
+            #app-content nav { top: 112px; }
+            #app-content nav .nav-btn { min-height: 72px; }
+        }
+
+        /* Tema oscuro final: contraste uniforme sin perder los acentos de la interfaz. */
+        body.dark-mode {
+            color-scheme: dark;
+            --ui-bg: #07131d;
+            --ui-card: #102331;
+            --ui-border: #294354;
+            --ui-muted: #9fb2c0;
+            background: #07131d;
+            color: #dce8ee;
+        }
+        body.dark-mode #app-content {
+            background:
+                radial-gradient(circle at 100% 0, rgba(20, 184, 166, .12), transparent 28rem),
+                linear-gradient(180deg, #081722 0, #0b1823 320px, #07131d 100%);
+        }
+        body.dark-mode #app-content header {
+            background: rgba(7, 23, 35, .96);
+            border-bottom-color: rgba(119, 214, 200, .2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .28);
+        }
+        body.dark-mode #app-content header .brand-icon {
+            background: rgba(119, 214, 200, .08);
+            border-color: rgba(213, 168, 75, .6);
+        }
+        body.dark-mode #app-content h2,
+        body.dark-mode #app-content h3,
+        body.dark-mode #app-content .text-gray-800,
+        body.dark-mode #app-content .text-gray-700,
+        body.dark-mode [id^="modal-"] h3,
+        body.dark-mode [id^="modal-"] .text-gray-800,
+        body.dark-mode [id^="modal-"] .text-gray-700 { color: #edf6f8 !important; }
+        body.dark-mode #app-content section > p,
+        body.dark-mode #app-content .text-gray-500,
+        body.dark-mode #app-content .text-gray-400,
+        body.dark-mode [id^="modal-"] .text-gray-500,
+        body.dark-mode [id^="modal-"] .text-gray-400 { color: #9eb1bf !important; }
+        body.dark-mode #app-content .bg-white,
+        body.dark-mode [id^="modal-"] > div:not(.scanner-panel) {
+            background: rgba(16, 35, 49, .97) !important;
+            border-color: #294354 !important;
+            box-shadow: 0 16px 38px rgba(0, 0, 0, .22);
+        }
+        body.dark-mode #tab-resumen > .bg-white:first-of-type {
+            background: linear-gradient(145deg, #102f42, #0d2636) !important;
+            border-color: #28556a !important;
+            box-shadow: 0 18px 44px rgba(0, 0, 0, .3);
+        }
+        body.dark-mode #tab-resumen .grid > div {
+            background: linear-gradient(145deg, #122736, #0e202d) !important;
+        }
+        body.dark-mode #tab-resumen .grid > div p:first-child { color: #94a9b8 !important; }
+        body.dark-mode #tab-resumen .grid > div p:last-child { color: #e8f2f5 !important; }
+        body.dark-mode #lista-catalogo > div,
+        body.dark-mode #lista-faltantes > div,
+        body.dark-mode #lista-vender > div {
+            background: #102331 !important;
+            border-color: #294354 !important;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .16);
+        }
+        body.dark-mode #lista-catalogo > div:hover,
+        body.dark-mode #lista-vender > div:hover { border-color: #3d6877 !important; }
+        body.dark-mode #app-content .bg-gray-50,
+        body.dark-mode [id^="modal-"] .bg-gray-50 { background-color: #132a39 !important; }
+        body.dark-mode #app-content .bg-gray-100,
+        body.dark-mode [id^="modal-"] .bg-gray-100 { background-color: #1b3342 !important; }
+        body.dark-mode #app-content .border-gray-100,
+        body.dark-mode #app-content .border-gray-200,
+        body.dark-mode [id^="modal-"] .border-gray-100,
+        body.dark-mode [id^="modal-"] .border-gray-200,
+        body.dark-mode [id^="modal-"] .border-b,
+        body.dark-mode [id^="modal-"] .border-t { border-color: #294354 !important; }
+        body.dark-mode input,
+        body.dark-mode select {
+            background: #0b1d29 !important;
+            border-color: #355468 !important;
+            color: #eef7f9;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, .2);
+        }
+        body.dark-mode input::placeholder { color: #6f8797; }
+        body.dark-mode input:focus,
+        body.dark-mode select:focus {
+            background: #0d2330 !important;
+            border-color: #42b8ad !important;
+            box-shadow: 0 0 0 3px rgba(66, 184, 173, .15) !important;
+        }
+        body.dark-mode label { color: #b8c9d2 !important; }
+        body.dark-mode #app-content nav {
+            background: rgba(10, 27, 39, .97);
+            border-color: #315064;
+            box-shadow: 0 18px 46px rgba(0, 0, 0, .38);
+        }
+        body.dark-mode #app-content nav .nav-btn { color: #8499a8; }
+        body.dark-mode #app-content nav .nav-btn.text-blue-600 {
+            background: #123d3c;
+            color: #84ded4;
+        }
+        body.dark-mode #app-content nav .nav-btn.text-blue-600 > span:first-child {
+            background: #164846;
+            border-color: #2c6b67;
+            box-shadow: 0 5px 12px rgba(0, 0, 0, .2);
+        }
+        body.dark-mode #app-content nav .nav-btn:not(.text-blue-600) > span:first-child {
+            background: #162b39;
+            border-color: #294354;
+        }
+        body.dark-mode #tab-ajustes > .bg-white > button:hover,
+        body.dark-mode #tab-ajustes > .bg-white > label:hover { background: #162d3b !important; }
+        body.dark-mode .chart-card canvas { filter: saturate(.9) brightness(1.08); }
+        body.dark-mode .leyenda-item { color: #aebfc9; }
+        body.dark-mode .reporte-periodo { border-color: #355468; color: #b9cad3; }
+        body.dark-mode .reporte-periodo.activo { color: #fff; border-color: var(--teal); }
+        body.dark-mode .bg-teal-50 { background-color: #113634 !important; }
+        body.dark-mode .text-teal-800,
+        body.dark-mode .text-teal-700 { color: #84ded4 !important; }
+        body.dark-mode .bg-green-50 { background-color: #123326 !important; }
+        body.dark-mode .bg-orange-50 { background-color: #382817 !important; }
+        body.dark-mode .bg-red-50 { background-color: #3b2024 !important; }
+        body.dark-mode [id^="modal-"] { background: rgba(2, 8, 15, .72); }
+        body.dark-mode #modal-lector .scanner-panel { border: 1px solid #294354; }
+        body.dark-mode #modal-producto-agregado .bg-green-100,
+        body.dark-mode #modal-cobrar .bg-green-100 { background-color: #163b2c !important; }
+        body.dark-mode #modal-eliminar .bg-red-100 { background-color: #452329 !important; }
+
+        @media (prefers-color-scheme: dark) {
+            body.dark-mode #startup-screen { background: #06111a; }
+        }
+
+        /* Experiencia fluida: respuesta inmediata, transiciones cortas y estados claros. */
+        html { scroll-behavior: smooth; }
+        #app-content main > section:not(.hidden) {
+            animation: sectionEnter .32s cubic-bezier(.22, 1, .36, 1) both;
+        }
+        @keyframes sectionEnter {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        #app-content .bg-white,
+        #lista-vender > div,
+        #lista-catalogo > div,
+        #lista-faltantes > div {
+            transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease, background-color .2s ease;
+        }
+        #app-content button:not(:disabled):hover { transform: translateY(-1px); }
+        #app-content button:not(:disabled):active,
+        [id^="modal-"] button:not(:disabled):active { transform: translateY(0) scale(.98) !important; }
+        button:disabled { cursor: not-allowed; filter: saturate(.65); }
+        .nav-btn { will-change: transform, background-color; }
+        .nav-btn.text-blue-600 { animation: navSelect .25s ease-out; }
+        @keyframes navSelect {
+            50% { transform: scale(.96); }
+        }
+        [id^="modal-"]:not(.hidden) { animation: modalBackdropIn .2s ease-out both; }
+        [id^="modal-"]:not(.hidden) > div { animation: modalPanelIn .28s cubic-bezier(.22, 1, .36, 1) both; }
+        @keyframes modalBackdropIn { from { opacity: 0; } }
+        @keyframes modalPanelIn {
+            from { opacity: 0; transform: translateY(14px) scale(.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        #app-toast {
+            position: fixed;
+            left: 50%;
+            bottom: calc(5.8rem + env(safe-area-inset-bottom));
+            z-index: 80;
+            width: max-content;
+            max-width: calc(100% - 2rem);
+            padding: .8rem 1rem;
+            border: 1px solid rgba(255,255,255,.16);
+            border-radius: 12px;
+            background: rgba(16, 42, 67, .96);
+            color: #fff;
+            box-shadow: 0 14px 36px rgba(15,23,42,.24);
+            font-size: .875rem;
+            font-weight: 700;
+            text-align: center;
+            transform: translate(-50%, 18px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .22s ease, transform .22s ease;
+            backdrop-filter: blur(12px);
+        }
+        #app-toast.visible { opacity: 1; transform: translate(-50%, 0); }
+        #app-toast.exito { background: rgba(15, 118, 110, .97); }
+        #app-toast.error { background: rgba(185, 28, 28, .97); }
+        .btn-cargando { position: relative; color: transparent !important; pointer-events: none; }
+        .btn-cargando::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 19px;
+            height: 19px;
+            margin: -9.5px;
+            border: 2px solid rgba(255,255,255,.4);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: giroBoton .7s linear infinite;
+        }
+        @keyframes giroBoton { to { transform: rotate(360deg); } }
+        @media (min-width: 1024px) {
+            #app-toast { bottom: 1.5rem; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            #app-content main > section:not(.hidden),
+            [id^="modal-"]:not(.hidden),
+            [id^="modal-"]:not(.hidden) > div { animation: none; }
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans antialiased">
+
+    <div id="app-toast" role="status" aria-live="polite"></div>
 
     <!-- Evita mostrar brevemente el acceso mientras Firebase recupera la sesión. -->
     <div id="startup-screen" role="status" aria-live="polite" aria-label="Cargando aplicación">
@@ -574,7 +1032,10 @@
                         <path d="m8 5.25 8 4.5"/>
                     </svg>
                 </span>
-                <h1 class="text-xl font-bold tracking-wide">Mi Negocio</h1>
+                <div class="brand-copy">
+                    <h1 class="text-xl font-bold tracking-wide">Mi Negocio</h1>
+                    <p>Inventario y punto de venta</p>
+                </div>
             </div>
             <div class="flex items-center space-x-3 relative">
                 <img id="user-avatar" src="" alt="Perfil" class="w-8 h-8 rounded-full border-2 border-white shadow-sm hidden">
@@ -602,7 +1063,7 @@
                         <p class="text-2xl font-bold text-red-500" id="resumen-costo">Q0.00</p>
                     </div>
                     <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-                        <p class="text-sm text-gray-500 font-semibold mb-1">Venta Total</p>
+                        <p class="text-sm text-gray-500 font-semibold mb-1">Ventas Realizadas</p>
                         <p class="text-2xl font-bold text-blue-600" id="resumen-venta">Q0.00</p>
                     </div>
                     <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
@@ -621,6 +1082,7 @@
             <!-- 2. PESTAÑA: CATÁLOGO -->
             <section id="tab-catalogo" class="fade-in hidden">
                 <h2 class="text-2xl font-bold mb-4 text-gray-800">Catálogo</h2>
+                <p class="text-sm text-gray-500 font-medium">Consulta existencias, precios y edita tus productos.</p>
                 <div class="relative mb-6">
                     <span class="absolute left-4 top-3.5 text-gray-400">🔍</span>
                     <input type="text" id="buscar-producto" placeholder="Buscar producto..." class="w-full p-3 pl-10 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm" onkeyup="renderizarCatalogo()">
@@ -639,12 +1101,17 @@
             <!-- 4. PESTAÑA: VENDER -->
             <section id="tab-vender" class="fade-in hidden">
                 <h2 class="text-2xl font-bold mb-4 text-gray-800">Caja Registradora</h2>
+                <p class="text-sm text-gray-500 font-medium">Busca productos, agrégalos al carrito y completa el cobro.</p>
                 
                 <div class="flex items-center justify-between gap-3 mb-3">
                     <p class="text-sm text-gray-500 font-semibold">Toca un producto o escanea su código:</p>
                     <button type="button" onclick="abrirLectorCodigo('vender')" class="shrink-0 bg-teal-600 hover:bg-teal-700 text-white px-4 py-3 font-bold" aria-label="Escanear producto para vender">
                         Escanear
                     </button>
+                </div>
+                <div class="relative mb-4">
+                    <span class="absolute left-4 top-3.5 text-gray-400" aria-hidden="true">🔍</span>
+                    <input type="search" id="buscar-venta" placeholder="Buscar por nombre o código..." class="w-full p-3 pl-10 border border-gray-300" oninput="renderizarListaVenta()" aria-label="Buscar producto para vender">
                 </div>
                 <div class="flex overflow-x-auto space-x-3 pb-4 mb-2" id="lista-vender"></div>
 
@@ -699,53 +1166,98 @@
 
             <!-- PESTAÑA: AJUSTES -->
             <section id="tab-ajustes" class="fade-in hidden">
-                <button type="button" onclick="volverDesdeAjustes()" class="mb-5 inline-flex items-center gap-2 text-sm font-bold text-teal-700 hover:text-teal-900" aria-label="Regresar a la pantalla anterior">
-                    <span aria-hidden="true">←</span> Regresar
-                </button>
-                <h2 class="text-2xl font-bold mb-2 text-gray-800">Ajustes</h2>
-                <p class="text-sm text-gray-500 mb-6 font-medium">Administra el inventario, los reportes y tu sesión.</p>
+                <div class="settings-header">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800">Ajustes</h2>
+                        <p class="text-sm text-gray-500 font-medium">Personaliza la aplicación y administra la información de tu negocio.</p>
+                    </div>
+                    <button type="button" onclick="volverDesdeAjustes()" class="settings-back" aria-label="Regresar a la pantalla anterior">
+                        <span aria-hidden="true">←</span> Regresar
+                    </button>
+                </div>
 
-                <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-                    <label for="interruptor-modo-oscuro" class="w-full flex items-center justify-between gap-4 px-5 py-4 border-b border-gray-100 cursor-pointer">
-                        <span class="flex items-center gap-4">
-                            <span class="text-2xl" aria-hidden="true">🌙</span>
-                            <span><strong class="block text-gray-800">Modo oscuro</strong><small class="text-gray-500">Usar colores oscuros en la aplicación</small></span>
-                        </span>
-                        <span class="theme-switch">
-                            <input id="interruptor-modo-oscuro" type="checkbox" onchange="cambiarModoOscuro(this.checked)" aria-label="Activar modo oscuro">
-                            <span class="theme-slider" aria-hidden="true"></span>
-                        </span>
-                    </label>
-                    <button onclick="exportarCSV()" class="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-gray-50 border-b border-gray-100">
-                        <span class="text-2xl" aria-hidden="true">📊</span>
-                        <span><strong class="block text-gray-800">Descargar inventario</strong><small class="text-gray-500">Exportar todos los productos en formato CSV</small></span>
-                    </button>
-                    <button onclick="abrirModalReportes()" class="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-teal-50 border-b border-gray-100">
-                        <span class="text-2xl" aria-hidden="true">📄</span>
-                        <span><strong class="block text-gray-800">Reporte de ventas</strong><small class="text-gray-500">Guardar y descargar informes en PDF</small></span>
-                    </button>
-                    <button onclick="cambiarTab('faltantes')" class="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-orange-50 border-b border-gray-100">
-                        <span class="text-2xl" aria-hidden="true">⚠️</span>
-                        <span><strong class="block text-gray-800">Alertas de stock</strong><small class="text-gray-500">Ver productos agotados o por terminarse</small></span>
-                    </button>
-                    <button onclick="cambiarTab('catalogo')" class="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-teal-50 border-b border-gray-100">
-                        <span class="text-2xl" aria-hidden="true">📦</span>
-                        <span><strong class="block text-gray-800">Catálogo de productos</strong><small class="text-gray-500">Editar productos y ajustar existencias</small></span>
-                    </button>
-                    <button onclick="limpiarTodo()" class="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-red-50 border-b border-gray-100">
-                        <span class="text-2xl" aria-hidden="true">🗑️</span>
-                        <span><strong class="block text-red-600">Borrar todo el sistema</strong><small class="text-gray-500">Eliminar inventario y ventas</small></span>
-                    </button>
-                    <button onclick="cerrarSesion()" class="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-gray-50">
-                        <span class="text-2xl" aria-hidden="true">🚪</span>
-                        <span><strong class="block text-gray-800">Cerrar sesión</strong><small class="text-gray-500">Salir de esta cuenta</small></span>
-                    </button>
+                <div class="settings-grid">
+                    <div class="settings-panel">
+                        <div class="settings-panel-heading">
+                            <span>Preferencias</span>
+                            <small>Ajusta la apariencia de la aplicación.</small>
+                        </div>
+                        <label for="interruptor-modo-oscuro" class="settings-action settings-action-control">
+                            <span class="flex items-center gap-4 min-w-0">
+                                <span class="settings-action-icon" aria-hidden="true">◐</span>
+                                <span class="settings-action-copy"><strong>Modo oscuro</strong><small>Reduce el brillo y mejora la lectura nocturna</small></span>
+                            </span>
+                            <span class="theme-switch">
+                                <input id="interruptor-modo-oscuro" type="checkbox" onchange="cambiarModoOscuro(this.checked)" aria-label="Activar modo oscuro">
+                                <span class="theme-slider" aria-hidden="true"></span>
+                            </span>
+                        </label>
+                    </div>
+
+                    <div class="settings-panel">
+                        <div class="settings-panel-heading">
+                            <span>Inventario</span>
+                            <small>Consulta y administra tus existencias.</small>
+                        </div>
+                        <button onclick="cambiarTab('catalogo')" class="settings-action">
+                            <span class="settings-action-icon" aria-hidden="true">▦</span>
+                            <span class="settings-action-copy"><strong>Catálogo de productos</strong><small>Edita productos, precios y existencias</small></span>
+                            <span class="settings-action-arrow" aria-hidden="true">›</span>
+                        </button>
+                        <button onclick="cambiarTab('faltantes')" class="settings-action">
+                            <span class="settings-action-icon" aria-hidden="true">!</span>
+                            <span class="settings-action-copy"><strong>Alertas de stock</strong><small>Revisa productos agotados o por terminarse</small></span>
+                            <span class="settings-action-arrow" aria-hidden="true">›</span>
+                        </button>
+                    </div>
+
+                    <div class="settings-panel settings-panel-wide">
+                        <div class="settings-panel-heading">
+                            <span>Datos y reportes</span>
+                            <small>Descarga respaldos e informes de tu negocio.</small>
+                        </div>
+                        <button onclick="exportarCSV()" class="settings-action">
+                            <span class="settings-action-icon" aria-hidden="true">⇩</span>
+                            <span class="settings-action-copy"><strong>Descargar inventario</strong><small>Exporta todos los productos en formato CSV</small></span>
+                            <span class="settings-action-arrow" aria-hidden="true">›</span>
+                        </button>
+                        <button onclick="abrirModalReportes()" class="settings-action">
+                            <span class="settings-action-icon" aria-hidden="true">▤</span>
+                            <span class="settings-action-copy"><strong>Reporte de ventas</strong><small>Genera, guarda y descarga informes en PDF</small></span>
+                            <span class="settings-action-arrow" aria-hidden="true">›</span>
+                        </button>
+                    </div>
+
+                    <div class="settings-panel">
+                        <div class="settings-panel-heading">
+                            <span>Cuenta</span>
+                            <small>Administra tu sesión actual.</small>
+                        </div>
+                        <button onclick="cerrarSesion()" class="settings-action">
+                            <span class="settings-action-icon" aria-hidden="true">↪</span>
+                            <span class="settings-action-copy"><strong>Cerrar sesión</strong><small>Salir de esta cuenta de forma segura</small></span>
+                            <span class="settings-action-arrow" aria-hidden="true">›</span>
+                        </button>
+                    </div>
+
+                    <div class="settings-panel settings-danger">
+                        <div class="settings-panel-heading">
+                            <span>Zona de peligro</span>
+                            <small>Esta acción no se puede deshacer.</small>
+                        </div>
+                        <button onclick="limpiarTodo()" class="settings-action settings-action-danger">
+                            <span class="settings-action-icon" aria-hidden="true">×</span>
+                            <span class="settings-action-copy"><strong>Borrar todos los datos</strong><small>Elimina permanentemente inventario y ventas</small></span>
+                            <span class="settings-action-arrow" aria-hidden="true">›</span>
+                        </button>
+                    </div>
                 </div>
             </section>
 
             <!-- 6. PESTAÑA: NUEVO PRODUCTO -->
             <section id="tab-nuevo" class="fade-in hidden">
                 <h2 class="text-2xl font-bold mb-6 text-gray-800">Registrar Producto</h2>
+                <p class="text-sm text-gray-500 font-medium">Agrega la información, presentación, existencias y precios del producto.</p>
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <form id="form-nuevo" onsubmit="guardarProducto(event)">
                         <div class="mb-5">
@@ -773,9 +1285,19 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-600 mb-2">Unidades que trae</label>
-                                <input type="number" id="nuevo-stock" required min="0.01" step="0.01" oninput="actualizarCostoUnitario()" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg" placeholder="Ej. 12">
+                                <label class="block text-sm font-medium text-gray-600 mb-2">Se vende por</label>
+                                <select id="nuevo-unidad-venta" onchange="actualizarEtiquetasUnidad()" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white text-lg">
+                                    <option value="unidad">Unidad</option>
+                                    <option value="libra">Libra</option>
+                                    <option value="ambas">Unidad y libra</option>
+                                </select>
                             </div>
+                        </div>
+
+                        <div class="mb-5">
+                            <label id="nuevo-stock-label" class="block text-sm font-medium text-gray-600 mb-2">Unidades que trae</label>
+                            <input type="number" id="nuevo-stock" required min="0.01" step="0.01" oninput="actualizarCostoUnitario()" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg" placeholder="Ej. 12">
+                            <p id="nuevo-unidad-ayuda" class="mt-2 text-xs text-gray-500">Existencias disponibles en unidades.</p>
                         </div>
 
                         <div class="grid grid-cols-2 gap-4 mb-3">
@@ -787,7 +1309,7 @@
                                 </div>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-600 mb-2">Precio de venta por unidad</label>
+                                <label id="nuevo-precio-label" class="block text-sm font-medium text-gray-600 mb-2">Precio de venta por unidad</label>
                                 <div class="relative">
                                     <span class="absolute left-4 top-4 text-gray-500 font-bold">Q</span>
                                     <input type="number" id="nuevo-precio" required min="0" step="0.01" class="w-full p-4 pl-9 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg" placeholder="Ej. 13.00">
@@ -795,8 +1317,22 @@
                             </div>
                         </div>
 
+                        <div id="nuevo-datos-ambas" class="hidden grid grid-cols-2 gap-4 mb-5">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-2">Precio por unidad</label>
+                                <div class="relative">
+                                    <span class="absolute left-4 top-4 text-gray-500 font-bold">Q</span>
+                                    <input type="number" id="nuevo-precio-unidad" min="0" step="0.01" class="w-full p-4 pl-9 bg-gray-50 border border-gray-200 text-lg" placeholder="Ej. 2.00">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-2">Peso de una unidad (lb)</label>
+                                <input type="number" id="nuevo-peso-unidad" min="0.01" step="0.01" class="w-full p-4 bg-gray-50 border border-gray-200 text-lg" placeholder="Ej. 0.50">
+                            </div>
+                        </div>
+
                         <div class="mb-8 rounded-lg border border-teal-100 bg-teal-50 p-3 text-sm text-teal-800">
-                            Costo calculado por unidad: <strong id="nuevo-costo-unitario">Q0.00</strong>
+                            Costo calculado por <span id="nuevo-costo-unidad-texto">unidad</span>: <strong id="nuevo-costo-unitario">Q0.00</strong>
                         </div>
 
                         <button type="submit" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-md hover:bg-blue-700 active:bg-blue-800 text-lg transition-transform transform active:scale-95">
@@ -867,8 +1403,17 @@
             <p class="text-xs font-bold uppercase tracking-wider text-teal-600 mb-1">Producto encontrado</p>
             <h3 id="titulo-producto-escaneado" class="text-xl font-bold text-gray-800"></h3>
             <p id="codigo-producto-escaneado" class="text-xs text-gray-400 mt-1"></p>
-            <p id="precio-producto-escaneado" class="text-4xl font-black text-teal-600 my-5"></p>
-            <p id="stock-producto-escaneado" class="text-sm text-gray-500 mb-6"></p>
+            <p id="precio-producto-escaneado" class="text-3xl font-black text-teal-600 my-5"></p>
+            <p id="stock-producto-escaneado" class="text-sm text-gray-500 mb-4"></p>
+            <div class="mb-4 text-left">
+                <label id="label-cantidad-escaneada" for="cantidad-producto-escaneado" class="block text-sm mb-2">Cantidad a agregar</label>
+                <input id="cantidad-producto-escaneado" type="number" min="0.01" step="1" value="1" inputmode="decimal" class="w-full p-3 border border-gray-200 text-center text-lg font-bold" oninput="validarCantidadEscaneada()">
+                <p id="ayuda-cantidad-escaneada" class="mt-1 text-xs text-gray-500">Indica cuántas unidades deseas agregar.</p>
+            </div>
+            <div id="opciones-producto-escaneado" class="hidden grid grid-cols-2 gap-3 mb-3">
+                <button id="btn-agregar-libra-escaneada" type="button" class="bg-teal-600 hover:bg-teal-700 text-white py-3 font-bold">Vender por libra</button>
+                <button id="btn-agregar-unidad-escaneada" type="button" class="bg-blue-600 hover:bg-blue-700 text-white py-3 font-bold">Vender por unidad</button>
+            </div>
             <div class="flex gap-3">
                 <button type="button" onclick="cerrarProductoEscaneado()" class="flex-1 bg-gray-100 text-gray-700 py-3 font-bold">Cancelar</button>
                 <button id="btn-agregar-escaneado" type="button" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white py-3 font-bold">Agregar al carrito</button>
@@ -932,9 +1477,17 @@
                         </select>
                     </div>
                     <div>
-                        <label for="editar-stock" class="block text-sm font-medium text-gray-600 mb-2">Unidades disponibles</label>
-                        <input type="number" id="editar-stock" required min="0" step="0.01" oninput="actualizarCostoUnitarioEdicion()" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-lg" placeholder="Ej. 12">
+                        <label for="editar-unidad-venta" class="block text-sm font-medium text-gray-600 mb-2">Se vende por</label>
+                        <select id="editar-unidad-venta" onchange="actualizarEtiquetasUnidadEdicion()" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-lg">
+                            <option value="unidad">Unidad</option>
+                            <option value="libra">Libra</option>
+                        </select>
                     </div>
+                </div>
+
+                <div class="mb-5">
+                    <label id="editar-stock-label" for="editar-stock" class="block text-sm font-medium text-gray-600 mb-2">Unidades disponibles</label>
+                    <input type="number" id="editar-stock" required min="0" step="0.01" oninput="actualizarCostoUnitarioEdicion()" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-lg" placeholder="Ej. 12">
                 </div>
 
                 <div class="grid grid-cols-2 gap-4 mb-3">
@@ -946,7 +1499,7 @@
                         </div>
                     </div>
                     <div>
-                        <label for="editar-precio" class="block text-sm font-medium text-gray-600 mb-2">Precio de venta por unidad</label>
+                        <label id="editar-precio-label" for="editar-precio" class="block text-sm font-medium text-gray-600 mb-2">Precio de venta por unidad</label>
                         <div class="relative">
                             <span class="absolute left-4 top-4 text-gray-500 font-bold">Q</span>
                             <input type="number" id="editar-precio" required min="0" step="0.01" class="w-full p-4 pl-9 bg-gray-50 border border-gray-200 rounded-xl text-lg" placeholder="Ej. 13.00">
@@ -954,8 +1507,22 @@
                     </div>
                 </div>
 
+                <div id="editar-datos-ambas" class="hidden grid grid-cols-2 gap-4 mb-5">
+                    <div>
+                        <label for="editar-precio-unidad" class="block text-sm font-medium text-gray-600 mb-2">Precio por unidad</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-4 text-gray-500 font-bold">Q</span>
+                            <input type="number" id="editar-precio-unidad" min="0" step="0.01" class="w-full p-4 pl-9 bg-gray-50 border border-gray-200 text-lg">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="editar-peso-unidad" class="block text-sm font-medium text-gray-600 mb-2">Peso de una unidad (lb)</label>
+                        <input type="number" id="editar-peso-unidad" min="0.01" step="0.01" class="w-full p-4 bg-gray-50 border border-gray-200 text-lg">
+                    </div>
+                </div>
+
                 <div class="mb-6 rounded-lg border border-teal-100 bg-teal-50 p-3 text-sm text-teal-800">
-                    Costo calculado por unidad: <strong id="editar-costo-unitario">Q0.00</strong>
+                    Costo calculado por <span id="editar-costo-unidad-texto">unidad</span>: <strong id="editar-costo-unitario">Q0.00</strong>
                 </div>
 
                 <div class="flex gap-3">
@@ -1065,7 +1632,23 @@
         let unsubscribeVentas = null;
         let ventas = [];
         const inicioCarga = performance.now();
-        const DURACION_MINIMA_CARGA = 2200;
+        const DURACION_MINIMA_CARGA = 650;
+        let temporizadorToast;
+
+        function mostrarAviso(mensaje, tipo = '') {
+            const toast = document.getElementById('app-toast');
+            clearTimeout(temporizadorToast);
+            toast.textContent = mensaje;
+            toast.className = tipo ? `visible ${tipo}` : 'visible';
+            temporizadorToast = setTimeout(() => toast.classList.remove('visible'), 2600);
+        }
+
+        function establecerCargaBoton(boton, cargando) {
+            if (!boton) return;
+            boton.disabled = cargando;
+            boton.classList.toggle('btn-cargando', cargando);
+            boton.setAttribute('aria-busy', cargando ? 'true' : 'false');
+        }
         
         auth.onAuthStateChanged(async (user) => {
             const startupScreen = document.getElementById('startup-screen');
@@ -1150,6 +1733,7 @@
             unsubscribeVentas = coleccionUsuario("ventas").onSnapshot((querySnapshot) => {
                 ventas = [];
                 querySnapshot.forEach((doc) => ventas.push({ id: doc.id, ...doc.data() }));
+                actualizarResumen();
                 renderizarGraficos();
             });
         }
@@ -1211,8 +1795,15 @@
             return { canvas, ctx, ancho: rect.width, alto: rect.height };
         }
 
+        function coloresGrafico() {
+            const oscuro = document.body.classList.contains('dark-mode');
+            return oscuro
+                ? { cuadricula: '#294354', texto: '#9fb2c0', titulo: '#dce8ee', fondo: '#102331' }
+                : { cuadricula: '#e2e8f0', texto: '#789', titulo: '#16324f', fondo: '#fff' };
+        }
+
         function mensajeGrafico(ctx, ancho, alto) {
-            ctx.fillStyle = '#94a3b8';
+            ctx.fillStyle = coloresGrafico().texto;
             ctx.font = '13px Inter, sans-serif';
             ctx.textAlign = 'center';
             ctx.fillText('Aún no hay ventas registradas', ancho / 2, alto / 2);
@@ -1228,9 +1819,10 @@
             const w = ancho - margen.izquierda - margen.derecha;
             const h = alto - margen.arriba - margen.abajo;
             const maximo = Math.max(...datos.map(d => d.importe), 1);
+            const tema = coloresGrafico();
             ctx.font = '11px Inter, sans-serif';
-            ctx.strokeStyle = '#e2e8f0';
-            ctx.fillStyle = '#789';
+            ctx.strokeStyle = tema.cuadricula;
+            ctx.fillStyle = tema.texto;
             ctx.textAlign = 'right';
 
             for (let i = 0; i <= 4; i++) {
@@ -1246,11 +1838,11 @@
                 const altura = dato.importe / maximo * h;
                 ctx.fillStyle = '#168c86';
                 ctx.fillRect(x, margen.arriba + h - altura, barra, altura);
-                ctx.fillStyle = '#526176';
+                ctx.fillStyle = tema.texto;
                 ctx.textAlign = 'center';
                 const nombre = dato.nombre.length > 10 ? `${dato.nombre.slice(0, 9)}…` : dato.nombre;
                 ctx.fillText(nombre, x + barra / 2, alto - 32);
-                ctx.fillStyle = '#16324f';
+                ctx.fillStyle = tema.titulo;
                 ctx.font = '600 10px Inter, sans-serif';
                 ctx.fillText(`Q${dato.importe.toFixed(0)}`, x + barra / 2, margen.arriba + h - altura - 7);
                 ctx.font = '11px Inter, sans-serif';
@@ -1267,12 +1859,13 @@
             const w = ancho - margen.izquierda - margen.derecha;
             const h = alto - margen.arriba - margen.abajo;
             const maximo = Math.max(...datos.map(d => d.valor), 1);
+            const tema = coloresGrafico();
             ctx.font = '11px Inter, sans-serif';
             for (let i = 0; i <= 4; i++) {
                 const y = margen.arriba + h - h * i / 4;
-                ctx.strokeStyle = '#e2e8f0';
+                ctx.strokeStyle = tema.cuadricula;
                 ctx.beginPath(); ctx.moveTo(margen.izquierda, y); ctx.lineTo(ancho - margen.derecha, y); ctx.stroke();
-                ctx.fillStyle = '#789'; ctx.textAlign = 'right';
+                ctx.fillStyle = tema.texto; ctx.textAlign = 'right';
                 ctx.fillText(`Q${Math.round(maximo * i / 4)}`, margen.izquierda - 7, y + 4);
             }
 
@@ -1290,9 +1883,9 @@
             ctx.beginPath(); puntos.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
             ctx.strokeStyle = '#168c86'; ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.stroke();
             puntos.forEach(p => {
-                ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill();
+                ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fillStyle = tema.fondo; ctx.fill();
                 ctx.strokeStyle = '#168c86'; ctx.lineWidth = 2; ctx.stroke();
-                ctx.fillStyle = '#526176'; ctx.textAlign = 'center'; ctx.font = '10px Inter, sans-serif';
+                ctx.fillStyle = tema.texto; ctx.textAlign = 'center'; ctx.font = '10px Inter, sans-serif';
                 ctx.fillText(p.nombre, p.x, alto - 20);
             });
         }
@@ -1347,6 +1940,11 @@
         function cambiarModoOscuro(activar) {
             document.body.classList.toggle('dark-mode', activar);
             localStorage.setItem('modoOscuro', activar ? 'true' : 'false');
+
+            // Redibuja los lienzos con colores adecuados al tema seleccionado.
+            if (!document.getElementById('tab-graficos').classList.contains('hidden')) {
+                requestAnimationFrame(renderizarGraficos);
+            }
         }
 
         function cambiarTab(tabId, elementoBtn) {
@@ -1374,6 +1972,9 @@
                 elementoBtn.querySelector('span:last-child').classList.remove('font-medium');
                 elementoBtn.querySelector('span:last-child').classList.add('font-semibold');
             }
+
+            // Evita conservar una posición incómoda al cambiar de pantalla.
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function actualizarResumen() {
@@ -1386,8 +1987,9 @@
 
             document.getElementById('resumen-variedad').innerText = inventario.length;
             document.getElementById('resumen-unidades').innerText = totalUnidades.toFixed(2);
+            const ventasRealizadas = ventas.reduce((total, venta) => total + (Number(venta.total) || 0), 0);
             document.getElementById('resumen-costo').innerText = `Q${costoTotal.toFixed(2)}`;
-            document.getElementById('resumen-venta').innerText = `Q${ventaTotal.toFixed(2)}`;
+            document.getElementById('resumen-venta').innerText = `Q${ventasRealizadas.toFixed(2)}`;
             document.getElementById('resumen-ganancia').innerText = `Q${(ventaTotal - costoTotal).toFixed(2)}`;
         }
 
@@ -1466,11 +2068,11 @@
                         
                         <div class="flex justify-between items-center mb-4">
                             <span class="text-sm text-gray-500">Costo: Q${p.costo.toFixed(2)}</span>
-                            <span class="font-black text-blue-600 text-lg">Q${p.precio.toFixed(2)}</span>
+                            <span class="font-black text-blue-600 text-lg">${p.unidadVenta === 'ambas' ? `Q${p.precio.toFixed(2)}/lb · Q${Number(p.precioUnidad).toFixed(2)}/unidad` : `Q${p.precio.toFixed(2)} / ${p.unidadVenta === 'libra' ? 'lb' : 'unidad'}`}</span>
                         </div>
 
                         <div class="flex justify-between items-center bg-gray-50 p-2 rounded-xl">
-                            <span class="text-xs font-bold px-3 py-1 rounded-lg ${bgStock}">Stock: ${p.stock}</span>
+                            <span class="text-xs font-bold px-3 py-1 rounded-lg ${bgStock}">Stock: ${p.stock} ${p.unidadVenta === 'unidad' ? 'unid.' : 'lb'}</span>
                             <div class="flex space-x-2">
                                 <button onclick="ajustarStock('${p.id}', -1)" class="w-8 h-8 rounded-lg bg-white border border-gray-200 text-gray-700 font-bold shadow-sm active:bg-gray-100">-</button>
                                 <button onclick="ajustarStock('${p.id}', 1)" class="w-8 h-8 rounded-lg bg-white border border-gray-200 text-gray-700 font-bold shadow-sm active:bg-gray-100">+</button>
@@ -1488,11 +2090,15 @@
             productoAEditar = id;
             document.getElementById('editar-codigo').value = producto.codigo || '';
             document.getElementById('editar-nombre').value = producto.nombre || '';
+            document.getElementById('editar-unidad-venta').value = producto.unidadVenta || 'unidad';
+            actualizarEtiquetasUnidadEdicion();
             const stock = Number(producto.stock) || 0;
             const costoUnitario = Number(producto.costo) || 0;
             document.getElementById('editar-stock').value = stock;
             document.getElementById('editar-costo').value = costoUnitario * stock;
             document.getElementById('editar-precio').value = Number(producto.precio) || 0;
+            document.getElementById('editar-precio-unidad').value = Number(producto.precioUnidad) || '';
+            document.getElementById('editar-peso-unidad').value = Number(producto.pesoUnidad) || '';
             actualizarCostoUnitarioEdicion();
 
             const selectorCategoria = document.getElementById('editar-categoria');
@@ -1526,31 +2132,37 @@
             const stock = parseFloat(document.getElementById('editar-stock').value);
             const costoPaquete = parseFloat(document.getElementById('editar-costo').value);
             const precio = parseFloat(document.getElementById('editar-precio').value);
+            const unidadVenta = document.getElementById('editar-unidad-venta').value;
+            const precioUnidad = parseFloat(document.getElementById('editar-precio-unidad').value);
+            const pesoUnidad = parseFloat(document.getElementById('editar-peso-unidad').value);
             const cambios = {
                 codigo,
                 nombre: document.getElementById('editar-nombre').value.trim(),
                 categoria: document.getElementById('editar-categoria').value,
+                unidadVenta,
                 stock,
                 costoPaquete,
                 costo: stock > 0 ? costoPaquete / stock : 0,
-                precio
+                precio,
+                precioUnidad: unidadVenta === 'ambas' ? precioUnidad : null,
+                pesoUnidad: unidadVenta === 'ambas' ? pesoUnidad : null
             };
-            if (!cambios.nombre || !Number.isFinite(stock) || stock < 0 || !Number.isFinite(costoPaquete) || costoPaquete < 0 || !Number.isFinite(precio) || precio < 0) {
+            const datosAmbosInvalidos = unidadVenta === 'ambas' && (!Number.isFinite(precioUnidad) || precioUnidad < 0 || !Number.isFinite(pesoUnidad) || pesoUnidad <= 0);
+            if (!cambios.nombre || !Number.isFinite(stock) || stock < 0 || !Number.isFinite(costoPaquete) || costoPaquete < 0 || !Number.isFinite(precio) || precio < 0 || datosAmbosInvalidos) {
                 alert('Completa todos los campos con valores válidos.');
                 return;
             }
 
             const boton = document.getElementById('btn-guardar-edicion');
-            boton.disabled = true;
-            boton.classList.add('opacity-50');
+            establecerCargaBoton(boton, true);
             try {
                 await coleccionUsuario('productos').doc(productoAEditar).update(cambios);
                 cerrarModalEditar();
+                mostrarAviso('Producto actualizado correctamente', 'exito');
             } catch (error) {
                 alert('No se pudo actualizar el producto: ' + error.message);
             } finally {
-                boton.disabled = false;
-                boton.classList.remove('opacity-50');
+                establecerCargaBoton(boton, false);
             }
         }
 
@@ -1588,6 +2200,7 @@
         let linternaActiva = false;
         let cuadroLector = null;
         let destinoLector = 'nuevo';
+        let productoEscaneadoActual = null;
 
         async function abrirLectorCodigo(destino = 'nuevo') {
             destinoLector = destino;
@@ -1688,25 +2301,93 @@
         }
 
         function mostrarProductoEscaneado(producto) {
+            productoEscaneadoActual = producto;
             document.getElementById('titulo-producto-escaneado').textContent = producto.nombre;
-            document.getElementById('codigo-producto-escaneado').textContent = `Código: ${producto.codigo}`;
-            document.getElementById('precio-producto-escaneado').textContent = `Q${Number(producto.precio).toFixed(2)}`;
+            document.getElementById('codigo-producto-escaneado').textContent = `Código: ${producto.codigo || 'Sin código'}`;
+            const ventaDoble = producto.unidadVenta === 'ambas';
+            document.getElementById('precio-producto-escaneado').innerHTML = ventaDoble
+                ? `Q${Number(producto.precio).toFixed(2)} / lb<br><span class="text-2xl text-blue-600">Q${Number(producto.precioUnidad).toFixed(2)} / unidad</span>`
+                : `Q${Number(producto.precio).toFixed(2)} / ${producto.unidadVenta === 'libra' ? 'libra' : 'unidad'}`;
             document.getElementById('stock-producto-escaneado').textContent = producto.stock > 0
-                ? `Disponible: ${producto.stock}`
+                ? `Disponible: ${producto.stock} ${producto.unidadVenta === 'unidad' ? 'unidades' : 'lb'}`
                 : 'Producto agotado';
 
+            const cantidad = document.getElementById('cantidad-producto-escaneado');
+            cantidad.value = '1';
+            if (ventaDoble) {
+                const maximoUnidades = Math.floor(Number(producto.stock) / Number(producto.pesoUnidad || 1));
+                cantidad.dataset.modo = 'ambas';
+                cantidad.step = '0.01';
+                cantidad.min = '0.01';
+                cantidad.max = Math.max(Number(producto.stock), maximoUnidades);
+                document.getElementById('label-cantidad-escaneada').textContent = 'Cantidad a agregar';
+                document.getElementById('ayuda-cantidad-escaneada').textContent = 'Escribe la cantidad y luego elige si corresponde a libras o unidades.';
+            } else {
+                configurarCantidadEscaneada(producto.unidadVenta);
+            }
+
             const boton = document.getElementById('btn-agregar-escaneado');
-            boton.disabled = producto.stock <= 0;
-            boton.classList.toggle('opacity-50', producto.stock <= 0);
-            boton.classList.toggle('cursor-not-allowed', producto.stock <= 0);
-            boton.onclick = () => {
-                agregarAlCarrito(producto.id);
-                cerrarProductoEscaneado();
-            };
+            const opciones = document.getElementById('opciones-producto-escaneado');
+            opciones.classList.toggle('hidden', !ventaDoble);
+            boton.classList.toggle('hidden', ventaDoble);
+            boton.onclick = () => agregarEscaneado(producto.id, producto.unidadVenta);
+
+            document.getElementById('btn-agregar-libra-escaneada').onclick = () => agregarEscaneado(producto.id, 'libra');
+            document.getElementById('btn-agregar-unidad-escaneada').onclick = () => agregarEscaneado(producto.id, 'unidad');
+            validarCantidadEscaneada();
             document.getElementById('modal-producto-escaneado').classList.remove('hidden');
+            setTimeout(() => cantidad.focus(), 100);
+        }
+
+        function configurarCantidadEscaneada(modoVenta) {
+            const producto = productoEscaneadoActual;
+            if (!producto) return;
+            const esLibra = modoVenta === 'libra';
+            const campo = document.getElementById('cantidad-producto-escaneado');
+            campo.step = esLibra ? '0.01' : '1';
+            campo.min = esLibra ? '0.01' : '1';
+            const maximo = esLibra
+                ? Number(producto.stock)
+                : producto.unidadVenta === 'ambas'
+                    ? Math.floor(Number(producto.stock) / Number(producto.pesoUnidad || 1))
+                    : Math.floor(Number(producto.stock));
+            campo.max = Math.max(0, maximo);
+            document.getElementById('label-cantidad-escaneada').textContent = esLibra ? 'Libras a agregar' : 'Unidades a agregar';
+            document.getElementById('ayuda-cantidad-escaneada').textContent = esLibra
+                ? `Puedes ingresar decimales. Máximo: ${maximo.toFixed(2)} lb.`
+                : `Ingresa una cantidad entera. Máximo: ${maximo}.`;
+            validarCantidadEscaneada();
+        }
+
+        function validarCantidadEscaneada() {
+            const producto = productoEscaneadoActual;
+            if (!producto) return false;
+            const campo = document.getElementById('cantidad-producto-escaneado');
+            const cantidad = Number(campo.value);
+            const maximo = Number(campo.max);
+            const valida = producto.stock > 0 && Number.isFinite(cantidad) && cantidad >= Number(campo.min) && cantidad <= maximo;
+            ['btn-agregar-escaneado', 'btn-agregar-libra-escaneada', 'btn-agregar-unidad-escaneada'].forEach(id => {
+                const boton = document.getElementById(id);
+                boton.disabled = !valida;
+                boton.classList.toggle('opacity-50', !valida);
+                boton.classList.toggle('cursor-not-allowed', !valida);
+            });
+            return valida;
+        }
+
+        function agregarEscaneado(id, modoVenta) {
+            configurarCantidadEscaneada(modoVenta);
+            if (!validarCantidadEscaneada()) {
+                alert('Ingresa una cantidad válida que no supere las existencias.');
+                return;
+            }
+            const cantidad = Number(document.getElementById('cantidad-producto-escaneado').value);
+            agregarAlCarrito(id, modoVenta, cantidad);
+            cerrarProductoEscaneado();
         }
 
         function cerrarProductoEscaneado() {
+            productoEscaneadoActual = null;
             document.getElementById('modal-producto-escaneado').classList.add('hidden');
         }
 
@@ -1740,6 +2421,27 @@
             if (document.hidden) cerrarLectorCodigo();
         });
 
+        function actualizarEtiquetasUnidad() {
+            const tipo = document.getElementById('nuevo-unidad-venta').value;
+            const usaLibras = tipo === 'libra' || tipo === 'ambas';
+            document.getElementById('nuevo-stock-label').textContent = usaLibras ? 'Libras disponibles' : 'Unidades que trae';
+            document.getElementById('nuevo-precio-label').textContent = usaLibras ? 'Precio de venta por libra' : 'Precio de venta por unidad';
+            document.getElementById('nuevo-costo-unidad-texto').textContent = usaLibras ? 'libra' : 'unidad';
+            document.getElementById('nuevo-unidad-ayuda').textContent = tipo === 'ambas'
+                ? 'El inventario se controla en libras; indica cuánto pesa aproximadamente cada unidad.'
+                : usaLibras ? 'Puedes registrar cantidades con decimales, por ejemplo 12.5 libras.' : 'Existencias disponibles en unidades.';
+            document.getElementById('nuevo-datos-ambas').classList.toggle('hidden', tipo !== 'ambas');
+        }
+
+        function actualizarEtiquetasUnidadEdicion() {
+            const tipo = document.getElementById('editar-unidad-venta').value;
+            const usaLibras = tipo === 'libra' || tipo === 'ambas';
+            document.getElementById('editar-stock-label').textContent = usaLibras ? 'Libras disponibles' : 'Unidades disponibles';
+            document.getElementById('editar-precio-label').textContent = usaLibras ? 'Precio de venta por libra' : 'Precio de venta por unidad';
+            document.getElementById('editar-costo-unidad-texto').textContent = usaLibras ? 'libra' : 'unidad';
+            document.getElementById('editar-datos-ambas').classList.toggle('hidden', tipo !== 'ambas');
+        }
+
         function actualizarCostoUnitario() {
             const unidades = parseFloat(document.getElementById('nuevo-stock').value) || 0;
             const costoPaquete = parseFloat(document.getElementById('nuevo-costo').value) || 0;
@@ -1766,8 +2468,12 @@
             const stock = parseFloat(document.getElementById('nuevo-stock').value);
             const costoPaquete = parseFloat(document.getElementById('nuevo-costo').value);
             const precio = parseFloat(document.getElementById('nuevo-precio').value);
-            if (!Number.isFinite(stock) || stock <= 0 || !Number.isFinite(costoPaquete) || costoPaquete < 0 || !Number.isFinite(precio) || precio < 0) {
-                alert('Ingresa unidades, costo del paquete y precio válidos.');
+            const unidadVenta = document.getElementById('nuevo-unidad-venta').value;
+            const precioUnidad = parseFloat(document.getElementById('nuevo-precio-unidad').value);
+            const pesoUnidad = parseFloat(document.getElementById('nuevo-peso-unidad').value);
+            const datosAmbosInvalidos = unidadVenta === 'ambas' && (!Number.isFinite(precioUnidad) || precioUnidad < 0 || !Number.isFinite(pesoUnidad) || pesoUnidad <= 0);
+            if (!Number.isFinite(stock) || stock <= 0 || !Number.isFinite(costoPaquete) || costoPaquete < 0 || !Number.isFinite(precio) || precio < 0 || datosAmbosInvalidos) {
+                alert('Ingresa existencias, costo y precios válidos.');
                 return;
             }
 
@@ -1775,15 +2481,21 @@
                 codigo,
                 nombre: document.getElementById('nuevo-nombre').value.trim(),
                 categoria: document.getElementById('nuevo-categoria').value,
+                unidadVenta,
                 costo: costoPaquete / stock,
                 costoPaquete,
                 precio,
+                precioUnidad: unidadVenta === 'ambas' ? precioUnidad : null,
+                pesoUnidad: unidadVenta === 'ambas' ? pesoUnidad : null,
                 stock
             };
 
+            const botonGuardar = document.querySelector('#form-nuevo button[type="submit"]');
+            establecerCargaBoton(botonGuardar, true);
             try {
                 await coleccionUsuario("productos").add(nuevo);
                 document.getElementById('form-nuevo').reset();
+                actualizarEtiquetasUnidad();
                 actualizarCostoUnitario();
                 const estado = document.getElementById('estado-codigo');
                 estado.textContent = 'Puedes usar la cámara trasera o escribir el número.';
@@ -1792,6 +2504,8 @@
                 document.getElementById('modal-producto-agregado').classList.remove('hidden');
             } catch (error) {
                 alert('No se pudo guardar el producto: ' + error.message);
+            } finally {
+                establecerCargaBoton(botonGuardar, false);
             }
         }
 
@@ -1803,35 +2517,74 @@
         function renderizarListaVenta() {
             const contenedor = document.getElementById('lista-vender');
             contenedor.innerHTML = '';
-            const conStock = inventario.filter(p => p.stock > 0);
+            const busqueda = (document.getElementById('buscar-venta')?.value || '').trim().toLowerCase();
+            const conStock = inventario.filter(p => p.stock > 0 && (
+                String(p.nombre || '').toLowerCase().includes(busqueda) ||
+                String(p.codigo || '').toLowerCase().includes(busqueda)
+            ));
             
             if(conStock.length === 0) {
-                contenedor.innerHTML = '<span class="text-sm text-gray-400">No hay productos con stock.</span>';
+                contenedor.innerHTML = `<span class="text-sm text-gray-400">${busqueda ? 'No se encontraron productos.' : 'No hay productos con stock.'}</span>`;
                 return;
             }
 
             conStock.forEach(p => {
+                const ventaDoble = p.unidadVenta === 'ambas';
+                const unidad = p.unidadVenta === 'libra' ? 'lb' : 'unidad';
                 contenedor.innerHTML += `
-                    <div onclick="agregarAlCarrito('${p.id}')" class="flex-shrink-0 w-32 bg-white border border-gray-200 rounded-xl p-3 text-center shadow-sm active:border-blue-500 cursor-pointer">
+                    <div onclick="${ventaDoble ? `mostrarProductoEscaneado(inventario.find(producto => producto.id === '${p.id}'))` : `agregarAlCarrito('${p.id}')`}" class="flex-shrink-0 w-36 bg-white border border-gray-200 rounded-xl p-3 text-center shadow-sm active:border-blue-500 cursor-pointer">
                         <p class="text-sm font-bold text-gray-700 truncate">${p.nombre}</p>
-                        <p class="text-blue-600 font-black mt-1">Q${p.precio.toFixed(2)}</p>
-                        <p class="text-[10px] text-gray-400 mt-1">Disp: ${p.stock}</p>
+                        <p class="text-blue-600 font-black mt-1">${ventaDoble ? `Q${p.precio.toFixed(2)}/lb<br>Q${Number(p.precioUnidad).toFixed(2)}/unidad` : `Q${p.precio.toFixed(2)} / ${unidad}`}</p>
+                        <p class="text-[10px] text-gray-400 mt-1">Disp: ${p.stock} ${p.unidadVenta === 'unidad' ? '' : 'lb'}</p>
                     </div>
                 `;
             });
         }
 
-        function agregarAlCarrito(id) {
+        function agregarAlCarrito(id, modoVenta, cantidadSolicitada = 1) {
             const prod = inventario.find(p => p.id === id);
             if(!prod || prod.stock <= 0) return;
-            const itemExistente = carrito.find(item => item.id === id);
-            
+            const modo = prod.unidadVenta === 'ambas' ? modoVenta : prod.unidadVenta;
+            if (prod.unidadVenta === 'ambas' && !['libra', 'unidad'].includes(modo)) return mostrarProductoEscaneado(prod);
+            const claveCarrito = `${id}-${modo}`;
+            const itemExistente = carrito.find(item => item.claveCarrito === claveCarrito);
+            const descuentoStock = modo === 'unidad' && prod.unidadVenta === 'ambas' ? Number(prod.pesoUnidad) : 1;
+            const cantidad = Number(cantidadSolicitada);
+            const incremento = modo === 'libra' ? cantidad : Math.floor(cantidad);
+            if (!Number.isFinite(incremento) || incremento <= 0) return;
+            const stockUsado = incremento * descuentoStock;
+            const stockReservado = carrito
+                .filter(item => item.id === id)
+                .reduce((total, item) => total + item.cantidad * (item.descuentoStock || 1), 0);
+
             if(itemExistente) {
-                if(itemExistente.cantidad < prod.stock) itemExistente.cantidad++;
+                if(stockReservado + stockUsado <= prod.stock) itemExistente.cantidad += incremento;
                 else alert('Stock máximo alcanzado');
+            } else if (stockReservado + stockUsado <= prod.stock) {
+                carrito.push({
+                    ...prod,
+                    claveCarrito,
+                    modoVenta: modo,
+                    cantidad: incremento,
+                    precio: modo === 'unidad' && prod.unidadVenta === 'ambas' ? Number(prod.precioUnidad) : Number(prod.precio),
+                    descuentoStock
+                });
             } else {
-                carrito.push({...prod, cantidad: 1});
+                alert('No hay suficiente stock para esa cantidad.');
             }
+            renderizarCarrito();
+        }
+
+        function cambiarCantidadCarrito(index, valor) {
+            const item = carrito[index];
+            const cantidad = Number(valor);
+            if (!item || !Number.isFinite(cantidad)) return;
+            const esPeso = (item.modoVenta || item.unidadVenta) === 'libra';
+            const reservadoPorOtros = carrito.reduce((total, otro, otroIndice) =>
+                otroIndice !== index && otro.id === item.id ? total + otro.cantidad * (otro.descuentoStock || 1) : total, 0);
+            const disponible = Math.max(0, item.stock - reservadoPorOtros);
+            const maximo = esPeso ? disponible : Math.floor(disponible / (item.descuentoStock || 1));
+            item.cantidad = Math.min(maximo, Math.max(esPeso ? 0.01 : 1, cantidad));
             renderizarCarrito();
         }
 
@@ -1849,13 +2602,18 @@
             carrito.forEach((item, index) => {
                 const subtotal = item.precio * item.cantidad;
                 totalVentaActual += subtotal;
+                const esLibra = (item.modoVenta || item.unidadVenta) === 'libra';
                 contenedor.innerHTML += `
-                    <div class="flex justify-between items-center py-3 border-b border-gray-100 last:border-0">
-                        <div>
+                    <div class="flex justify-between items-center gap-3 py-3 border-b border-gray-100 last:border-0">
+                        <div class="min-w-0">
                             <p class="font-bold text-gray-700 text-sm">${item.nombre}</p>
-                            <p class="text-xs text-gray-500">${item.cantidad} und. x Q${item.precio.toFixed(2)}</p>
+                            ${esLibra ? `
+                                <label class="text-xs text-gray-500">Peso vendido (lb)</label>
+                                <input type="number" min="0.01" max="${item.stock}" step="0.01" value="${item.cantidad}" onchange="cambiarCantidadCarrito(${index}, this.value)" class="mt-1 w-24 h-9 min-h-0 px-2 text-sm">
+                                <p class="text-xs text-gray-500 mt-1">Q${item.precio.toFixed(2)} por libra</p>
+                            ` : `<p class="text-xs text-gray-500">${item.cantidad} und. x Q${item.precio.toFixed(2)}${item.unidadVenta === 'ambas' ? ` · descuenta ${(item.cantidad * item.descuentoStock).toFixed(2)} lb` : ''}</p>`}
                         </div>
-                        <div class="flex items-center space-x-4">
+                        <div class="flex items-center space-x-4 shrink-0">
                             <span class="font-black text-gray-700">Q${subtotal.toFixed(2)}</span>
                             <button onclick="quitarDelCarrito(${index})" class="text-red-400 hover:text-red-600 font-bold text-lg">×</button>
                         </div>
@@ -1927,23 +2685,36 @@
             const venta = {
                 total: totalVentaActual,
                 fecha: firebase.firestore.FieldValue.serverTimestamp(),
-                items: carrito.map(item => ({ nombre: item.nombre, precio: item.precio, cantidad: item.cantidad }))
+                items: carrito.map(item => ({
+                    nombre: item.nombre,
+                    precio: item.precio,
+                    cantidad: item.cantidad,
+                    unidadVenta: item.modoVenta || item.unidadVenta || 'unidad'
+                }))
             };
 
             const batch = db.batch();
-            carrito.forEach(itemVenta => {
-                const prodRef = coleccionUsuario("productos").doc(itemVenta.id);
-                const prodReal = inventario.find(p => p.id === itemVenta.id);
-                if(prodReal) batch.update(prodRef, { stock: Math.max(0, prodReal.stock - itemVenta.cantidad) });
+            const descuentosPorProducto = carrito.reduce((totales, item) => {
+                totales[item.id] = (totales[item.id] || 0) + item.cantidad * (item.descuentoStock || 1);
+                return totales;
+            }, {});
+            Object.entries(descuentosPorProducto).forEach(([id, descuento]) => {
+                const prodRef = coleccionUsuario("productos").doc(id);
+                const prodReal = inventario.find(p => p.id === id);
+                if(prodReal) batch.update(prodRef, { stock: Math.max(0, prodReal.stock - descuento) });
             });
             batch.set(coleccionUsuario("ventas").doc(), venta);
 
+            const boton = document.getElementById('btn-finalizar-venta');
+            establecerCargaBoton(boton, true);
             batch.commit().then(() => {
                 carrito = [];
                 renderizarCarrito();
                 cerrarModalCobro();
-                alert('✅ Venta cobrada con éxito. Inventario actualizado en la Nube.');
-            }).catch(error => alert('No se pudo registrar la venta: ' + error.message));
+                mostrarAviso('Venta cobrada e inventario actualizado', 'exito');
+            }).catch(error => {
+                alert('No se pudo registrar la venta: ' + error.message);
+            }).finally(() => establecerCargaBoton(boton, false));
         }
 
         let periodoReporte = 'diario';

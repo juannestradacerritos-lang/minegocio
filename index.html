@@ -346,7 +346,66 @@
         .barra-grafico { background: var(--teal); }
         .barra-grafico.secundaria { background: var(--gold); }
 
-        .chart-card { overflow: hidden; }
+        .chart-card { overflow: visible; }
+        .category-picker { position: relative; }
+        .category-picker-trigger {
+            width: 100%;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: .75rem;
+            padding: .7rem .9rem;
+            border: 1px solid #d5dee8;
+            border-radius: 10px !important;
+            background: #f8fafc;
+            color: #26364a;
+            font-size: .875rem;
+            font-weight: 700;
+            text-align: left;
+        }
+        .category-picker-trigger:hover { border-color: #9fcac5; background: #fff; }
+        .category-picker-trigger[aria-expanded="true"] { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(22,140,134,.13); }
+        .category-picker-chevron { color: var(--teal); transition: transform .2s ease; }
+        .category-picker-trigger[aria-expanded="true"] .category-picker-chevron { transform: rotate(180deg); }
+        .category-picker-menu {
+            position: absolute;
+            top: calc(100% + .45rem);
+            right: 0;
+            z-index: 30;
+            width: max(100%, 250px);
+            max-height: min(320px, 55vh);
+            overflow-y: auto;
+            padding: .4rem;
+            border: 1px solid #d5e1e6;
+            border-radius: 12px;
+            background: #fff;
+            box-shadow: 0 18px 45px rgba(15,42,67,.18);
+        }
+        .category-picker-menu.hidden { display: none; }
+        .category-picker-option {
+            width: 100%;
+            min-height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: .75rem;
+            padding: .65rem .75rem;
+            border-radius: 8px !important;
+            color: #42566a;
+            font-size: .82rem;
+            font-weight: 650;
+            text-align: left;
+        }
+        .category-picker-option:hover, .category-picker-option:focus-visible { background: #edf7f5; color: #0f766e; }
+        .category-picker-option[aria-selected="true"] { background: #e1f3f0; color: #0f766e; font-weight: 800; }
+        .category-picker-check { width: 20px; color: var(--teal); text-align: center; }
+        body.dark-mode .category-picker-trigger { background: #0b1d29; border-color: #355468; color: #edf6f8; }
+        body.dark-mode .category-picker-trigger:hover { background: #102b39; border-color: #42b8ad; }
+        body.dark-mode .category-picker-menu { background: #102331; border-color: #355468; box-shadow: 0 18px 45px rgba(0,0,0,.38); }
+        body.dark-mode .category-picker-option { color: #b9cad3; }
+        body.dark-mode .category-picker-option:hover, body.dark-mode .category-picker-option:focus-visible,
+        body.dark-mode .category-picker-option[aria-selected="true"] { background: #153d3b; color: #84ded4; }
         .ranking-list { display: grid; gap: .65rem; }
         .ranking-item { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: .75rem; padding: .8rem; border: 1px solid var(--ui-border); border-radius: 12px; background: rgba(248,250,252,.75); }
         .ranking-position { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: var(--teal-soft); color: var(--ui-primary-dark); font-weight: 900; }
@@ -1121,6 +1180,141 @@
             .product-choice-grid.three-options { grid-template-columns: 1fr; }
             .product-choice-grid.three-options .product-choice-button { min-height: 58px; }
         }
+
+        /* Desplegables personalizados para formularios y ajustes. */
+        .app-select { position: relative; width: 100%; }
+        .app-select-native {
+            position: absolute !important;
+            width: 1px !important;
+            height: 1px !important;
+            min-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            opacity: 0 !important;
+            pointer-events: none;
+        }
+        .app-select-trigger {
+            width: 100%;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: .75rem;
+            padding: .7rem .9rem;
+            border: 1px solid #d5dee8;
+            border-radius: 10px !important;
+            background: #f8fafc;
+            color: #1e293b;
+            font-size: inherit;
+            font-weight: 650;
+            text-align: left;
+            box-shadow: inset 0 1px 2px rgba(15,42,67,.025);
+        }
+        .app-select-trigger:hover { border-color: #9fcac5; background: #fff; }
+        .app-select-trigger[aria-expanded="true"] {
+            border-color: var(--teal);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(22,140,134,.13);
+        }
+        .app-select-value { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .app-select-chevron { flex: 0 0 auto; color: var(--teal); transition: transform .2s ease; }
+        .app-select-trigger[aria-expanded="true"] .app-select-chevron { transform: rotate(180deg); }
+        .app-select-menu {
+            position: fixed;
+            z-index: 100;
+            display: grid;
+            gap: .2rem;
+            overflow-y: auto;
+            padding: .4rem;
+            border: 1px solid #d5e1e6;
+            border-radius: 12px;
+            background: #fff;
+            box-shadow: 0 18px 45px rgba(15,42,67,.2);
+            overscroll-behavior: contain;
+        }
+        .app-select-menu.hidden { display: none; }
+        .app-select-option {
+            width: 100%;
+            min-height: 43px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: .75rem;
+            padding: .65rem .75rem;
+            border-radius: 8px !important;
+            color: #42566a;
+            font-size: .84rem;
+            font-weight: 650;
+            text-align: left;
+        }
+        .app-select-option:hover, .app-select-option:focus-visible { background: #edf7f5; color: #0f766e; }
+        .app-select-option[aria-selected="true"] { background: #e1f3f0; color: #0f766e; font-weight: 800; }
+        .app-select-check { width: 20px; flex: 0 0 auto; color: var(--teal); text-align: center; }
+        body.dark-mode .app-select-trigger { background: #0b1d29; border-color: #355468; color: #edf6f8; }
+        body.dark-mode .app-select-trigger:hover,
+        body.dark-mode .app-select-trigger[aria-expanded="true"] { background: #102b39; border-color: #42b8ad; }
+        body.dark-mode .app-select-menu { background: #102331; border-color: #355468; box-shadow: 0 18px 45px rgba(0,0,0,.42); }
+        body.dark-mode .app-select-option { color: #b9cad3; }
+        body.dark-mode .app-select-option:hover, body.dark-mode .app-select-option:focus-visible,
+        body.dark-mode .app-select-option[aria-selected="true"] { background: #153d3b; color: #84ded4; }
+
+        /* Menú contextual de acciones en las tarjetas del catálogo. */
+        .catalog-actions { position: relative; flex: 0 0 auto; }
+        .catalog-actions-trigger {
+            width: 40px;
+            height: 40px;
+            display: grid;
+            place-items: center;
+            border: 1px solid #dce6eb;
+            border-radius: 10px !important;
+            background: #f8fafc;
+            color: #526176;
+            font-size: 1.35rem;
+            font-weight: 900;
+            line-height: 1;
+            letter-spacing: .08em;
+        }
+        .catalog-actions-trigger:hover,
+        .catalog-actions-trigger[aria-expanded="true"] { background: #e7f4f2; border-color: #9fcac5; color: var(--ui-primary-dark); }
+        .catalog-actions-menu {
+            position: absolute;
+            top: calc(100% + .4rem);
+            right: 0;
+            z-index: 25;
+            width: 170px;
+            overflow: hidden;
+            padding: .35rem;
+            border: 1px solid #d5e1e6;
+            border-radius: 12px;
+            background: #fff;
+            box-shadow: 0 16px 38px rgba(15,42,67,.18);
+        }
+        .catalog-actions-menu.hidden { display: none; }
+        .catalog-action {
+            width: 100%;
+            min-height: 42px;
+            display: flex;
+            align-items: center;
+            gap: .7rem;
+            padding: .65rem .75rem;
+            border-radius: 8px !important;
+            color: #334155;
+            font-size: .83rem;
+            font-weight: 750;
+            text-align: left;
+        }
+        .catalog-action:hover { background: #edf7f5; color: #0f766e; transform: none !important; }
+        .catalog-action-danger { color: #b4232f; }
+        .catalog-action-danger:hover { background: #fff1f2; color: #b4232f; }
+        .catalog-action-icon { width: 20px; text-align: center; }
+        body.dark-mode .catalog-actions-trigger { background: #132a39; border-color: #355468; color: #b9cad3; }
+        body.dark-mode .catalog-actions-trigger:hover,
+        body.dark-mode .catalog-actions-trigger[aria-expanded="true"] { background: #153d3b; border-color: #42b8ad; color: #84ded4; }
+        body.dark-mode .catalog-actions-menu { background: #102331; border-color: #355468; box-shadow: 0 18px 42px rgba(0,0,0,.4); }
+        body.dark-mode .catalog-action { color: #dce8ee; }
+        body.dark-mode .catalog-action:hover { background: #153d3b; color: #84ded4; }
+        body.dark-mode .catalog-action-danger { color: #ffabb3; }
+        body.dark-mode .catalog-action-danger:hover { background: #452329; color: #ffabb3; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans antialiased">
@@ -1310,11 +1504,15 @@
                             <h3 class="font-bold text-gray-700">Productos más vendidos</h3>
                             <p class="text-xs text-gray-500 mt-1">Filtra las ventas por categoría.</p>
                         </div>
-                        <div class="w-full sm:w-56">
-                            <label for="filtro-categoria-ventas" class="block text-xs mb-1">Categoría</label>
-                            <select id="filtro-categoria-ventas" onchange="renderizarGraficos()" class="w-full p-3 border border-gray-200">
-                                <option value="todas">Todas las categorías</option>
-                            </select>
+                        <div class="w-full sm:w-64">
+                            <span id="etiqueta-filtro-categoria" class="block text-xs mb-1 font-semibold text-gray-500">Categoría</span>
+                            <div id="selector-categoria-ventas" class="category-picker">
+                                <button id="filtro-categoria-boton" type="button" class="category-picker-trigger" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="etiqueta-filtro-categoria filtro-categoria-texto" onclick="alternarMenuCategorias()">
+                                    <span id="filtro-categoria-texto">Todas las categorías</span>
+                                    <span class="category-picker-chevron" aria-hidden="true">⌄</span>
+                                </button>
+                                <div id="filtro-categoria-menu" class="category-picker-menu hidden" role="listbox" aria-labelledby="etiqueta-filtro-categoria"></div>
+                            </div>
                         </div>
                     </div>
                     <div id="lista-mas-vendidos" class="ranking-list"></div>
@@ -1774,7 +1972,9 @@
                         <select id="editar-categoria" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-lg">
                             <option value="Verduras">Verduras</option>
                             <option value="Abarrotes">Abarrotes</option>
-                            <option value="Limpieza">Limpieza</option>
+                            <option value="Plásticos para el hogar">Plásticos para el hogar</option>
+                            <option value="Vajilla de porcelana">Vajilla de porcelana</option>
+                            <option value="Granos y frijoles">Granos y frijoles</option>
                             <option value="Otros">Otros</option>
                         </select>
                     </div>
@@ -1989,6 +2189,184 @@
             boton.classList.toggle('btn-cargando', cargando);
             boton.setAttribute('aria-busy', cargando ? 'true' : 'false');
         }
+
+        let selectorPersonalizadoAbierto = null;
+        let contadorSelectoresPersonalizados = 0;
+
+        function opcionesSelectorPersonalizado(select) {
+            return [...select.options].map((opcion, indice) => ({
+                indice,
+                texto: opcion.textContent,
+                seleccionada: opcion.selected,
+                deshabilitada: opcion.disabled
+            }));
+        }
+
+        function sincronizarSelectorPersonalizado(select) {
+            const contenedor = select.closest('.app-select');
+            if (!contenedor) return;
+            const valor = contenedor.querySelector('.app-select-value');
+            const opcion = select.options[select.selectedIndex];
+            valor.textContent = opcion?.textContent || 'Selecciona una opción';
+            contenedor.querySelector('.app-select-trigger').disabled = select.disabled;
+        }
+
+        function cerrarSelectorPersonalizado(devolverFoco = false) {
+            if (!selectorPersonalizadoAbierto) return;
+            const { contenedor, boton, menu } = selectorPersonalizadoAbierto;
+            menu.classList.add('hidden');
+            boton.setAttribute('aria-expanded', 'false');
+            contenedor.classList.remove('abierto');
+            selectorPersonalizadoAbierto = null;
+            if (devolverFoco) boton.focus();
+        }
+
+        function posicionarSelectorPersonalizado(boton, menu) {
+            const margen = 10;
+            const separacion = 6;
+            const rect = boton.getBoundingClientRect();
+            const espacioAbajo = window.innerHeight - rect.bottom - margen;
+            const espacioArriba = rect.top - margen;
+            const abrirArriba = espacioAbajo < 190 && espacioArriba > espacioAbajo;
+            const altoDisponible = Math.max(110, Math.min(320, (abrirArriba ? espacioArriba : espacioAbajo) - separacion));
+            const ancho = Math.min(Math.max(rect.width, 220), window.innerWidth - margen * 2);
+            const izquierda = Math.min(Math.max(margen, rect.left), window.innerWidth - ancho - margen);
+
+            menu.style.width = `${ancho}px`;
+            menu.style.maxHeight = `${altoDisponible}px`;
+            menu.style.left = `${izquierda}px`;
+            menu.style.top = abrirArriba ? 'auto' : `${rect.bottom + separacion}px`;
+            menu.style.bottom = abrirArriba ? `${window.innerHeight - rect.top + separacion}px` : 'auto';
+        }
+
+        function construirOpcionesSelector(select, menu) {
+            menu.replaceChildren();
+            opcionesSelectorPersonalizado(select).forEach(opcion => {
+                const botonOpcion = document.createElement('button');
+                botonOpcion.type = 'button';
+                botonOpcion.className = 'app-select-option';
+                botonOpcion.setAttribute('role', 'option');
+                botonOpcion.setAttribute('aria-selected', String(opcion.seleccionada));
+                botonOpcion.disabled = opcion.deshabilitada;
+
+                const texto = document.createElement('span');
+                texto.textContent = opcion.texto;
+                const marca = document.createElement('span');
+                marca.className = 'app-select-check';
+                marca.setAttribute('aria-hidden', 'true');
+                marca.textContent = opcion.seleccionada ? '✓' : '';
+                botonOpcion.append(texto, marca);
+
+                botonOpcion.addEventListener('click', () => {
+                    select.selectedIndex = opcion.indice;
+                    select.dispatchEvent(new Event('change', { bubbles: true }));
+                    sincronizarSelectorPersonalizado(select);
+                    cerrarSelectorPersonalizado(true);
+                });
+                menu.appendChild(botonOpcion);
+            });
+        }
+
+        function abrirSelectorPersonalizado(contenedor) {
+            const select = contenedor.querySelector('select');
+            const boton = contenedor.querySelector('.app-select-trigger');
+            const menu = document.getElementById(boton.getAttribute('aria-controls'));
+            if (select.disabled) return;
+            if (selectorPersonalizadoAbierto?.contenedor === contenedor) {
+                cerrarSelectorPersonalizado();
+                return;
+            }
+            cerrarSelectorPersonalizado();
+            sincronizarSelectorPersonalizado(select);
+            construirOpcionesSelector(select, menu);
+            menu.classList.remove('hidden');
+            boton.setAttribute('aria-expanded', 'true');
+            contenedor.classList.add('abierto');
+            selectorPersonalizadoAbierto = { contenedor, boton, menu };
+            posicionarSelectorPersonalizado(boton, menu);
+            requestAnimationFrame(() => menu.querySelector('[aria-selected="true"]:not(:disabled)')?.focus());
+        }
+
+        function moverFocoOpcion(menu, direccion) {
+            const opciones = [...menu.querySelectorAll('.app-select-option:not(:disabled)')];
+            if (!opciones.length) return;
+            const actual = opciones.indexOf(document.activeElement);
+            const siguiente = actual < 0 ? 0 : (actual + direccion + opciones.length) % opciones.length;
+            opciones[siguiente].focus();
+        }
+
+        function convertirSelectPersonalizado(select) {
+            if (select.closest('.app-select') || select.multiple) return;
+            const contenedor = document.createElement('div');
+            contenedor.className = 'app-select';
+            [...select.classList]
+                .filter(clase => /^m[trblxy]?-[\w.\[\]-]+$/.test(clase))
+                .forEach(clase => contenedor.classList.add(clase));
+            select.parentNode.insertBefore(contenedor, select);
+            contenedor.appendChild(select);
+            select.classList.add('app-select-native');
+            select.tabIndex = -1;
+
+            const idMenu = `app-select-menu-${++contadorSelectoresPersonalizados}`;
+            const boton = document.createElement('button');
+            boton.type = 'button';
+            boton.className = 'app-select-trigger';
+            boton.setAttribute('aria-haspopup', 'listbox');
+            boton.setAttribute('aria-expanded', 'false');
+            boton.setAttribute('aria-controls', idMenu);
+            const etiqueta = select.id ? document.querySelector(`label[for="${select.id}"]`) : null;
+            boton.setAttribute('aria-label', etiqueta?.textContent.trim() || select.getAttribute('aria-label') || 'Seleccionar opción');
+            boton.innerHTML = '<span class="app-select-value"></span><span class="app-select-chevron" aria-hidden="true">⌄</span>';
+
+            const menu = document.createElement('div');
+            menu.id = idMenu;
+            menu.className = 'app-select-menu hidden';
+            menu.setAttribute('role', 'listbox');
+            contenedor.appendChild(boton);
+            document.body.appendChild(menu);
+
+            boton.addEventListener('click', () => abrirSelectorPersonalizado(contenedor));
+            boton.addEventListener('keydown', event => {
+                if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(event.key)) {
+                    event.preventDefault();
+                    abrirSelectorPersonalizado(contenedor);
+                }
+            });
+            menu.addEventListener('keydown', event => {
+                if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                    event.preventDefault();
+                    moverFocoOpcion(menu, event.key === 'ArrowDown' ? 1 : -1);
+                } else if (event.key === 'Home' || event.key === 'End') {
+                    event.preventDefault();
+                    const opciones = [...menu.querySelectorAll('.app-select-option:not(:disabled)')];
+                    opciones[event.key === 'Home' ? 0 : opciones.length - 1]?.focus();
+                } else if (event.key === 'Escape') {
+                    event.preventDefault();
+                    cerrarSelectorPersonalizado(true);
+                }
+            });
+            select.addEventListener('change', () => sincronizarSelectorPersonalizado(select));
+            sincronizarSelectorPersonalizado(select);
+        }
+
+        function inicializarSelectoresPersonalizados() {
+            document.querySelectorAll('select:not([multiple])').forEach(convertirSelectPersonalizado);
+        }
+
+        document.addEventListener('click', event => {
+            if (selectorPersonalizadoAbierto && !selectorPersonalizadoAbierto.contenedor.contains(event.target) && !selectorPersonalizadoAbierto.menu.contains(event.target)) {
+                cerrarSelectorPersonalizado();
+            }
+        });
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && selectorPersonalizadoAbierto) cerrarSelectorPersonalizado(true);
+        });
+        document.addEventListener('reset', event => {
+            setTimeout(() => event.target.querySelectorAll('select').forEach(sincronizarSelectorPersonalizado));
+        });
+        window.addEventListener('resize', () => cerrarSelectorPersonalizado());
+        window.addEventListener('scroll', () => cerrarSelectorPersonalizado(), true);
+        inicializarSelectoresPersonalizados();
         
         auth.onAuthStateChanged(async (user) => {
             const startupScreen = document.getElementById('startup-screen');
@@ -2119,20 +2497,84 @@
             }).join('');
         }
 
+        const categoriasVentasBase = [
+            'Verduras',
+            'Abarrotes',
+            'Plásticos para el hogar',
+            'Vajilla de porcelana',
+            'Granos y frijoles',
+            'Otros'
+        ];
+        let categoriaVentasSeleccionada = 'todas';
+        let opcionesCategoriasVentas = [];
+
+        function obtenerCategoriasVentas() {
+            const categoriasInventario = inventario.map(producto => producto.categoria || 'Otros');
+            return [...new Set([...categoriasVentasBase, ...categoriasInventario])];
+        }
+
+        function renderizarMenuCategorias() {
+            const menu = document.getElementById('filtro-categoria-menu');
+            const texto = document.getElementById('filtro-categoria-texto');
+            if (!menu || !texto) return;
+            const categorias = obtenerCategoriasVentas();
+            if (categoriaVentasSeleccionada !== 'todas' && !categorias.includes(categoriaVentasSeleccionada)) {
+                categoriaVentasSeleccionada = 'todas';
+            }
+            opcionesCategoriasVentas = [{ valor: 'todas', texto: 'Todas las categorías' }, ...categorias.map(categoria => ({ valor: categoria, texto: categoria }))];
+            texto.textContent = opcionesCategoriasVentas.find(opcion => opcion.valor === categoriaVentasSeleccionada)?.texto || 'Todas las categorías';
+            menu.innerHTML = opcionesCategoriasVentas.map((opcion, indice) => {
+                const activa = opcion.valor === categoriaVentasSeleccionada;
+                return `<button type="button" class="category-picker-option" role="option" aria-selected="${activa}" onclick="seleccionarCategoriaVentasPorIndice(${indice})"><span>${escaparHTML(opcion.texto)}</span><span class="category-picker-check" aria-hidden="true">${activa ? '✓' : ''}</span></button>`;
+            }).join('');
+        }
+
+        function alternarMenuCategorias() {
+            const boton = document.getElementById('filtro-categoria-boton');
+            const menu = document.getElementById('filtro-categoria-menu');
+            if (!boton || !menu) return;
+            const abrir = menu.classList.contains('hidden');
+            if (abrir) renderizarMenuCategorias();
+            menu.classList.toggle('hidden', !abrir);
+            boton.setAttribute('aria-expanded', abrir ? 'true' : 'false');
+            if (abrir) requestAnimationFrame(() => menu.querySelector('[aria-selected="true"]')?.focus());
+        }
+
+        function cerrarMenuCategorias() {
+            document.getElementById('filtro-categoria-menu')?.classList.add('hidden');
+            document.getElementById('filtro-categoria-boton')?.setAttribute('aria-expanded', 'false');
+        }
+
+        function seleccionarCategoriaVentasPorIndice(indice) {
+            const opcion = opcionesCategoriasVentas[indice];
+            if (!opcion) return;
+            categoriaVentasSeleccionada = opcion.valor;
+            cerrarMenuCategorias();
+            renderizarGraficos();
+            document.getElementById('filtro-categoria-boton')?.focus();
+        }
+
+        document.addEventListener('click', event => {
+            const selector = document.getElementById('selector-categoria-ventas');
+            if (selector && !selector.contains(event.target)) cerrarMenuCategorias();
+        });
+
+        document.addEventListener('keydown', event => {
+            if (event.key !== 'Escape') return;
+            const boton = document.getElementById('filtro-categoria-boton');
+            if (boton?.getAttribute('aria-expanded') === 'true') {
+                cerrarMenuCategorias();
+                boton.focus();
+            }
+        });
+
         function renderizarGraficos() {
             const porProducto = {};
             const porDia = {};
             let totalVentas = 0;
             let unidadesVendidas = 0;
-            const selector = document.getElementById('filtro-categoria-ventas');
-            const categoriaSeleccionada = selector?.value || 'todas';
-            const categorias = [...new Set(inventario.map(p => p.categoria || 'Otros'))].sort();
-            if (selector) {
-                const valorActual = selector.value;
-                selector.innerHTML = '<option value="todas">Todas las categorías</option>' + categorias.map(categoria => `<option value="${escaparHTML(categoria)}">${escaparHTML(categoria)}</option>`).join('');
-                selector.value = categorias.includes(valorActual) ? valorActual : 'todas';
-            }
-            const filtro = selector?.value || categoriaSeleccionada;
+            renderizarMenuCategorias();
+            const filtro = categoriaVentasSeleccionada;
 
             ventas.forEach(venta => {
                 const fecha = obtenerFechaVenta(venta.fecha);
@@ -2432,6 +2874,7 @@
         }
 
         function renderizarCatalogo() {
+            cerrarAccionesCatalogo();
             const contenedor = document.getElementById('lista-catalogo');
             const busqueda = document.getElementById('buscar-producto').value.toLowerCase();
             contenedor.innerHTML = '';
@@ -2454,13 +2897,16 @@
                                 <h3 class="font-bold text-gray-800 text-lg leading-tight mt-1">${escaparHTML(p.nombre)}</h3>
                                 <p class="text-xs text-gray-500 mt-2 font-mono break-all">Código: ${escaparHTML(p.codigo || 'Sin código')}</p>
                             </div>
-                            <div class="flex gap-1 shrink-0">
-                                <button onclick="abrirModalEditar('${p.id}')" class="w-9 h-9 text-blue-500 hover:bg-blue-50 transition-colors" aria-label="Editar ${escaparHTML(p.nombre)}" title="Editar producto">
-                                    ✏️
-                                </button>
-                                <button onclick="abrirModalEliminar('${p.id}')" class="w-9 h-9 text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors" aria-label="Eliminar ${escaparHTML(p.nombre)}" title="Eliminar producto">
-                                    🗑
-                                </button>
+                            <div class="catalog-actions">
+                                <button type="button" class="catalog-actions-trigger" onclick="alternarAccionesCatalogo(event, '${p.id}')" aria-label="Acciones para ${escaparHTML(p.nombre)}" aria-haspopup="menu" aria-expanded="false">⋮</button>
+                                <div id="acciones-catalogo-${p.id}" class="catalog-actions-menu hidden" role="menu">
+                                    <button type="button" class="catalog-action" role="menuitem" onclick="editarDesdeMenuCatalogo(event, '${p.id}')">
+                                        <span class="catalog-action-icon" aria-hidden="true">✎</span><span>Editar producto</span>
+                                    </button>
+                                    <button type="button" class="catalog-action catalog-action-danger" role="menuitem" onclick="eliminarDesdeMenuCatalogo(event, '${p.id}')">
+                                        <span class="catalog-action-icon" aria-hidden="true">🗑</span><span>Eliminar producto</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         
@@ -2480,6 +2926,51 @@
                 `;
             });
         }
+
+        let menuCatalogoAbierto = null;
+
+        function cerrarAccionesCatalogo() {
+            if (!menuCatalogoAbierto) return;
+            menuCatalogoAbierto.menu.classList.add('hidden');
+            menuCatalogoAbierto.boton.setAttribute('aria-expanded', 'false');
+            menuCatalogoAbierto = null;
+        }
+
+        function alternarAccionesCatalogo(event, id) {
+            event.stopPropagation();
+            const boton = event.currentTarget;
+            const menu = document.getElementById(`acciones-catalogo-${id}`);
+            const yaEstaAbierto = menuCatalogoAbierto?.menu === menu;
+            cerrarAccionesCatalogo();
+            if (yaEstaAbierto || !menu) return;
+            menu.classList.remove('hidden');
+            boton.setAttribute('aria-expanded', 'true');
+            menuCatalogoAbierto = { menu, boton };
+        }
+
+        function editarDesdeMenuCatalogo(event, id) {
+            event.stopPropagation();
+            cerrarAccionesCatalogo();
+            abrirModalEditar(id);
+        }
+
+        function eliminarDesdeMenuCatalogo(event, id) {
+            event.stopPropagation();
+            cerrarAccionesCatalogo();
+            abrirModalEliminar(id);
+        }
+
+        document.addEventListener('click', event => {
+            if (menuCatalogoAbierto && !menuCatalogoAbierto.menu.parentElement.contains(event.target)) cerrarAccionesCatalogo();
+        });
+
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && menuCatalogoAbierto) {
+                const boton = menuCatalogoAbierto.boton;
+                cerrarAccionesCatalogo();
+                boton.focus();
+            }
+        });
 
         function abrirModalEditar(id) {
             const producto = inventario.find(p => p.id === id);
@@ -2508,6 +2999,9 @@
                 selectorCategoria.add(new Option(categoria, categoria));
             }
             selectorCategoria.value = categoria;
+            ['editar-categoria', 'editar-unidad-venta', 'editar-tamanos'].forEach(id => {
+                sincronizarSelectorPersonalizado(document.getElementById(id));
+            });
             document.getElementById('modal-editar').classList.remove('hidden');
         }
 

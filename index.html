@@ -2820,14 +2820,22 @@
         function actualizarResumen() {
             let totalUnidades = 0, costoTotal = 0, ventaTotal = 0;
             inventario.forEach(p => {
-                totalUnidades += p.stock;
-                costoTotal += (p.costo * p.stock);
-                ventaTotal += (p.precio * p.stock);
+                const stock = Number(p.stock);
+                const costo = Number(p.costo);
+                const precio = Number(p.precio);
+                const stockValido = Number.isFinite(stock) ? stock : 0;
+
+                totalUnidades += stockValido;
+                costoTotal += (Number.isFinite(costo) ? costo : 0) * stockValido;
+                ventaTotal += (Number.isFinite(precio) ? precio : 0) * stockValido;
             });
 
             document.getElementById('resumen-variedad').innerText = inventario.length;
             document.getElementById('resumen-unidades').innerText = totalUnidades.toFixed(2);
-            const ventasRealizadas = ventas.reduce((total, venta) => total + (Number(venta.total) || 0), 0);
+            const ventasRealizadas = ventas.reduce((total, venta) => {
+                const importe = Number(venta.total);
+                return total + (Number.isFinite(importe) ? importe : 0);
+            }, 0);
             document.getElementById('resumen-costo').innerText = `Q${costoTotal.toFixed(2)}`;
             document.getElementById('resumen-venta').innerText = `Q${ventasRealizadas.toFixed(2)}`;
             document.getElementById('resumen-ganancia').innerText = `Q${(ventaTotal - costoTotal).toFixed(2)}`;

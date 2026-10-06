@@ -347,6 +347,12 @@
         .barra-grafico.secundaria { background: var(--gold); }
 
         .chart-card { overflow: hidden; }
+        .ranking-list { display: grid; gap: .65rem; }
+        .ranking-item { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: .75rem; padding: .8rem; border: 1px solid var(--ui-border); border-radius: 12px; background: rgba(248,250,252,.75); }
+        .ranking-position { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: var(--teal-soft); color: var(--ui-primary-dark); font-weight: 900; }
+        .movement-list { display: grid; gap: .65rem; max-height: 55vh; overflow-y: auto; }
+        .movement-item { display: flex; justify-content: space-between; gap: 1rem; padding: .85rem; border: 1px solid var(--ui-border); border-radius: 12px; background: #f8fafc; }
+        body.dark-mode .ranking-item, body.dark-mode .movement-item { background: #132a39; border-color: #294354; }
         .chart-wrap {
             position: relative;
             width: 100%;
@@ -638,7 +644,7 @@
             align-items: flex-start;
             justify-content: space-between;
             gap: 1rem;
-            margin-bottom: 1.75rem;
+            margin-bottom: 1.25rem;
         }
         .settings-back {
             display: inline-flex;
@@ -653,7 +659,41 @@
             font-weight: 800;
         }
         .settings-back:hover { background: #fff; border-color: #9fcac5; }
-        .settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+        .inventory-page-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: .85rem;
+        }
+        .inventory-page-header h2 { margin-bottom: 0 !important; }
+        .inventory-page-header .settings-back { flex: 0 0 auto; }
+        .settings-intro {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding: 1rem 1.15rem;
+            border: 1px solid #cbe3df;
+            border-radius: var(--ui-radius);
+            background: linear-gradient(135deg, #e8f6f3, #f7fafb);
+        }
+        .settings-intro-icon {
+            display: grid;
+            place-items: center;
+            width: 46px;
+            height: 46px;
+            flex: 0 0 auto;
+            border-radius: 14px;
+            background: var(--ui-primary);
+            color: #fff;
+            font-size: 1.25rem;
+            box-shadow: 0 7px 16px rgba(15,118,110,.2);
+        }
+        .settings-intro strong { display: block; color: var(--ui-navy); font-size: .9rem; }
+        .settings-intro span { display: block; margin-top: .18rem; color: var(--ui-muted); font-size: .75rem; line-height: 1.4; }
+        .settings-grid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(270px, .75fr); gap: 1rem; align-items: start; }
+        .settings-column { display: grid; gap: 1rem; min-width: 0; }
         .settings-panel {
             overflow: hidden;
             border: 1px solid var(--ui-border);
@@ -661,7 +701,9 @@
             background: rgba(255,255,255,.94);
             box-shadow: 0 8px 26px rgba(15,42,67,.055);
         }
-        .settings-panel-wide { grid-column: 1 / -1; }
+        .settings-panel-featured { border-color: #bcded9; box-shadow: 0 12px 30px rgba(15,118,110,.08); }
+        .settings-panel-featured .settings-panel-heading { background: linear-gradient(135deg, #f0faf8, #fff); }
+        .settings-panel-wide { grid-column: auto; }
         .settings-panel-heading { padding: 1.1rem 1.2rem .8rem; border-bottom: 1px solid #e8eef1; }
         .settings-panel-heading span { display: block; color: var(--ui-navy); font-size: .92rem; font-weight: 800; }
         .settings-panel-heading small { display: block; margin-top: .2rem; color: var(--ui-muted); font-size: .73rem; }
@@ -719,6 +761,28 @@
         /* Modales homogéneos y fáciles de leer. */
         [id^="modal-"] > div:not(.scanner-panel) { border-radius: 18px !important; }
         [id^="modal-"] h3 { color: var(--ui-navy); }
+        .confirm-icon {
+            display: grid;
+            place-items: center;
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 1rem;
+            border-radius: 18px;
+            background: #fff1f2;
+            color: #be123c;
+            font-size: 1.75rem;
+            font-weight: 900;
+        }
+        .confirm-detail {
+            margin: 1rem 0 1.5rem;
+            padding: .85rem 1rem;
+            border: 1px solid #f5d5d9;
+            border-radius: 12px;
+            background: #fff8f8;
+            color: #9f2531;
+            font-size: .8rem;
+            font-weight: 700;
+        }
 
         body.dark-mode {
             --ui-bg: #091722;
@@ -728,7 +792,12 @@
         }
         body.dark-mode #app-content { background: #091722; }
         body.dark-mode .settings-back { background: #102331; border-color: #315064; color: #84ded4; }
+        body.dark-mode .settings-intro { background: linear-gradient(135deg, #123432, #102331); border-color: #2c5d5a; }
+        body.dark-mode .settings-intro strong { color: #edf6f8; }
+        body.dark-mode .settings-intro-icon { background: #168c86; }
         body.dark-mode .settings-panel { background: #102331; border-color: #294354; box-shadow: 0 12px 30px rgba(0,0,0,.18); }
+        body.dark-mode .settings-panel-featured { border-color: #2c5d5a; }
+        body.dark-mode .settings-panel-featured .settings-panel-heading { background: #123432; }
         body.dark-mode .settings-panel-heading,
         body.dark-mode .settings-action + .settings-action { border-color: #294354; }
         body.dark-mode .settings-panel-heading span,
@@ -740,6 +809,8 @@
         body.dark-mode .settings-action-danger:hover { background: #301c23; }
         body.dark-mode .settings-action-danger .settings-action-icon { background: #452329; color: #f29ba4; }
         body.dark-mode .settings-action-danger .settings-action-copy strong { color: #ffabb3; }
+        body.dark-mode .confirm-icon { background: #452329; color: #ffabb3; }
+        body.dark-mode .confirm-detail { background: #2a1a21; border-color: #573139; color: #f4a2aa; }
 
         @media (max-width: 640px) {
             #app-content header { min-height: 66px; }
@@ -753,9 +824,16 @@
             #tab-nuevo > .bg-white { padding: 1rem; }
             #tab-nuevo .grid.grid-cols-2 { gap: .75rem; }
             #tab-nuevo .grid.grid-cols-2 label { min-height: 2.25rem; display: flex; align-items: flex-end; }
-            .settings-header { display: block; margin-bottom: 1.25rem; }
-            .settings-header .settings-back { margin-bottom: 1.25rem; }
+            .settings-header { display: flex; align-items: flex-start; margin-bottom: 1rem; }
+            .settings-header > div { min-width: 0; }
+            .settings-header .settings-back { margin: 0; flex: 0 0 auto; }
+            .settings-header .settings-back span:last-child,
+            .inventory-page-header .settings-back span:last-child { display: none; }
+            .inventory-page-header { margin-bottom: .65rem; }
+            .settings-intro { align-items: flex-start; padding: .9rem; }
+            .settings-intro-icon { width: 42px; height: 42px; }
             .settings-grid { grid-template-columns: 1fr; gap: .8rem; }
+            .settings-column { gap: .8rem; }
             .settings-panel-wide { grid-column: auto; }
             .settings-action { min-height: 72px; padding: .85rem 1rem; }
             .settings-action-icon { width: 40px; height: 40px; }
@@ -974,6 +1052,75 @@
             [id^="modal-"]:not(.hidden),
             [id^="modal-"]:not(.hidden) > div { animation: none; }
         }
+
+        /* Selector de producto: cantidad y presentaciones claramente separadas. */
+        .product-choice-summary {
+            padding: 1rem;
+            border: 1px solid #dce6eb;
+            border-radius: 14px;
+            background: linear-gradient(145deg, #f4faf9, #f8fafc);
+            text-align: left;
+        }
+        .product-choice-step {
+            display: flex;
+            align-items: center;
+            gap: .55rem;
+            margin-bottom: .65rem;
+            color: #526176;
+            font-size: .76rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: .045em;
+        }
+        .product-choice-step span {
+            display: grid;
+            place-items: center;
+            width: 23px;
+            height: 23px;
+            border-radius: 50%;
+            background: #dff3ef;
+            color: #0f766e;
+            font-size: .72rem;
+        }
+        .product-choice-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: .65rem;
+        }
+        .product-choice-grid.three-options { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .product-choice-button {
+            min-height: 68px;
+            padding: .7rem .55rem;
+            border: 1px solid #b9ded8;
+            background: #eff9f7;
+            color: #115e59;
+            font-size: .78rem;
+            font-weight: 800;
+            line-height: 1.3;
+            box-shadow: 0 5px 14px rgba(15,118,110,.07);
+        }
+        .product-choice-button:hover { background: #dff3ef; border-color: #7bc3ba; }
+        .product-choice-button strong { display: block; color: #102a43; font-size: .9rem; }
+        .product-choice-button small { display: block; margin-top: .2rem; color: #0f766e; font-size: .72rem; }
+        .product-choice-button.option-blue { border-color: #c9d9eb; background: #f0f5fa; color: #315f8c; }
+        .product-choice-button.option-blue:hover { background: #e5eef7; border-color: #94b4d2; }
+        .product-choice-button.option-blue small { color: #315f8c; }
+        .product-choice-button.option-gold { border-color: #ead8ad; background: #fdf8ed; color: #8a6418; }
+        .product-choice-button.option-gold:hover { background: #f9edcf; border-color: #d5b565; }
+        .product-choice-button.option-gold small { color: #8a6418; }
+        body.dark-mode .product-choice-summary { background: #132a39; border-color: #294354; }
+        body.dark-mode .product-choice-step { color: #aebfc9; }
+        body.dark-mode .product-choice-button { background: #153d3b; border-color: #2c6b67; color: #84ded4; }
+        body.dark-mode .product-choice-button strong { color: #edf6f8; }
+        body.dark-mode .product-choice-button small { color: #84ded4; }
+        body.dark-mode .product-choice-button.option-blue { background: #172f45; border-color: #315574; }
+        body.dark-mode .product-choice-button.option-blue small { color: #9bc3e8; }
+        body.dark-mode .product-choice-button.option-gold { background: #392f1c; border-color: #68552b; }
+        body.dark-mode .product-choice-button.option-gold small { color: #e4c677; }
+        @media (max-width: 420px) {
+            .product-choice-grid.three-options { grid-template-columns: 1fr; }
+            .product-choice-grid.three-options .product-choice-button { min-height: 58px; }
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans antialiased">
@@ -1081,7 +1228,12 @@
 
             <!-- 2. PESTAÑA: CATÁLOGO -->
             <section id="tab-catalogo" class="fade-in hidden">
-                <h2 class="text-2xl font-bold mb-4 text-gray-800">Catálogo</h2>
+                <div class="inventory-page-header">
+                    <h2 class="text-2xl font-bold text-gray-800">Catálogo</h2>
+                    <button type="button" onclick="cambiarTab('ajustes')" class="settings-back" aria-label="Regresar a Ajustes">
+                        <span aria-hidden="true">←</span><span>Regresar</span>
+                    </button>
+                </div>
                 <p class="text-sm text-gray-500 font-medium">Consulta existencias, precios y edita tus productos.</p>
                 <div class="relative mb-6">
                     <span class="absolute left-4 top-3.5 text-gray-400">🔍</span>
@@ -1093,7 +1245,12 @@
 
             <!-- 3. PESTAÑA: ALERTAS (FALTANTES) -->
             <section id="tab-faltantes" class="fade-in hidden">
-                <h2 class="text-2xl font-bold mb-2 text-gray-800">Alertas de Stock</h2>
+                <div class="inventory-page-header">
+                    <h2 class="text-2xl font-bold text-gray-800">Alertas de Stock</h2>
+                    <button type="button" onclick="cambiarTab('ajustes')" class="settings-back" aria-label="Regresar a Ajustes">
+                        <span aria-hidden="true">←</span><span>Regresar</span>
+                    </button>
+                </div>
                 <p class="text-sm text-gray-500 mb-6 font-medium">Productos agotados o que están por terminarse (5 o menos).</p>
                 <div id="lista-faltantes" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </section>
@@ -1147,6 +1304,21 @@
                         <p id="grafico-unidades-vendidas" class="text-2xl font-black text-gray-700 mt-2">0</p>
                     </div>
                 </div>
+                <div class="chart-card bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-4">
+                    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700">Productos más vendidos</h3>
+                            <p class="text-xs text-gray-500 mt-1">Filtra las ventas por categoría.</p>
+                        </div>
+                        <div class="w-full sm:w-56">
+                            <label for="filtro-categoria-ventas" class="block text-xs mb-1">Categoría</label>
+                            <select id="filtro-categoria-ventas" onchange="renderizarGraficos()" class="w-full p-3 border border-gray-200">
+                                <option value="todas">Todas las categorías</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="lista-mas-vendidos" class="ranking-list"></div>
+                </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="chart-card bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
                         <h3 class="font-bold text-gray-700 border-b border-gray-100 pb-3 mb-4">Ventas por producto · Barras</h3>
@@ -1172,84 +1344,108 @@
                         <p class="text-sm text-gray-500 font-medium">Personaliza la aplicación y administra la información de tu negocio.</p>
                     </div>
                     <button type="button" onclick="volverDesdeAjustes()" class="settings-back" aria-label="Regresar a la pantalla anterior">
-                        <span aria-hidden="true">←</span> Regresar
+                        <span aria-hidden="true">←</span><span>Regresar</span>
                     </button>
                 </div>
 
                 <div class="settings-grid">
-                    <div class="settings-panel">
-                        <div class="settings-panel-heading">
-                            <span>Preferencias</span>
-                            <small>Ajusta la apariencia de la aplicación.</small>
+                    <div class="settings-column">
+                        <div class="settings-panel settings-panel-featured">
+                            <div class="settings-panel-heading">
+                                <span>Datos y reportes</span>
+                                <small>Protege y descarga la información de tu negocio.</small>
+                            </div>
+                            <button onclick="abrirModalRespaldo()" class="settings-action">
+                                <span class="settings-action-icon" aria-hidden="true">⬡</span>
+                                <span class="settings-action-copy"><strong>Respaldar todos los datos</strong><small>Guarda inventario, ventas, movimientos y reportes en JSON</small></span>
+                                <span class="settings-action-arrow" aria-hidden="true">›</span>
+                            </button>
+                            <button onclick="abrirSelectorRestauracion()" class="settings-action">
+                                <span class="settings-action-icon" aria-hidden="true">↥</span>
+                                <span class="settings-action-copy"><strong>Restaurar respaldo</strong><small>Recupera los datos desde un archivo JSON guardado</small></span>
+                                <span class="settings-action-arrow" aria-hidden="true">›</span>
+                            </button>
+                            <button onclick="abrirModalExportarInventario()" class="settings-action">
+                                <span class="settings-action-icon" aria-hidden="true">⇩</span>
+                                <span class="settings-action-copy"><strong>Descargar inventario</strong><small>Exporta todos los productos en formato CSV</small></span>
+                                <span class="settings-action-arrow" aria-hidden="true">›</span>
+                            </button>
+                            <button onclick="abrirModalReportes()" class="settings-action">
+                                <span class="settings-action-icon" aria-hidden="true">▤</span>
+                                <span class="settings-action-copy"><strong>Reporte de ventas</strong><small>Genera, guarda y descarga informes en PDF</small></span>
+                                <span class="settings-action-arrow" aria-hidden="true">›</span>
+                            </button>
                         </div>
-                        <label for="interruptor-modo-oscuro" class="settings-action settings-action-control">
-                            <span class="flex items-center gap-4 min-w-0">
-                                <span class="settings-action-icon" aria-hidden="true">◐</span>
-                                <span class="settings-action-copy"><strong>Modo oscuro</strong><small>Reduce el brillo y mejora la lectura nocturna</small></span>
-                            </span>
-                            <span class="theme-switch">
-                                <input id="interruptor-modo-oscuro" type="checkbox" onchange="cambiarModoOscuro(this.checked)" aria-label="Activar modo oscuro">
-                                <span class="theme-slider" aria-hidden="true"></span>
-                            </span>
-                        </label>
+
+                        <div class="settings-panel">
+                            <div class="settings-panel-heading">
+                                <span>Inventario</span>
+                                <small>Consulta y administra tus existencias.</small>
+                            </div>
+                            <button onclick="cambiarTab('catalogo')" class="settings-action">
+                                <span class="settings-action-icon" aria-hidden="true">▦</span>
+                                <span class="settings-action-copy"><strong>Catálogo de productos</strong><small>Edita productos, precios y existencias</small></span>
+                                <span class="settings-action-arrow" aria-hidden="true">›</span>
+                            </button>
+                            <button onclick="cambiarTab('faltantes')" class="settings-action">
+                                <span class="settings-action-icon" aria-hidden="true">!</span>
+                                <span class="settings-action-copy"><strong>Alertas de stock</strong><small>Revisa productos agotados o por terminarse</small></span>
+                                <span class="settings-action-arrow" aria-hidden="true">›</span>
+                            </button>
+                            <button onclick="abrirModalMovimientos()" class="settings-action">
+                                <span class="settings-action-icon" aria-hidden="true">↕</span>
+                                <span class="settings-action-copy"><strong>Historial de movimientos</strong><small>Consulta entradas, ajustes y salidas por ventas</small></span>
+                                <span class="settings-action-arrow" aria-hidden="true">›</span>
+                            </button>
+                        </div>
                     </div>
 
-                    <div class="settings-panel">
-                        <div class="settings-panel-heading">
-                            <span>Inventario</span>
-                            <small>Consulta y administra tus existencias.</small>
+                    <div class="settings-column">
+                        <div class="settings-panel">
+                            <div class="settings-panel-heading">
+                                <span>Preferencias</span>
+                                <small>Ajusta la apariencia.</small>
+                            </div>
+                            <label for="interruptor-modo-oscuro" class="settings-action settings-action-control">
+                                <span class="flex items-center gap-4 min-w-0">
+                                    <span class="settings-action-icon" aria-hidden="true">◐</span>
+                                    <span class="settings-action-copy"><strong>Modo oscuro</strong><small>Mejora la lectura nocturna</small></span>
+                                </span>
+                                <span class="theme-switch">
+                                    <input id="interruptor-modo-oscuro" type="checkbox" onchange="cambiarModoOscuro(this.checked)" aria-label="Activar modo oscuro">
+                                    <span class="theme-slider" aria-hidden="true"></span>
+                                </span>
+                            </label>
                         </div>
-                        <button onclick="cambiarTab('catalogo')" class="settings-action">
-                            <span class="settings-action-icon" aria-hidden="true">▦</span>
-                            <span class="settings-action-copy"><strong>Catálogo de productos</strong><small>Edita productos, precios y existencias</small></span>
-                            <span class="settings-action-arrow" aria-hidden="true">›</span>
-                        </button>
-                        <button onclick="cambiarTab('faltantes')" class="settings-action">
-                            <span class="settings-action-icon" aria-hidden="true">!</span>
-                            <span class="settings-action-copy"><strong>Alertas de stock</strong><small>Revisa productos agotados o por terminarse</small></span>
-                            <span class="settings-action-arrow" aria-hidden="true">›</span>
-                        </button>
-                    </div>
 
-                    <div class="settings-panel settings-panel-wide">
-                        <div class="settings-panel-heading">
-                            <span>Datos y reportes</span>
-                            <small>Descarga respaldos e informes de tu negocio.</small>
+                        <div class="settings-panel">
+                            <div class="settings-panel-heading">
+                                <span>Cuenta</span>
+                                <small>Administra tu sesión actual.</small>
+                            </div>
+                            <button onclick="cerrarSesion()" class="settings-action">
+                                <span class="settings-action-icon" aria-hidden="true">↪</span>
+                                <span class="settings-action-copy"><strong>Cerrar sesión</strong><small>Salir de esta cuenta de forma segura</small></span>
+                                <span class="settings-action-arrow" aria-hidden="true">›</span>
+                            </button>
                         </div>
-                        <button onclick="exportarCSV()" class="settings-action">
-                            <span class="settings-action-icon" aria-hidden="true">⇩</span>
-                            <span class="settings-action-copy"><strong>Descargar inventario</strong><small>Exporta todos los productos en formato CSV</small></span>
-                            <span class="settings-action-arrow" aria-hidden="true">›</span>
-                        </button>
-                        <button onclick="abrirModalReportes()" class="settings-action">
-                            <span class="settings-action-icon" aria-hidden="true">▤</span>
-                            <span class="settings-action-copy"><strong>Reporte de ventas</strong><small>Genera, guarda y descarga informes en PDF</small></span>
-                            <span class="settings-action-arrow" aria-hidden="true">›</span>
-                        </button>
-                    </div>
 
-                    <div class="settings-panel">
-                        <div class="settings-panel-heading">
-                            <span>Cuenta</span>
-                            <small>Administra tu sesión actual.</small>
+                        <div class="settings-panel settings-danger">
+                            <div class="settings-panel-heading">
+                                <span>Zona de peligro</span>
+                                <small>Estas acciones no se pueden deshacer.</small>
+                            </div>
+                            <button onclick="limpiarInventario()" class="settings-action settings-action-danger">
+                                <span class="settings-action-icon" aria-hidden="true">×</span>
+                                <span class="settings-action-copy"><strong>Borrar inventario</strong><small>Elimina todos los productos</small></span>
+                                <span class="settings-action-arrow" aria-hidden="true">›</span>
+                            </button>
+                            <button onclick="limpiarVentas()" class="settings-action settings-action-danger">
+                                <span class="settings-action-icon" aria-hidden="true">×</span>
+                                <span class="settings-action-copy"><strong>Borrar ventas</strong><small>Elimina todo el historial</small></span>
+                                <span class="settings-action-arrow" aria-hidden="true">›</span>
+                            </button>
                         </div>
-                        <button onclick="cerrarSesion()" class="settings-action">
-                            <span class="settings-action-icon" aria-hidden="true">↪</span>
-                            <span class="settings-action-copy"><strong>Cerrar sesión</strong><small>Salir de esta cuenta de forma segura</small></span>
-                            <span class="settings-action-arrow" aria-hidden="true">›</span>
-                        </button>
-                    </div>
-
-                    <div class="settings-panel settings-danger">
-                        <div class="settings-panel-heading">
-                            <span>Zona de peligro</span>
-                            <small>Esta acción no se puede deshacer.</small>
-                        </div>
-                        <button onclick="limpiarTodo()" class="settings-action settings-action-danger">
-                            <span class="settings-action-icon" aria-hidden="true">×</span>
-                            <span class="settings-action-copy"><strong>Borrar todos los datos</strong><small>Elimina permanentemente inventario y ventas</small></span>
-                            <span class="settings-action-arrow" aria-hidden="true">›</span>
-                        </button>
                     </div>
                 </div>
             </section>
@@ -1280,7 +1476,9 @@
                                 <select id="nuevo-categoria" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white text-lg">
                                     <option value="Verduras">Verduras</option>
                                     <option value="Abarrotes">Abarrotes</option>
-                                    <option value="Limpieza">Limpieza</option>
+                                    <option value="Plásticos para el hogar">Plásticos para el hogar</option>
+                                    <option value="Vajilla de porcelana">Vajilla de porcelana</option>
+                                    <option value="Granos y frijoles">Granos y frijoles</option>
                                     <option value="Otros">Otros</option>
                                 </select>
                             </div>
@@ -1342,18 +1540,13 @@
                             </div>
                         </div>
 
-                        <div id="nuevo-datos-ambas" class="hidden grid grid-cols-2 gap-4 mb-5">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-600 mb-2">Precio por unidad</label>
-                                <div class="relative">
-                                    <span class="absolute left-4 top-4 text-gray-500 font-bold">Q</span>
-                                    <input type="number" id="nuevo-precio-unidad" min="0" step="0.01" class="w-full p-4 pl-9 bg-gray-50 border border-gray-200 text-lg" placeholder="Ej. 2.00">
-                                </div>
+                        <div id="nuevo-datos-ambas" class="hidden mb-5">
+                            <label class="block text-sm font-medium text-gray-600 mb-2">Precio por unidad</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-4 text-gray-500 font-bold">Q</span>
+                                <input type="number" id="nuevo-precio-unidad" min="0" step="0.01" class="w-full p-4 pl-9 bg-gray-50 border border-gray-200 text-lg" placeholder="Ej. 2.00">
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-600 mb-2">Peso de una unidad (lb)</label>
-                                <input type="number" id="nuevo-peso-unidad" min="0.01" step="0.01" class="w-full p-4 bg-gray-50 border border-gray-200 text-lg" placeholder="Ej. 0.50">
-                            </div>
+                            <p class="mt-2 text-xs text-gray-500">Cada unidad vendida descuenta 1 de las existencias.</p>
                         </div>
 
                         <div class="mb-8 rounded-lg border border-teal-100 bg-teal-50 p-3 text-sm text-teal-800">
@@ -1392,6 +1585,41 @@
     </div>
 
     <!-- MODALES OCULTOS -->
+    <input id="archivo-restauracion" type="file" accept="application/json,.json" class="hidden" onchange="prepararRestauracion(event)">
+
+    <div id="modal-restaurar" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden p-4" role="dialog" aria-modal="true" aria-labelledby="titulo-restaurar">
+        <div class="bg-white p-6 w-full max-w-md shadow-2xl">
+            <p class="text-xs font-bold uppercase tracking-wider text-teal-600 mb-2">Recuperación de datos</p>
+            <h3 id="titulo-restaurar" class="text-xl font-bold text-gray-800">Restaurar respaldo</h3>
+            <p id="resumen-restauracion" class="mt-2 text-sm text-gray-500"></p>
+            <div class="my-5 grid grid-cols-3 gap-2 text-center">
+                <div class="bg-gray-50 p-3 rounded-xl"><strong id="restaurar-productos" class="block text-xl text-teal-600">0</strong><span class="text-xs text-gray-500">Productos</span></div>
+                <div class="bg-gray-50 p-3 rounded-xl"><strong id="restaurar-ventas" class="block text-xl text-teal-600">0</strong><span class="text-xs text-gray-500">Ventas</span></div>
+                <div class="bg-gray-50 p-3 rounded-xl"><strong id="restaurar-reportes" class="block text-xl text-teal-600">0</strong><span class="text-xs text-gray-500">Reportes</span></div>
+            </div>
+            <label for="modo-restauracion" class="block text-sm mb-2">Forma de restauración</label>
+            <select id="modo-restauracion" class="w-full p-3 border border-gray-200 mb-5">
+                <option value="combinar">Combinar con los datos actuales</option>
+                <option value="reemplazar">Reemplazar todos los datos actuales</option>
+            </select>
+            <p class="mb-5 text-xs text-red-500 font-semibold">Reemplazar elimina primero los datos actuales. Esta acción no se puede deshacer.</p>
+            <div class="flex gap-3">
+                <button type="button" onclick="cerrarModalRestaurar()" class="flex-1 bg-gray-100 text-gray-700 py-3 font-bold">Cancelar</button>
+                <button id="btn-confirmar-restauracion" type="button" onclick="confirmarRestauracion()" class="flex-1 bg-teal-600 text-white py-3 font-bold">Restaurar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-movimientos" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden p-4" role="dialog" aria-modal="true" aria-labelledby="titulo-movimientos">
+        <div class="bg-white p-6 w-full max-w-lg shadow-2xl">
+            <div class="flex items-start justify-between mb-4">
+                <div><p class="text-xs font-bold uppercase tracking-wider text-teal-600">Inventario</p><h3 id="titulo-movimientos" class="text-xl font-bold text-gray-800">Historial de movimientos</h3></div>
+                <button type="button" onclick="cerrarModalMovimientos()" class="text-2xl text-gray-400" aria-label="Cerrar">×</button>
+            </div>
+            <div id="lista-movimientos" class="movement-list"></div>
+        </div>
+    </div>
+
     <div id="modal-producto-agregado" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden p-4" role="dialog" aria-modal="true" aria-labelledby="titulo-producto-agregado">
         <div class="bg-white p-6 rounded-2xl w-full max-w-sm text-center shadow-2xl">
             <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl" aria-hidden="true">✓</div>
@@ -1428,24 +1656,69 @@
             <p class="text-xs font-bold uppercase tracking-wider text-teal-600 mb-1">Producto encontrado</p>
             <h3 id="titulo-producto-escaneado" class="text-xl font-bold text-gray-800"></h3>
             <p id="codigo-producto-escaneado" class="text-xs text-gray-400 mt-1"></p>
-            <p id="precio-producto-escaneado" class="text-3xl font-black text-teal-600 my-5"></p>
-            <p id="stock-producto-escaneado" class="text-sm text-gray-500 mb-4"></p>
-            <div class="mb-4 text-left">
+            <div class="product-choice-summary my-4">
+                <p id="precio-producto-escaneado" class="text-2xl font-black text-teal-600"></p>
+                <p id="stock-producto-escaneado" class="text-sm text-gray-500 mt-1"></p>
+            </div>
+            <div class="mb-5 text-left">
+                <p class="product-choice-step"><span>1</span> Indica la cantidad</p>
                 <label id="label-cantidad-escaneada" for="cantidad-producto-escaneado" class="block text-sm mb-2">Cantidad a agregar</label>
                 <input id="cantidad-producto-escaneado" type="number" min="0.01" step="1" value="1" inputmode="decimal" class="w-full p-3 border border-gray-200 text-center text-lg font-bold" oninput="validarCantidadEscaneada()">
                 <p id="ayuda-cantidad-escaneada" class="mt-1 text-xs text-gray-500">Indica cuántas unidades deseas agregar.</p>
             </div>
-            <div id="opciones-producto-escaneado" class="hidden grid grid-cols-2 gap-3 mb-3">
-                <button id="btn-agregar-libra-escaneada" type="button" class="bg-teal-600 hover:bg-teal-700 text-white py-3 font-bold">Vender por libra</button>
-                <button id="btn-agregar-unidad-escaneada" type="button" class="bg-blue-600 hover:bg-blue-700 text-white py-3 font-bold">Vender por unidad</button>
+            <div id="bloque-presentacion-escaneada" class="hidden mb-5 text-left">
+                <p class="product-choice-step"><span>2</span> Elige cómo venderlo</p>
+                <div id="opciones-producto-escaneado" class="hidden product-choice-grid">
+                    <button id="btn-agregar-libra-escaneada" type="button" class="product-choice-button option-gold"><strong>Por libra</strong><small></small></button>
+                    <button id="btn-agregar-unidad-escaneada" type="button" class="product-choice-button option-blue"><strong>Por unidad</strong><small></small></button>
+                </div>
+                <div id="opciones-tamano-escaneado" class="hidden product-choice-grid">
+                    <button id="btn-agregar-libra-tamano-escaneada" type="button" class="hidden product-choice-button option-gold"><strong>Por libra</strong><small></small></button>
+                    <button id="btn-agregar-mediano-escaneado" type="button" class="product-choice-button option-blue"><strong>Mediano</strong><small></small></button>
+                    <button id="btn-agregar-grande-escaneado" type="button" class="product-choice-button"><strong>Grande</strong><small></small></button>
+                </div>
             </div>
-            <div id="opciones-tamano-escaneado" class="hidden grid grid-cols-2 gap-3 mb-3">
-                <button id="btn-agregar-mediano-escaneado" type="button" class="bg-blue-600 hover:bg-blue-700 text-white py-3 font-bold">Mediano</button>
-                <button id="btn-agregar-grande-escaneado" type="button" class="bg-teal-600 hover:bg-teal-700 text-white py-3 font-bold">Grande</button>
-            </div>
-            <div class="flex gap-3">
+            <div class="flex gap-3 border-t border-gray-100 pt-4">
                 <button type="button" onclick="cerrarProductoEscaneado()" class="flex-1 bg-gray-100 text-gray-700 py-3 font-bold">Cancelar</button>
                 <button id="btn-agregar-escaneado" type="button" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white py-3 font-bold">Agregar al carrito</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-exportar-inventario" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden transition-opacity p-4" role="dialog" aria-modal="true" aria-labelledby="titulo-exportar-inventario">
+        <div class="bg-white p-6 rounded-2xl w-full max-w-sm text-center shadow-2xl">
+            <div class="w-16 h-16 bg-teal-50 text-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl" aria-hidden="true">⇩</div>
+            <p class="text-xs font-bold uppercase tracking-wider text-teal-600 mb-2">Respaldo de datos</p>
+            <h3 id="titulo-exportar-inventario" class="text-xl font-bold text-gray-800">Descargar inventario</h3>
+            <p class="mt-2 text-sm leading-relaxed text-gray-500">Se creará un archivo CSV con los productos, categorías, costos, precios y existencias.</p>
+            <div class="my-5 rounded-xl border border-gray-100 bg-gray-50 p-4 text-left">
+                <div class="flex items-center justify-between gap-3">
+                    <span class="text-sm font-semibold text-gray-500">Productos incluidos</span>
+                    <strong id="total-productos-exportar" class="text-xl text-teal-600">0</strong>
+                </div>
+            </div>
+            <div class="flex gap-3">
+                <button type="button" onclick="cerrarModalExportarInventario()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 font-bold">Cancelar</button>
+                <button id="btn-descargar-inventario" type="button" onclick="exportarCSV()" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white py-3 font-bold shadow-md">Descargar CSV</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-respaldo" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden transition-opacity p-4" role="dialog" aria-modal="true" aria-labelledby="titulo-respaldo">
+        <div class="bg-white p-6 rounded-2xl w-full max-w-sm text-center shadow-2xl">
+            <div class="w-16 h-16 bg-teal-50 text-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl" aria-hidden="true">⬡</div>
+            <p class="text-xs font-bold uppercase tracking-wider text-teal-600 mb-2">Copia de seguridad</p>
+            <h3 id="titulo-respaldo" class="text-xl font-bold text-gray-800">Respaldar todos los datos</h3>
+            <p class="mt-2 text-sm leading-relaxed text-gray-500">Se descargará un archivo JSON con todos los productos, ventas y reportes guardados en tu cuenta.</p>
+            <div class="my-5 rounded-xl border border-gray-100 bg-gray-50 p-4 text-left space-y-3">
+                <div class="flex justify-between gap-3"><span class="text-sm font-semibold text-gray-500">Productos</span><strong id="respaldo-productos" class="text-teal-600">0</strong></div>
+                <div class="flex justify-between gap-3"><span class="text-sm font-semibold text-gray-500">Ventas</span><strong id="respaldo-ventas" class="text-teal-600">0</strong></div>
+                <div class="flex justify-between gap-3"><span class="text-sm font-semibold text-gray-500">Reportes</span><strong id="respaldo-reportes" class="text-teal-600">Se consultarán al guardar</strong></div>
+            </div>
+            <p id="estado-respaldo" class="hidden mb-4 text-sm font-semibold text-teal-700" aria-live="polite"></p>
+            <div class="flex gap-3">
+                <button type="button" onclick="cerrarModalRespaldo()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 font-bold">Cancelar</button>
+                <button id="btn-crear-respaldo" type="button" onclick="descargarRespaldoCompleto()" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white py-3 font-bold shadow-md">Guardar respaldo</button>
             </div>
         </div>
     </div>
@@ -1562,18 +1835,13 @@
                     </div>
                 </div>
 
-                <div id="editar-datos-ambas" class="hidden grid grid-cols-2 gap-4 mb-5">
-                    <div>
-                        <label for="editar-precio-unidad" class="block text-sm font-medium text-gray-600 mb-2">Precio por unidad</label>
-                        <div class="relative">
-                            <span class="absolute left-4 top-4 text-gray-500 font-bold">Q</span>
-                            <input type="number" id="editar-precio-unidad" min="0" step="0.01" class="w-full p-4 pl-9 bg-gray-50 border border-gray-200 text-lg">
-                        </div>
+                <div id="editar-datos-ambas" class="hidden mb-5">
+                    <label for="editar-precio-unidad" class="block text-sm font-medium text-gray-600 mb-2">Precio por unidad</label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-4 text-gray-500 font-bold">Q</span>
+                        <input type="number" id="editar-precio-unidad" min="0" step="0.01" class="w-full p-4 pl-9 bg-gray-50 border border-gray-200 text-lg">
                     </div>
-                    <div>
-                        <label for="editar-peso-unidad" class="block text-sm font-medium text-gray-600 mb-2">Peso de una unidad (lb)</label>
-                        <input type="number" id="editar-peso-unidad" min="0.01" step="0.01" class="w-full p-4 bg-gray-50 border border-gray-200 text-lg">
-                    </div>
+                    <p class="mt-2 text-xs text-gray-500">Cada unidad vendida descuenta 1 de las existencias.</p>
                 </div>
 
                 <div class="mb-6 rounded-lg border border-teal-100 bg-teal-50 p-3 text-sm text-teal-800">
@@ -1598,6 +1866,20 @@
             <div class="flex space-x-3">
                 <button onclick="cerrarModalEliminar()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-bold transition-colors">Cancelar</button>
                 <button id="btn-confirmar-eliminar" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-xl font-bold shadow-md transition-colors">Sí, eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-confirmar-borrado" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden transition-opacity p-4" role="dialog" aria-modal="true" aria-labelledby="titulo-confirmar-borrado">
+        <div class="bg-white p-6 w-full max-w-sm text-center shadow-2xl">
+            <div class="confirm-icon" aria-hidden="true">!</div>
+            <p class="text-xs font-bold uppercase tracking-wider text-red-500 mb-2">Acción permanente</p>
+            <h3 id="titulo-confirmar-borrado" class="text-xl font-bold text-gray-800">¿Borrar información?</h3>
+            <p id="texto-confirmar-borrado" class="mt-2 text-sm leading-relaxed text-gray-500"></p>
+            <div id="detalle-confirmar-borrado" class="confirm-detail"></div>
+            <div class="flex gap-3">
+                <button type="button" onclick="cerrarConfirmacionBorrado()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 font-bold">Cancelar</button>
+                <button id="btn-confirmar-borrado" type="button" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 font-bold shadow-md">Sí, borrar</button>
             </div>
         </div>
     </div>
@@ -1685,7 +1967,10 @@
         let totalVentaActual = 0; 
         let unsubscribeFirestore = null;
         let unsubscribeVentas = null;
+        let unsubscribeMovimientos = null;
         let ventas = [];
+        let movimientos = [];
+        let respaldoPendiente = null;
         const inicioCarga = performance.now();
         const DURACION_MINIMA_CARGA = 650;
         let temporizadorToast;
@@ -1728,15 +2013,18 @@
                 await persistenciaFirestore;
                 iniciarLecturaInventario();
                 iniciarLecturaVentas();
+                iniciarLecturaMovimientos();
             } else {
                 loginScreen.classList.remove('hidden');
                 appContent.classList.add('hidden');
                 
                 if(unsubscribeFirestore) unsubscribeFirestore();
                 if(unsubscribeVentas) unsubscribeVentas();
+                if(unsubscribeMovimientos) unsubscribeMovimientos();
                 
                 inventario = [];
                 ventas = [];
+                movimientos = [];
                 carrito = [];
                 actualizarResumen();
                 renderizarCatalogo();
@@ -1793,25 +2081,77 @@
             });
         }
 
+        function iniciarLecturaMovimientos() {
+            unsubscribeMovimientos = coleccionUsuario('movimientos').orderBy('fecha', 'desc').limit(200).onSnapshot(querySnapshot => {
+                movimientos = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderizarMovimientos();
+            });
+        }
+
+        function registrarMovimiento(datos, batch = null) {
+            const referencia = coleccionUsuario('movimientos').doc();
+            const movimiento = { ...datos, fecha: firebase.firestore.FieldValue.serverTimestamp() };
+            if (batch) batch.set(referencia, movimiento);
+            else return referencia.set(movimiento);
+        }
+
+        function abrirModalMovimientos() {
+            renderizarMovimientos();
+            document.getElementById('modal-movimientos').classList.remove('hidden');
+        }
+
+        function cerrarModalMovimientos() {
+            document.getElementById('modal-movimientos').classList.add('hidden');
+        }
+
+        function renderizarMovimientos() {
+            const contenedor = document.getElementById('lista-movimientos');
+            if (!contenedor) return;
+            if (!movimientos.length) {
+                contenedor.innerHTML = '<p class="text-center text-gray-400 py-8">Aún no hay movimientos registrados.</p>';
+                return;
+            }
+            contenedor.innerHTML = movimientos.map(movimiento => {
+                const fecha = obtenerFechaVenta(movimiento.fecha);
+                const cantidad = Number(movimiento.cantidad) || 0;
+                const signo = cantidad > 0 ? '+' : '';
+                return `<div class="movement-item"><div><strong class="block text-sm text-gray-700">${escaparHTML(movimiento.producto || 'Producto')}</strong><span class="block text-xs text-gray-500 mt-1">${escaparHTML(movimiento.detalle || movimiento.tipo || 'Movimiento')}</span><span class="block text-[11px] text-gray-400 mt-1">${fecha ? fecha.toLocaleString('es-GT') : 'Sincronizando…'}</span></div><strong class="${cantidad < 0 ? 'text-red-500' : 'text-teal-600'}">${signo}${cantidad.toFixed(2).replace(/\.00$/, '')}</strong></div>`;
+            }).join('');
+        }
+
         function renderizarGraficos() {
             const porProducto = {};
             const porDia = {};
             let totalVentas = 0;
             let unidadesVendidas = 0;
+            const selector = document.getElementById('filtro-categoria-ventas');
+            const categoriaSeleccionada = selector?.value || 'todas';
+            const categorias = [...new Set(inventario.map(p => p.categoria || 'Otros'))].sort();
+            if (selector) {
+                const valorActual = selector.value;
+                selector.innerHTML = '<option value="todas">Todas las categorías</option>' + categorias.map(categoria => `<option value="${escaparHTML(categoria)}">${escaparHTML(categoria)}</option>`).join('');
+                selector.value = categorias.includes(valorActual) ? valorActual : 'todas';
+            }
+            const filtro = selector?.value || categoriaSeleccionada;
 
             ventas.forEach(venta => {
-                const total = Number(venta.total) || 0;
-                totalVentas += total;
                 const fecha = obtenerFechaVenta(venta.fecha);
-                if (fecha) {
-                    const clave = fecha.toISOString().slice(0, 10);
-                    porDia[clave] = (porDia[clave] || 0) + total;
-                }
                 (venta.items || []).forEach(item => {
-                    if (!porProducto[item.nombre]) porProducto[item.nombre] = { importe: 0, cantidad: 0 };
-                    porProducto[item.nombre].importe += (Number(item.precio) || 0) * (Number(item.cantidad) || 0);
-                    porProducto[item.nombre].cantidad += Number(item.cantidad) || 0;
-                    unidadesVendidas += Number(item.cantidad) || 0;
+                    const nombreBase = String(item.nombre || '').replace(/ \((mediano|grande)\)$/i, '');
+                    const producto = inventario.find(p => p.id === item.productoId) || inventario.find(p => p.nombre === nombreBase);
+                    const categoria = item.categoria || producto?.categoria || 'Otros';
+                    if (filtro !== 'todas' && categoria !== filtro) return;
+                    const cantidad = Number(item.cantidad) || 0;
+                    const importe = (Number(item.precio) || 0) * cantidad;
+                    totalVentas += importe;
+                    unidadesVendidas += cantidad;
+                    if (!porProducto[item.nombre]) porProducto[item.nombre] = { importe: 0, cantidad: 0, categoria };
+                    porProducto[item.nombre].importe += importe;
+                    porProducto[item.nombre].cantidad += cantidad;
+                    if (fecha) {
+                        const clave = fecha.toISOString().slice(0, 10);
+                        porDia[clave] = (porDia[clave] || 0) + importe;
+                    }
                 });
             });
 
@@ -1819,12 +2159,15 @@
             document.getElementById('grafico-unidades-vendidas').innerText = unidadesVendidas.toFixed(2).replace(/\.00$/, '');
 
             const productos = Object.entries(porProducto).map(([nombre, valor]) => ({ nombre, ...valor }));
+            const ordenados = [...productos].sort((a, b) => b.cantidad - a.cantidad);
+            const ranking = document.getElementById('lista-mas-vendidos');
+            ranking.innerHTML = ordenados.length ? ordenados.slice(0, 8).map((producto, indice) => `<div class="ranking-item"><span class="ranking-position">${indice + 1}</span><div class="min-w-0"><strong class="block text-sm text-gray-700 truncate">${escaparHTML(producto.nombre)}</strong><span class="text-xs text-gray-500">${escaparHTML(producto.categoria)} · Q${producto.importe.toFixed(2)}</span></div><strong class="text-teal-600">${producto.cantidad.toFixed(2).replace(/\.00$/, '')}</strong></div>`).join('') : '<p class="text-center text-gray-400 py-6">No hay ventas en esta categoría.</p>';
             const dias = Object.entries(porDia).sort(([a], [b]) => a.localeCompare(b)).slice(-10)
                 .map(([fecha, total]) => ({ nombre: formatearFechaCorta(fecha), valor: total }));
 
             dibujarBarras('grafico-barras', [...productos].sort((a, b) => b.importe - a.importe).slice(0, 6));
             dibujarLinea('grafico-lineal', dias);
-            dibujarPastel('grafico-pastel', [...productos].sort((a, b) => b.cantidad - a.cantidad).slice(0, 6));
+            dibujarPastel('grafico-pastel', ordenados.slice(0, 6));
         }
 
         function obtenerFechaVenta(fecha) {
@@ -2123,7 +2466,7 @@
                         
                         <div class="flex justify-between items-center mb-4">
                             <span class="text-sm text-gray-500">Costo: Q${p.costo.toFixed(2)}</span>
-                            <span class="font-black text-blue-600 text-lg">${p.tieneTamanos ? `Med. Q${Number(p.precioMediano).toFixed(2)} · Gde. Q${Number(p.precioGrande).toFixed(2)}` : p.unidadVenta === 'ambas' ? `Q${p.precio.toFixed(2)}/lb · Q${Number(p.precioUnidad).toFixed(2)}/unidad` : `Q${p.precio.toFixed(2)} / ${p.unidadVenta === 'libra' ? 'lb' : 'unidad'}`}</span>
+                            <span class="font-black text-blue-600 text-lg">${p.tieneTamanos ? `${p.unidadVenta === 'ambas' ? `Q${Number(p.precioLibra ?? p.precio).toFixed(2)}/lb · ` : ''}Med. Q${Number(p.precioMediano).toFixed(2)} · Gde. Q${Number(p.precioGrande).toFixed(2)}` : p.unidadVenta === 'ambas' ? `Q${p.precio.toFixed(2)}/lb · Q${Number(p.precioUnidad).toFixed(2)}/unidad` : `Q${p.precio.toFixed(2)} / ${p.unidadVenta === 'libra' ? 'lb' : 'unidad'}`}</span>
                         </div>
 
                         <div class="flex justify-between items-center bg-gray-50 p-2 rounded-xl">
@@ -2153,7 +2496,6 @@
             document.getElementById('editar-costo').value = costoUnitario * stock;
             document.getElementById('editar-precio').value = Number(producto.precio) || 0;
             document.getElementById('editar-precio-unidad').value = Number(producto.precioUnidad) || '';
-            document.getElementById('editar-peso-unidad').value = Number(producto.pesoUnidad) || '';
             document.getElementById('editar-tamanos').value = producto.tieneTamanos ? 'si' : 'no';
             document.getElementById('editar-precio-mediano').value = Number(producto.precioMediano) || '';
             document.getElementById('editar-precio-grande').value = Number(producto.precioGrande) || '';
@@ -2193,7 +2535,6 @@
             const precio = parseFloat(document.getElementById('editar-precio').value);
             const unidadVenta = document.getElementById('editar-unidad-venta').value;
             const precioUnidad = parseFloat(document.getElementById('editar-precio-unidad').value);
-            const pesoUnidad = parseFloat(document.getElementById('editar-peso-unidad').value);
             const tieneTamanos = document.getElementById('editar-tamanos').value === 'si';
             const precioMediano = parseFloat(document.getElementById('editar-precio-mediano').value);
             const precioGrande = parseFloat(document.getElementById('editar-precio-grande').value);
@@ -2205,16 +2546,17 @@
                 stock,
                 costoPaquete,
                 costo: stock > 0 ? costoPaquete / stock : 0,
-                precio: tieneTamanos ? precioMediano : precio,
+                precio,
+                precioLibra: unidadVenta === 'ambas' ? precio : null,
                 tieneTamanos,
                 precioMediano: tieneTamanos ? precioMediano : null,
                 precioGrande: tieneTamanos ? precioGrande : null,
-                precioUnidad: unidadVenta === 'ambas' ? precioUnidad : null,
-                pesoUnidad: unidadVenta === 'ambas' ? pesoUnidad : null
+                precioUnidad: unidadVenta === 'ambas' && !tieneTamanos ? precioUnidad : null,
+                pesoUnidad: null
             };
-            const datosAmbosInvalidos = unidadVenta === 'ambas' && (!Number.isFinite(precioUnidad) || precioUnidad < 0 || !Number.isFinite(pesoUnidad) || pesoUnidad <= 0);
+            const datosAmbosInvalidos = unidadVenta === 'ambas' && !tieneTamanos && (!Number.isFinite(precioUnidad) || precioUnidad < 0);
             const tamanosInvalidos = tieneTamanos && (!Number.isFinite(precioMediano) || precioMediano < 0 || !Number.isFinite(precioGrande) || precioGrande < 0);
-            const precioBaseInvalido = !tieneTamanos && (!Number.isFinite(precio) || precio < 0);
+            const precioBaseInvalido = (!tieneTamanos || unidadVenta === 'ambas') && (!Number.isFinite(precio) || precio < 0);
             if (!cambios.nombre || !Number.isFinite(stock) || stock < 0 || !Number.isFinite(costoPaquete) || costoPaquete < 0 || precioBaseInvalido || tamanosInvalidos || datosAmbosInvalidos) {
                 alert('Completa todos los campos con valores válidos.');
                 return;
@@ -2223,7 +2565,12 @@
             const boton = document.getElementById('btn-guardar-edicion');
             establecerCargaBoton(boton, true);
             try {
-                await coleccionUsuario('productos').doc(productoAEditar).update(cambios);
+                const anterior = inventario.find(producto => producto.id === productoAEditar);
+                const batch = db.batch();
+                batch.update(coleccionUsuario('productos').doc(productoAEditar), cambios);
+                const diferencia = stock - (Number(anterior?.stock) || 0);
+                if (diferencia) registrarMovimiento({ productoId: productoAEditar, producto: cambios.nombre, categoria: cambios.categoria, tipo: 'ajuste', detalle: 'Cambio desde edición', cantidad: diferencia }, batch);
+                await batch.commit();
                 cerrarModalEditar();
                 mostrarAviso('Producto actualizado correctamente', 'exito');
             } catch (error) {
@@ -2233,14 +2580,16 @@
             }
         }
 
-        function ajustarStock(id, cantidad) {
+        async function ajustarStock(id, cantidad) {
             const prod = inventario.find(p => p.id === id);
-            if(prod) {
-                let nuevoStock = prod.stock + cantidad;
-                if(nuevoStock < 0) nuevoStock = 0;
-                
-                coleccionUsuario("productos").doc(id).update({ stock: nuevoStock });
-            }
+            if (!prod) return;
+            const nuevoStock = Math.max(0, Number(prod.stock) + cantidad);
+            const cambioReal = nuevoStock - Number(prod.stock);
+            if (!cambioReal) return;
+            const batch = db.batch();
+            batch.update(coleccionUsuario('productos').doc(id), { stock: nuevoStock });
+            registrarMovimiento({ productoId: id, producto: prod.nombre, categoria: prod.categoria || 'Otros', tipo: 'ajuste', detalle: cambioReal > 0 ? 'Entrada manual' : 'Salida manual', cantidad: cambioReal }, batch);
+            await batch.commit().catch(error => mostrarAviso('No se pudo ajustar el stock', 'error'));
         }
 
         function abrirModalEliminar(id) {
@@ -2374,7 +2723,7 @@
             const ventaDoble = producto.unidadVenta === 'ambas';
             const tieneTamanos = Boolean(producto.tieneTamanos);
             document.getElementById('precio-producto-escaneado').innerHTML = tieneTamanos
-                ? `Mediano Q${Number(producto.precioMediano).toFixed(2)}<br><span class="text-2xl text-blue-600">Grande Q${Number(producto.precioGrande).toFixed(2)}</span>`
+                ? `${ventaDoble ? `Q${Number(producto.precioLibra ?? producto.precio).toFixed(2)} / lb<br>` : ''}Mediano Q${Number(producto.precioMediano).toFixed(2)}<br><span class="text-2xl text-blue-600">Grande Q${Number(producto.precioGrande).toFixed(2)}</span>`
                 : ventaDoble
                     ? `Q${Number(producto.precio).toFixed(2)} / lb<br><span class="text-2xl text-blue-600">Q${Number(producto.precioUnidad).toFixed(2)} / unidad</span>`
                     : `Q${Number(producto.precio).toFixed(2)} / ${producto.unidadVenta === 'libra' ? 'libra' : 'unidad'}`;
@@ -2385,11 +2734,10 @@
             const cantidad = document.getElementById('cantidad-producto-escaneado');
             cantidad.value = '1';
             if (ventaDoble) {
-                const maximoUnidades = Math.floor(Number(producto.stock) / Number(producto.pesoUnidad || 1));
                 cantidad.dataset.modo = 'ambas';
                 cantidad.step = '0.01';
                 cantidad.min = '0.01';
-                cantidad.max = Math.max(Number(producto.stock), maximoUnidades);
+                cantidad.max = Number(producto.stock);
                 document.getElementById('label-cantidad-escaneada').textContent = 'Cantidad a agregar';
                 document.getElementById('ayuda-cantidad-escaneada').textContent = 'Escribe la cantidad y luego elige si corresponde a libras o unidades.';
             } else {
@@ -2401,16 +2749,26 @@
             const opcionesTamano = document.getElementById('opciones-tamano-escaneado');
             opciones.classList.toggle('hidden', !ventaDoble || tieneTamanos);
             opcionesTamano.classList.toggle('hidden', !tieneTamanos);
+            opcionesTamano.classList.toggle('three-options', tieneTamanos && ventaDoble);
+            document.getElementById('bloque-presentacion-escaneada').classList.toggle('hidden', !ventaDoble && !tieneTamanos);
             boton.classList.toggle('hidden', ventaDoble || tieneTamanos);
             boton.onclick = () => agregarEscaneado(producto.id, producto.unidadVenta);
 
-            document.getElementById('btn-agregar-libra-escaneada').onclick = () => agregarEscaneado(producto.id, 'libra');
-            document.getElementById('btn-agregar-unidad-escaneada').onclick = () => agregarEscaneado(producto.id, 'unidad');
+            const botonLibra = document.getElementById('btn-agregar-libra-escaneada');
+            const botonUnidad = document.getElementById('btn-agregar-unidad-escaneada');
+            botonLibra.querySelector('small').textContent = `Q${Number(producto.precioLibra ?? producto.precio).toFixed(2)} / lb`;
+            botonUnidad.querySelector('small').textContent = `Q${Number(producto.precioUnidad).toFixed(2)} c/u`;
+            botonLibra.onclick = () => agregarEscaneado(producto.id, 'libra');
+            botonUnidad.onclick = () => agregarEscaneado(producto.id, 'unidad');
             const modoTamano = producto.unidadVenta === 'ambas' ? 'unidad' : producto.unidadVenta;
+            const botonLibraTamano = document.getElementById('btn-agregar-libra-tamano-escaneada');
             const botonMediano = document.getElementById('btn-agregar-mediano-escaneado');
             const botonGrande = document.getElementById('btn-agregar-grande-escaneado');
-            botonMediano.textContent = `Mediano · Q${Number(producto.precioMediano).toFixed(2)}`;
-            botonGrande.textContent = `Grande · Q${Number(producto.precioGrande).toFixed(2)}`;
+            botonLibraTamano.classList.toggle('hidden', !ventaDoble);
+            botonLibraTamano.querySelector('small').textContent = `Q${Number(producto.precioLibra ?? producto.precio).toFixed(2)} / lb`;
+            botonLibraTamano.onclick = () => agregarEscaneado(producto.id, 'libra');
+            botonMediano.querySelector('small').textContent = `Q${Number(producto.precioMediano).toFixed(2)} c/u`;
+            botonGrande.querySelector('small').textContent = `Q${Number(producto.precioGrande).toFixed(2)} c/u`;
             botonMediano.onclick = () => agregarEscaneado(producto.id, modoTamano, 'mediano');
             botonGrande.onclick = () => agregarEscaneado(producto.id, modoTamano, 'grande');
             validarCantidadEscaneada();
@@ -2427,9 +2785,7 @@
             campo.min = esLibra ? '0.01' : '1';
             const maximo = esLibra
                 ? Number(producto.stock)
-                : producto.unidadVenta === 'ambas'
-                    ? Math.floor(Number(producto.stock) / Number(producto.pesoUnidad || 1))
-                    : Math.floor(Number(producto.stock));
+                : Math.floor(Number(producto.stock));
             campo.max = Math.max(0, maximo);
             document.getElementById('label-cantidad-escaneada').textContent = esLibra ? 'Libras a agregar' : 'Unidades a agregar';
             document.getElementById('ayuda-cantidad-escaneada').textContent = esLibra
@@ -2445,7 +2801,7 @@
             const cantidad = Number(campo.value);
             const maximo = Number(campo.max);
             const valida = producto.stock > 0 && Number.isFinite(cantidad) && cantidad >= Number(campo.min) && cantidad <= maximo;
-            ['btn-agregar-escaneado', 'btn-agregar-libra-escaneada', 'btn-agregar-unidad-escaneada', 'btn-agregar-mediano-escaneado', 'btn-agregar-grande-escaneado'].forEach(id => {
+            ['btn-agregar-escaneado', 'btn-agregar-libra-escaneada', 'btn-agregar-unidad-escaneada', 'btn-agregar-libra-tamano-escaneada', 'btn-agregar-mediano-escaneado', 'btn-agregar-grande-escaneado'].forEach(id => {
                 const boton = document.getElementById(id);
                 boton.disabled = !valida;
                 boton.classList.toggle('opacity-50', !valida);
@@ -2502,9 +2858,14 @@
 
         function actualizarCamposTamanos(prefijo) {
             const tieneTamanos = document.getElementById(`${prefijo}-tamanos`).value === 'si';
+            const ventaDoble = document.getElementById(`${prefijo}-unidad-venta`).value === 'ambas';
             document.getElementById(`${prefijo}-precios-tamanos`).classList.toggle('hidden', !tieneTamanos);
-            document.getElementById(`${prefijo}-precio-base-wrap`).classList.toggle('hidden', tieneTamanos);
-            document.getElementById(`${prefijo}-precio`).required = !tieneTamanos;
+            // En venta doble, el precio base sigue visible porque corresponde al precio por libra.
+            document.getElementById(`${prefijo}-precio-base-wrap`).classList.toggle('hidden', tieneTamanos && !ventaDoble);
+            // Con tamaños, cada unidad usa el precio mediano o grande; no hace falta otro precio por unidad.
+            document.getElementById(`${prefijo}-datos-ambas`).classList.toggle('hidden', !ventaDoble || tieneTamanos);
+            document.getElementById(`${prefijo}-precio-unidad`).required = ventaDoble && !tieneTamanos;
+            document.getElementById(`${prefijo}-precio`).required = !tieneTamanos || ventaDoble;
             document.getElementById(`${prefijo}-precio-mediano`).required = tieneTamanos;
             document.getElementById(`${prefijo}-precio-grande`).required = tieneTamanos;
         }
@@ -2516,9 +2877,10 @@
             document.getElementById('nuevo-precio-label').textContent = usaLibras ? 'Precio de venta por libra' : 'Precio de venta por unidad';
             document.getElementById('nuevo-costo-unidad-texto').textContent = usaLibras ? 'libra' : 'unidad';
             document.getElementById('nuevo-unidad-ayuda').textContent = tipo === 'ambas'
-                ? 'El inventario se controla en libras; indica cuánto pesa aproximadamente cada unidad.'
+                ? 'Registra las existencias disponibles; una venta por unidad descuenta 1 y una venta por libra descuenta la cantidad indicada.'
                 : usaLibras ? 'Puedes registrar cantidades con decimales, por ejemplo 12.5 libras.' : 'Existencias disponibles en unidades.';
             document.getElementById('nuevo-datos-ambas').classList.toggle('hidden', tipo !== 'ambas');
+            actualizarCamposTamanos('nuevo');
         }
 
         function actualizarEtiquetasUnidadEdicion() {
@@ -2528,6 +2890,7 @@
             document.getElementById('editar-precio-label').textContent = usaLibras ? 'Precio de venta por libra' : 'Precio de venta por unidad';
             document.getElementById('editar-costo-unidad-texto').textContent = usaLibras ? 'libra' : 'unidad';
             document.getElementById('editar-datos-ambas').classList.toggle('hidden', tipo !== 'ambas');
+            actualizarCamposTamanos('editar');
         }
 
         function actualizarCostoUnitario() {
@@ -2558,13 +2921,12 @@
             const precio = parseFloat(document.getElementById('nuevo-precio').value);
             const unidadVenta = document.getElementById('nuevo-unidad-venta').value;
             const precioUnidad = parseFloat(document.getElementById('nuevo-precio-unidad').value);
-            const pesoUnidad = parseFloat(document.getElementById('nuevo-peso-unidad').value);
             const tieneTamanos = document.getElementById('nuevo-tamanos').value === 'si';
             const precioMediano = parseFloat(document.getElementById('nuevo-precio-mediano').value);
             const precioGrande = parseFloat(document.getElementById('nuevo-precio-grande').value);
-            const datosAmbosInvalidos = unidadVenta === 'ambas' && (!Number.isFinite(precioUnidad) || precioUnidad < 0 || !Number.isFinite(pesoUnidad) || pesoUnidad <= 0);
+            const datosAmbosInvalidos = unidadVenta === 'ambas' && !tieneTamanos && (!Number.isFinite(precioUnidad) || precioUnidad < 0);
             const tamanosInvalidos = tieneTamanos && (!Number.isFinite(precioMediano) || precioMediano < 0 || !Number.isFinite(precioGrande) || precioGrande < 0);
-            const precioBaseInvalido = !tieneTamanos && (!Number.isFinite(precio) || precio < 0);
+            const precioBaseInvalido = (!tieneTamanos || unidadVenta === 'ambas') && (!Number.isFinite(precio) || precio < 0);
             if (!Number.isFinite(stock) || stock <= 0 || !Number.isFinite(costoPaquete) || costoPaquete < 0 || precioBaseInvalido || tamanosInvalidos || datosAmbosInvalidos) {
                 alert('Ingresa existencias, costo y precios válidos.');
                 return;
@@ -2577,19 +2939,23 @@
                 unidadVenta,
                 costo: costoPaquete / stock,
                 costoPaquete,
-                precio: tieneTamanos ? precioMediano : precio,
+                precio,
+                precioLibra: unidadVenta === 'ambas' ? precio : null,
                 tieneTamanos,
                 precioMediano: tieneTamanos ? precioMediano : null,
                 precioGrande: tieneTamanos ? precioGrande : null,
-                precioUnidad: unidadVenta === 'ambas' ? precioUnidad : null,
-                pesoUnidad: unidadVenta === 'ambas' ? pesoUnidad : null,
+                precioUnidad: unidadVenta === 'ambas' && !tieneTamanos ? precioUnidad : null,
                 stock
             };
 
             const botonGuardar = document.querySelector('#form-nuevo button[type="submit"]');
             establecerCargaBoton(botonGuardar, true);
             try {
-                await coleccionUsuario("productos").add(nuevo);
+                const referenciaProducto = coleccionUsuario('productos').doc();
+                const batch = db.batch();
+                batch.set(referenciaProducto, nuevo);
+                registrarMovimiento({ productoId: referenciaProducto.id, producto: nuevo.nombre, categoria: nuevo.categoria, tipo: 'entrada', detalle: 'Registro inicial', cantidad: stock }, batch);
+                await batch.commit();
                 document.getElementById('form-nuevo').reset();
                 actualizarEtiquetasUnidad();
                 actualizarCamposTamanos('nuevo');
@@ -2632,7 +2998,7 @@
                 contenedor.innerHTML += `
                     <div onclick="${requiereEleccion ? `mostrarProductoEscaneado(inventario.find(producto => producto.id === '${p.id}'))` : `agregarAlCarrito('${p.id}')`}" class="flex-shrink-0 w-36 bg-white border border-gray-200 rounded-xl p-3 text-center shadow-sm active:border-blue-500 cursor-pointer">
                         <p class="text-sm font-bold text-gray-700 truncate">${p.nombre}</p>
-                        <p class="text-blue-600 font-black mt-1">${p.tieneTamanos ? `Med. Q${Number(p.precioMediano).toFixed(2)}<br>Gde. Q${Number(p.precioGrande).toFixed(2)}` : ventaDoble ? `Q${p.precio.toFixed(2)}/lb<br>Q${Number(p.precioUnidad).toFixed(2)}/unidad` : `Q${p.precio.toFixed(2)} / ${unidad}`}</p>
+                        <p class="text-blue-600 font-black mt-1">${p.tieneTamanos ? `${ventaDoble ? `Q${Number(p.precioLibra ?? p.precio).toFixed(2)}/lb<br>` : ''}Med. Q${Number(p.precioMediano).toFixed(2)}<br>Gde. Q${Number(p.precioGrande).toFixed(2)}` : ventaDoble ? `Q${p.precio.toFixed(2)}/lb<br>Q${Number(p.precioUnidad).toFixed(2)}/unidad` : `Q${p.precio.toFixed(2)} / ${unidad}`}</p>
                         <p class="text-[10px] text-gray-400 mt-1">Disp: ${p.stock} ${p.unidadVenta === 'unidad' ? '' : 'lb'}</p>
                     </div>
                 `;
@@ -2642,12 +3008,13 @@
         function agregarAlCarrito(id, modoVenta, cantidadSolicitada = 1, tamano = '') {
             const prod = inventario.find(p => p.id === id);
             if(!prod || prod.stock <= 0) return;
-            if (prod.tieneTamanos && !['mediano', 'grande'].includes(tamano)) return mostrarProductoEscaneado(prod);
             const modo = prod.unidadVenta === 'ambas' ? modoVenta : prod.unidadVenta;
+            // La venta por libra no necesita elegir tamaño; mediano y grande aplican a unidades.
+            if (prod.tieneTamanos && modo !== 'libra' && !['mediano', 'grande'].includes(tamano)) return mostrarProductoEscaneado(prod);
             if (prod.unidadVenta === 'ambas' && !['libra', 'unidad'].includes(modo)) return mostrarProductoEscaneado(prod);
             const claveCarrito = `${id}-${modo}-${tamano || 'normal'}`;
             const itemExistente = carrito.find(item => item.claveCarrito === claveCarrito);
-            const descuentoStock = modo === 'unidad' && prod.unidadVenta === 'ambas' ? Number(prod.pesoUnidad) : 1;
+            const descuentoStock = 1;
             const cantidad = Number(cantidadSolicitada);
             const incremento = modo === 'libra' ? cantidad : Math.floor(cantidad);
             if (!Number.isFinite(incremento) || incremento <= 0) return;
@@ -2670,7 +3037,11 @@
                         ? Number(prod.precioGrande)
                         : tamano === 'mediano'
                             ? Number(prod.precioMediano)
-                            : modo === 'unidad' && prod.unidadVenta === 'ambas' ? Number(prod.precioUnidad) : Number(prod.precio),
+                            : modo === 'unidad' && prod.unidadVenta === 'ambas'
+                                ? Number(prod.precioUnidad)
+                                : modo === 'libra' && prod.unidadVenta === 'ambas'
+                                    ? Number(prod.precioLibra ?? prod.precio)
+                                    : Number(prod.precio),
                     descuentoStock
                 });
             } else {
@@ -2715,7 +3086,7 @@
                                 <label class="text-xs text-gray-500">Peso vendido (lb)</label>
                                 <input type="number" min="0.01" max="${item.stock}" step="0.01" value="${item.cantidad}" onchange="cambiarCantidadCarrito(${index}, this.value)" class="mt-1 w-24 h-9 min-h-0 px-2 text-sm">
                                 <p class="text-xs text-gray-500 mt-1">Q${item.precio.toFixed(2)} por libra</p>
-                            ` : `<p class="text-xs text-gray-500">${item.cantidad} und. x Q${item.precio.toFixed(2)}${item.unidadVenta === 'ambas' ? ` · descuenta ${(item.cantidad * item.descuentoStock).toFixed(2)} lb` : ''}</p>`}
+                            ` : `<p class="text-xs text-gray-500">${item.cantidad} und. x Q${item.precio.toFixed(2)}</p>`}
                         </div>
                         <div class="flex items-center space-x-4 shrink-0">
                             <span class="font-black text-gray-700">Q${subtotal.toFixed(2)}</span>
@@ -2790,7 +3161,9 @@
                 total: totalVentaActual,
                 fecha: firebase.firestore.FieldValue.serverTimestamp(),
                 items: carrito.map(item => ({
+                    productoId: item.id,
                     nombre: item.tamano ? `${item.nombre} (${item.tamano})` : item.nombre,
+                    categoria: item.categoria || 'Otros',
                     precio: item.precio,
                     cantidad: item.cantidad,
                     unidadVenta: item.modoVenta || item.unidadVenta || 'unidad',
@@ -2806,7 +3179,10 @@
             Object.entries(descuentosPorProducto).forEach(([id, descuento]) => {
                 const prodRef = coleccionUsuario("productos").doc(id);
                 const prodReal = inventario.find(p => p.id === id);
-                if(prodReal) batch.update(prodRef, { stock: Math.max(0, prodReal.stock - descuento) });
+                if (prodReal) {
+                    batch.update(prodRef, { stock: Math.max(0, prodReal.stock - descuento) });
+                    registrarMovimiento({ productoId: id, producto: prodReal.nombre, categoria: prodReal.categoria || 'Otros', tipo: 'venta', detalle: 'Salida por venta', cantidad: -descuento }, batch);
+                }
             });
             batch.set(coleccionUsuario("ventas").doc(), venta);
 
@@ -3098,19 +3474,200 @@
             }
         }
 
+        function abrirSelectorRestauracion() {
+            const campo = document.getElementById('archivo-restauracion');
+            campo.value = '';
+            campo.click();
+        }
+
+        async function prepararRestauracion(event) {
+            const archivo = event.target.files?.[0];
+            if (!archivo) return;
+            try {
+                const datos = JSON.parse(await archivo.text());
+                if (!datos || !Array.isArray(datos.inventario) || !Array.isArray(datos.ventas)) throw new Error('Formato inválido');
+                respaldoPendiente = {
+                    inventario: datos.inventario,
+                    ventas: datos.ventas,
+                    reportesVentas: Array.isArray(datos.reportesVentas) ? datos.reportesVentas : [],
+                    movimientos: Array.isArray(datos.movimientos) ? datos.movimientos : []
+                };
+                document.getElementById('restaurar-productos').textContent = respaldoPendiente.inventario.length;
+                document.getElementById('restaurar-ventas').textContent = respaldoPendiente.ventas.length;
+                document.getElementById('restaurar-reportes').textContent = respaldoPendiente.reportesVentas.length;
+                document.getElementById('resumen-restauracion').textContent = `Archivo: ${archivo.name}. Revisa el contenido y elige cómo recuperarlo.`;
+                document.getElementById('modal-restaurar').classList.remove('hidden');
+            } catch (error) {
+                respaldoPendiente = null;
+                mostrarAviso('El archivo no es un respaldo válido', 'error');
+            }
+        }
+
+        function cerrarModalRestaurar() {
+            respaldoPendiente = null;
+            document.getElementById('modal-restaurar').classList.add('hidden');
+        }
+
+        function prepararDatoFirestore(valor, clave = '') {
+            if (Array.isArray(valor)) return valor.map(dato => prepararDatoFirestore(dato));
+            if (valor && typeof valor === 'object') return Object.fromEntries(Object.entries(valor).map(([k, dato]) => [k, prepararDatoFirestore(dato, k)]));
+            if (typeof valor === 'string' && ['fecha', 'creadoEn', 'inicio', 'fin'].includes(clave)) {
+                const fecha = new Date(valor);
+                if (!Number.isNaN(fecha.getTime())) return firebase.firestore.Timestamp.fromDate(fecha);
+            }
+            return valor;
+        }
+
+        async function guardarColeccionRestaurada(nombre, registros) {
+            for (let i = 0; i < registros.length; i += 400) {
+                const batch = db.batch();
+                registros.slice(i, i + 400).forEach(registro => {
+                    const { id, ...datos } = registro || {};
+                    const referencia = id ? coleccionUsuario(nombre).doc(String(id)) : coleccionUsuario(nombre).doc();
+                    batch.set(referencia, prepararDatoFirestore(datos), { merge: true });
+                });
+                await batch.commit();
+            }
+        }
+
+        async function confirmarRestauracion() {
+            if (!respaldoPendiente) return;
+            const reemplazar = document.getElementById('modo-restauracion').value === 'reemplazar';
+            if (reemplazar && !confirm('Se borrarán los datos actuales antes de restaurar. ¿Deseas continuar?')) return;
+            const boton = document.getElementById('btn-confirmar-restauracion');
+            establecerCargaBoton(boton, true);
+            try {
+                const colecciones = ['productos', 'ventas', 'reportesVentas', 'movimientos'];
+                if (reemplazar) {
+                    for (const nombre of colecciones) await borrarColeccion(nombre);
+                }
+                await guardarColeccionRestaurada('productos', respaldoPendiente.inventario);
+                await guardarColeccionRestaurada('ventas', respaldoPendiente.ventas);
+                await guardarColeccionRestaurada('reportesVentas', respaldoPendiente.reportesVentas);
+                await guardarColeccionRestaurada('movimientos', respaldoPendiente.movimientos);
+                cerrarModalRestaurar();
+                mostrarAviso('Respaldo restaurado correctamente', 'exito');
+            } catch (error) {
+                mostrarAviso('No se pudo completar la restauración', 'error');
+                console.error('Error al restaurar:', error);
+            } finally {
+                establecerCargaBoton(boton, false);
+            }
+        }
+
+        function abrirModalRespaldo() {
+            document.getElementById('respaldo-productos').textContent = inventario.length;
+            document.getElementById('respaldo-ventas').textContent = ventas.length;
+            document.getElementById('respaldo-reportes').textContent = 'Se consultarán al guardar';
+            document.getElementById('estado-respaldo').classList.add('hidden');
+            document.getElementById('modal-respaldo').classList.remove('hidden');
+        }
+
+        function cerrarModalRespaldo() {
+            document.getElementById('modal-respaldo').classList.add('hidden');
+        }
+
+        function convertirDatoRespaldo(valor) {
+            if (valor?.toDate instanceof Function) return valor.toDate().toISOString();
+            if (valor instanceof Date) return valor.toISOString();
+            if (Array.isArray(valor)) return valor.map(convertirDatoRespaldo);
+            if (valor && typeof valor === 'object') {
+                return Object.fromEntries(Object.entries(valor).map(([clave, dato]) => [clave, convertirDatoRespaldo(dato)]));
+            }
+            return valor;
+        }
+
+        async function descargarRespaldoCompleto() {
+            const boton = document.getElementById('btn-crear-respaldo');
+            const estado = document.getElementById('estado-respaldo');
+            establecerCargaBoton(boton, true);
+            estado.textContent = 'Preparando todos los datos…';
+            estado.classList.remove('hidden');
+
+            try {
+                const consultaReportes = await coleccionUsuario('reportesVentas').get();
+                const reportes = consultaReportes.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                document.getElementById('respaldo-reportes').textContent = reportes.length;
+
+                const respaldo = convertirDatoRespaldo({
+                    version: 1,
+                    aplicacion: 'Mi Negocio',
+                    creadoEn: new Date().toISOString(),
+                    usuario: {
+                        uid: auth.currentUser?.uid || null,
+                        correo: auth.currentUser?.email || null
+                    },
+                    inventario,
+                    ventas,
+                    movimientos,
+                    reportesVentas: reportes
+                });
+                const blob = new Blob([JSON.stringify(respaldo, null, 2)], { type: 'application/json;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const enlace = document.createElement('a');
+                enlace.href = url;
+                enlace.download = `Respaldo_Mi_Negocio_${new Date().toISOString().slice(0, 10)}.json`;
+                document.body.appendChild(enlace);
+                enlace.click();
+                enlace.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+                cerrarModalRespaldo();
+                mostrarAviso('Respaldo completo guardado correctamente', 'exito');
+            } catch (error) {
+                estado.textContent = 'No se pudo crear el respaldo.';
+                mostrarAviso('No se pudo guardar el respaldo', 'error');
+                console.error('Error al crear el respaldo:', error);
+            } finally {
+                establecerCargaBoton(boton, false);
+            }
+        }
+
+        function abrirModalExportarInventario() {
+            if (inventario.length === 0) {
+                mostrarAviso('No hay productos para descargar', 'error');
+                return;
+            }
+            document.getElementById('total-productos-exportar').textContent = inventario.length;
+            document.getElementById('modal-exportar-inventario').classList.remove('hidden');
+        }
+
+        function cerrarModalExportarInventario() {
+            document.getElementById('modal-exportar-inventario').classList.add('hidden');
+        }
+
         function exportarCSV() {
-            if(inventario.length === 0) return alert('No hay datos para exportar');
-            let csv = "Nombre,Categoria,Costo,Precio,Stock\n";
-            inventario.forEach(p => { csv += `"${p.nombre}","${p.categoria}",${p.costo},${p.precio},${p.stock}\n`; });
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.setAttribute('hidden', '');
-            a.setAttribute('href', url);
-            a.setAttribute('download', 'Inventario_Nube.csv');
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            if (inventario.length === 0) {
+                cerrarModalExportarInventario();
+                mostrarAviso('No hay productos para descargar', 'error');
+                return;
+            }
+
+            const escaparCSV = valor => `"${String(valor ?? '').replace(/"/g, '""')}"`;
+            let csv = '\uFEFFNombre,Categoria,Costo,Precio,Stock\r\n';
+            inventario.forEach(p => {
+                csv += [p.nombre, p.categoria, p.costo, p.precio, p.stock].map(escaparCSV).join(',') + '\r\n';
+            });
+
+            const boton = document.getElementById('btn-descargar-inventario');
+            establecerCargaBoton(boton, true);
+            try {
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const enlace = document.createElement('a');
+                enlace.href = url;
+                enlace.download = `Inventario_${new Date().toISOString().slice(0, 10)}.csv`;
+                document.body.appendChild(enlace);
+                enlace.click();
+                enlace.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+                cerrarModalExportarInventario();
+                mostrarAviso('Inventario descargado correctamente', 'exito');
+            } catch (error) {
+                mostrarAviso('No se pudo descargar el inventario', 'error');
+                console.error('Error al exportar el inventario:', error);
+            } finally {
+                establecerCargaBoton(boton, false);
+            }
         }
 
         function borrarColeccion(nombreColeccion) {
@@ -3128,20 +3685,55 @@
             });
         }
 
-        function limpiarTodo() {
-            const confirmar = confirm("⚠ PELIGRO: ¿Estás seguro de borrar todo el inventario y las ventas? Esta acción no se puede deshacer.");
-            if (!confirmar) return;
+        let accionBorradoPendiente = null;
 
-            Promise.all([
-                borrarColeccion("productos"),
-                borrarColeccion("ventas")
-            ]).then(() => {
-                carrito = [];
-                renderizarCarrito();
-                alert('Inventario y ventas eliminados correctamente.');
-            }).catch(error => {
-                alert('No se pudo borrar el sistema: ' + error.message);
-            });
+        function abrirConfirmacionBorrado(tipo) {
+            const esInventario = tipo === 'inventario';
+            accionBorradoPendiente = tipo;
+            document.getElementById('titulo-confirmar-borrado').textContent = esInventario
+                ? '¿Borrar todo el inventario?'
+                : '¿Borrar todas las ventas?';
+            document.getElementById('texto-confirmar-borrado').textContent = esInventario
+                ? 'Se eliminarán todos los productos y existencias registrados.'
+                : 'Se eliminará permanentemente todo el historial de ventas.';
+            document.getElementById('detalle-confirmar-borrado').textContent = 'Esta acción no se puede deshacer.';
+            document.getElementById('btn-confirmar-borrado').onclick = confirmarBorradoDatos;
+            document.getElementById('modal-confirmar-borrado').classList.remove('hidden');
+        }
+
+        function cerrarConfirmacionBorrado() {
+            accionBorradoPendiente = null;
+            document.getElementById('modal-confirmar-borrado').classList.add('hidden');
+        }
+
+        async function confirmarBorradoDatos() {
+            const tipo = accionBorradoPendiente;
+            if (!tipo) return;
+            const boton = document.getElementById('btn-confirmar-borrado');
+            establecerCargaBoton(boton, true);
+
+            try {
+                await borrarColeccion(tipo === 'inventario' ? 'productos' : 'ventas');
+                if (tipo === 'inventario') {
+                    carrito = [];
+                    renderizarCarrito();
+                }
+                cerrarConfirmacionBorrado();
+                mostrarAviso(tipo === 'inventario' ? 'Inventario eliminado correctamente' : 'Historial de ventas eliminado correctamente', 'exito');
+            } catch (error) {
+                mostrarAviso('No se pudieron borrar los datos', 'error');
+                console.error('Error al borrar datos:', error);
+            } finally {
+                establecerCargaBoton(boton, false);
+            }
+        }
+
+        function limpiarInventario() {
+            abrirConfirmacionBorrado('inventario');
+        }
+
+        function limpiarVentas() {
+            abrirConfirmacionBorrado('ventas');
         }
     </script>
 

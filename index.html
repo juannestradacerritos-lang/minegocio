@@ -1167,9 +1167,19 @@
         .product-choice-button.option-gold { border-color: #ead8ad; background: #fdf8ed; color: #8a6418; }
         .product-choice-button.option-gold:hover { background: #f9edcf; border-color: #d5b565; }
         .product-choice-button.option-gold small { color: #8a6418; }
+        .product-choice-button.seleccionada {
+            border-color: var(--ui-primary);
+            background: #dff3ef;
+            box-shadow: 0 0 0 3px rgba(15,118,110,.14);
+        }
+        #modal-producto-escaneado > div {
+            max-height: calc(100dvh - 2rem);
+            overflow-y: auto;
+        }
         body.dark-mode .product-choice-summary { background: #132a39; border-color: #294354; }
         body.dark-mode .product-choice-step { color: #aebfc9; }
         body.dark-mode .product-choice-button { background: #153d3b; border-color: #2c6b67; color: #84ded4; }
+        body.dark-mode .product-choice-button.seleccionada { background: #1b504c; border-color: #84ded4; box-shadow: 0 0 0 3px rgba(132,222,212,.14); }
         body.dark-mode .product-choice-button strong { color: #edf6f8; }
         body.dark-mode .product-choice-button small { color: #84ded4; }
         body.dark-mode .product-choice-button.option-blue { background: #172f45; border-color: #315574; }
@@ -1177,8 +1187,12 @@
         body.dark-mode .product-choice-button.option-gold { background: #392f1c; border-color: #68552b; }
         body.dark-mode .product-choice-button.option-gold small { color: #e4c677; }
         @media (max-width: 420px) {
-            .product-choice-grid.three-options { grid-template-columns: 1fr; }
-            .product-choice-grid.three-options .product-choice-button { min-height: 58px; }
+            #modal-producto-escaneado > div { padding: 1rem; }
+            #modal-producto-escaneado .product-choice-summary { margin: .65rem 0; padding: .7rem; }
+            #modal-producto-escaneado #precio-producto-escaneado { font-size: 1.1rem; line-height: 1.35; }
+            #modal-producto-escaneado .product-choice-button { min-height: 54px; padding: .5rem; }
+            .product-choice-grid.three-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .product-choice-grid.three-options .product-choice-button:first-child { grid-column: 1 / -1; }
         }
 
         /* Desplegables personalizados para formularios y ajustes. */
@@ -1878,7 +1892,7 @@
             </div>
             <div class="flex gap-3 border-t border-gray-100 pt-4">
                 <button type="button" onclick="cerrarProductoEscaneado()" class="flex-1 bg-gray-100 text-gray-700 py-3 font-bold">Cancelar</button>
-                <button id="btn-agregar-escaneado" type="button" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white py-3 font-bold">Agregar al carrito</button>
+                <button id="btn-agregar-escaneado" type="button" onclick="aceptarProductoEscaneado()" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white py-3 font-bold">Aceptar</button>
             </div>
         </div>
     </div>
@@ -3119,6 +3133,7 @@
         let cuadroLector = null;
         let destinoLector = 'nuevo';
         let productoEscaneadoActual = null;
+        let presentacionEscaneadaSeleccionada = null;
 
         async function abrirLectorCodigo(destino = 'nuevo') {
             destinoLector = destino;
@@ -3246,6 +3261,9 @@
                 configurarCantidadEscaneada(producto.unidadVenta);
             }
 
+            presentacionEscaneadaSeleccionada = (!ventaDoble && !tieneTamanos)
+                ? { modoVenta: producto.unidadVenta, tamano: '' }
+                : null;
             const boton = document.getElementById('btn-agregar-escaneado');
             const opciones = document.getElementById('opciones-producto-escaneado');
             const opcionesTamano = document.getElementById('opciones-tamano-escaneado');
@@ -3253,26 +3271,26 @@
             opcionesTamano.classList.toggle('hidden', !tieneTamanos);
             opcionesTamano.classList.toggle('three-options', tieneTamanos && ventaDoble);
             document.getElementById('bloque-presentacion-escaneada').classList.toggle('hidden', !ventaDoble && !tieneTamanos);
-            boton.classList.toggle('hidden', ventaDoble || tieneTamanos);
-            boton.onclick = () => agregarEscaneado(producto.id, producto.unidadVenta);
+            boton.classList.remove('hidden');
 
             const botonLibra = document.getElementById('btn-agregar-libra-escaneada');
             const botonUnidad = document.getElementById('btn-agregar-unidad-escaneada');
             botonLibra.querySelector('small').textContent = `Q${Number(producto.precioLibra ?? producto.precio).toFixed(2)} / lb`;
             botonUnidad.querySelector('small').textContent = `Q${Number(producto.precioUnidad).toFixed(2)} c/u`;
-            botonLibra.onclick = () => agregarEscaneado(producto.id, 'libra');
-            botonUnidad.onclick = () => agregarEscaneado(producto.id, 'unidad');
+            botonLibra.onclick = () => seleccionarPresentacionEscaneada('libra', '', botonLibra);
+            botonUnidad.onclick = () => seleccionarPresentacionEscaneada('unidad', '', botonUnidad);
             const modoTamano = producto.unidadVenta === 'ambas' ? 'unidad' : producto.unidadVenta;
             const botonLibraTamano = document.getElementById('btn-agregar-libra-tamano-escaneada');
             const botonMediano = document.getElementById('btn-agregar-mediano-escaneado');
             const botonGrande = document.getElementById('btn-agregar-grande-escaneado');
             botonLibraTamano.classList.toggle('hidden', !ventaDoble);
             botonLibraTamano.querySelector('small').textContent = `Q${Number(producto.precioLibra ?? producto.precio).toFixed(2)} / lb`;
-            botonLibraTamano.onclick = () => agregarEscaneado(producto.id, 'libra');
+            botonLibraTamano.onclick = () => seleccionarPresentacionEscaneada('libra', '', botonLibraTamano);
             botonMediano.querySelector('small').textContent = `Q${Number(producto.precioMediano).toFixed(2)} c/u`;
             botonGrande.querySelector('small').textContent = `Q${Number(producto.precioGrande).toFixed(2)} c/u`;
-            botonMediano.onclick = () => agregarEscaneado(producto.id, modoTamano, 'mediano');
-            botonGrande.onclick = () => agregarEscaneado(producto.id, modoTamano, 'grande');
+            botonMediano.onclick = () => seleccionarPresentacionEscaneada(modoTamano, 'mediano', botonMediano);
+            botonGrande.onclick = () => seleccionarPresentacionEscaneada(modoTamano, 'grande', botonGrande);
+            document.querySelectorAll('#modal-producto-escaneado .product-choice-button').forEach(opcion => opcion.classList.remove('seleccionada'));
             validarCantidadEscaneada();
             document.getElementById('modal-producto-escaneado').classList.remove('hidden');
             setTimeout(() => cantidad.focus(), 100);
@@ -3303,13 +3321,38 @@
             const cantidad = Number(campo.value);
             const maximo = Number(campo.max);
             const valida = producto.stock > 0 && Number.isFinite(cantidad) && cantidad >= Number(campo.min) && cantidad <= maximo;
-            ['btn-agregar-escaneado', 'btn-agregar-libra-escaneada', 'btn-agregar-unidad-escaneada', 'btn-agregar-libra-tamano-escaneada', 'btn-agregar-mediano-escaneado', 'btn-agregar-grande-escaneado'].forEach(id => {
+            ['btn-agregar-libra-escaneada', 'btn-agregar-unidad-escaneada', 'btn-agregar-libra-tamano-escaneada', 'btn-agregar-mediano-escaneado', 'btn-agregar-grande-escaneado'].forEach(id => {
                 const boton = document.getElementById(id);
                 boton.disabled = !valida;
                 boton.classList.toggle('opacity-50', !valida);
                 boton.classList.toggle('cursor-not-allowed', !valida);
             });
+            const botonAceptar = document.getElementById('btn-agregar-escaneado');
+            const puedeAceptar = valida && Boolean(presentacionEscaneadaSeleccionada);
+            botonAceptar.disabled = !puedeAceptar;
+            botonAceptar.classList.toggle('opacity-50', !puedeAceptar);
+            botonAceptar.classList.toggle('cursor-not-allowed', !puedeAceptar);
             return valida;
+        }
+
+        function seleccionarPresentacionEscaneada(modoVenta, tamano, boton) {
+            presentacionEscaneadaSeleccionada = { modoVenta, tamano };
+            document.querySelectorAll('#modal-producto-escaneado .product-choice-button').forEach(opcion => opcion.classList.remove('seleccionada'));
+            boton.classList.add('seleccionada');
+            configurarCantidadEscaneada(modoVenta);
+        }
+
+        function aceptarProductoEscaneado() {
+            if (!productoEscaneadoActual) return;
+            if (!presentacionEscaneadaSeleccionada) {
+                mostrarAviso('Selecciona una presentación', 'error');
+                return;
+            }
+            agregarEscaneado(
+                productoEscaneadoActual.id,
+                presentacionEscaneadaSeleccionada.modoVenta,
+                presentacionEscaneadaSeleccionada.tamano
+            );
         }
 
         function agregarEscaneado(id, modoVenta, tamano = '') {
@@ -3325,6 +3368,7 @@
 
         function cerrarProductoEscaneado() {
             productoEscaneadoActual = null;
+            presentacionEscaneadaSeleccionada = null;
             document.getElementById('modal-producto-escaneado').classList.add('hidden');
         }
 

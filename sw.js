@@ -1,5 +1,6 @@
-const CACHE_NAME = 'mi-negocio-v57';
+const CACHE_NAME = 'mi-negocio-v58';
 const APP_SHELL = ['./', './index.html', './manifest.json', './icon.svg'];
+const PAGINA_OFFLINE = './index.html';
 const RECURSOS_EXTERNOS = [
   'https://cdn.tailwindcss.com',
   'https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js',
@@ -7,23 +8,44 @@ const RECURSOS_EXTERNOS = [
   'https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js'
 ];
 
+function respuestaValida(response) {
+  // Las respuestas opacas de otros dominios tienen status 0, pero sí se pueden reutilizar desde Cache Storage.
+  return response && (response.ok || response.type === 'opaque');
+}
+
+async function guardarEnCache(request, response) {
+  if (!respuestaValida(response)) return;
+  const cache = await caches.open(CACHE_NAME);
+  await cache.put(request, response.clone());
+}
+
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(async cache => {
-      await cache.addAll(APP_SHELL);
-      // Los recursos externos se intentan guardar, pero no bloquean la instalación.
-      await Promise.allSettled(RECURSOS_EXTERNOS.map(url => cache.add(url)));
-    })
-  );
-  self.skipWaiting();
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE_NAME);
+
+    // Cada archivo se guarda por separado para que un fallo no invalide toda la instalación.
+    const resultadosLocales = await Promise.allSettled(
+      APP_SHELL.map(recurso => cache.add(recurso))
+    );
+
+    // index.html es imprescindible para mostrar la aplicación sin conexión.
+    const indice = APP_SHELL.indexOf(PAGINA_OFFLINE);
+    if (resultadosLocales[indice]?.status === 'rejected') {
+      throw resultadosLocales[indice].reason;
+    }
+
+    // Las bibliotecas externas también se intentan guardar sin bloquear la instalación.
+    await Promise.allSettled(RECURSOS_EXTERNOS.map(recurso => cache.add(recurso)));
+    await self.skipWaiting();
+  })());
 });
 
 self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys()
-      .then(keys => Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))))
-      .then(() => self.clients.claim())
-  );
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key)));
+    await self.clients.claim();
+  })());
 });
 
 self.addEventListener('fetch', event => {
@@ -35,37 +57,42 @@ self.addEventListener('fetch', event => {
   const esDependencia = RECURSOS_EXTERNOS.includes(url.href);
 
   if (esNavegacion) {
-    event.respondWith(
-      fetch(event.request)
-        .then(response => {
-          if (response.ok) {
-            const copia = response.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put('./index.html', copia));
-          }
-          return response;
-        })
-        .catch(() => caches.match('./index.html'))
-    );
+    event.respondWith((async () => {
+      try {
+        const response = await fetch(event.request);
+        await guardarEnCache(PAGINA_OFFLINE, response);
+        return response;
+      } catch (error) {
+        const paginaGuardada = await caches.match(PAGINA_OFFLINE);
+        if (paginaGuardada) return paginaGuardada;
+        return new Response('La aplicación no está disponible sin conexión todavía.', {
+          status: 503,
+          headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+        });
+      }
+    })());
     return;
   }
 
   if (esRecursoApp || esDependencia) {
-    event.respondWith(
-      caches.match(event.request).then(cached => {
-        const actualizar = fetch(event.request).then(response => {
-          if (response.ok) {
-            const copia = response.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(event.request, copia));
-          }
-          return response;
-        });
+    event.respondWith((async () => {
+      const cached = await caches.match(event.request, { ignoreSearch: esRecursoApp });
 
-        if (cached) {
-          event.waitUntil(actualizar.catch(() => undefined));
-          return cached;
-        }
-        return actualizar.catch(() => Response.error());
-      })
-    );
+      const actualizar = fetch(event.request).then(async response => {
+        await guardarEnCache(event.request, response);
+        return response;
+      });
+
+      if (cached) {
+        event.waitUntil(actualizar.catch(() => undefined));
+        return cached;
+      }
+
+      try {
+        return await actualizar;
+      } catch (error) {
+        return new Response('', { status: 504, statusText: 'Sin conexión' });
+      }
+    })());
   }
 });

@@ -41,6 +41,50 @@
             overscroll-behavior: auto;
         }
         #tab-vender { overflow: visible; }
+
+        /* ===== Bloqueo del scroll de fondo con un modal abierto ===== */
+        body.modal-abierto { position: fixed; left: 0; right: 0; width: 100%; overflow: hidden; }
+        .fixed[id^="modal-"] { overscroll-behavior: contain; touch-action: none; }
+        /* Si el contenido del modal es más alto que la pantalla, se desplaza dentro de sí mismo. */
+        .fixed[id^="modal-"] > div { max-height: 100%; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; }
+
+        /* ===== Cobro: hoja inferior en teléfonos ===== */
+        body.cobro-abierto { overflow: hidden; }
+        #modal-cobrar .cobro-sheet { animation: cobro-aparecer .22s ease-out; }
+        #modal-cobrar .cobro-handle { display: none; }
+        @keyframes cobro-aparecer { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+
+        .cobro-rapido { display: grid; grid-template-columns: repeat(4, 1fr); gap: .5rem; }
+        .cobro-chip {
+            min-height: 48px; padding: .4rem .25rem; border: 1px solid #d5dee5; border-radius: 12px;
+            background: #f4f7f9; color: #16324f; font-weight: 800; font-size: .95rem; line-height: 1.1;
+            touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+            transition: background .15s, border-color .15s, transform .1s;
+        }
+        .cobro-chip small { display: block; font-size: .6rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #5b6f81; }
+        .cobro-chip:active { transform: scale(.95); }
+        .cobro-chip.activo { background: #dcfce7; border-color: #22c55e; color: #166534; }
+        .cobro-chip.activo small { color: #166534; }
+        body.dark-mode .cobro-chip { background: #102331; border-color: #294354; color: #dce8ee; }
+        body.dark-mode .cobro-chip small { color: #9fb2c0; }
+        body.dark-mode .cobro-chip.activo { background: #12361f; border-color: #22c55e; color: #86efac; }
+        body.dark-mode .cobro-chip.activo small { color: #86efac; }
+        body.dark-mode .cobro-handle { background: #3a5468; }
+
+        @media (max-width: 640px) {
+            #modal-cobrar.cobro-modal { align-items: flex-end; padding: 0; }
+            #modal-cobrar .cobro-sheet {
+                width: 100%; max-width: none; max-height: 100%; overflow-y: auto; overscroll-behavior: contain;
+                border-radius: 24px 24px 0 0; padding: .75rem 1.25rem calc(1.25rem + env(safe-area-inset-bottom));
+                animation-name: cobro-subir;
+            }
+            #modal-cobrar .cobro-handle { display: block; width: 44px; height: 5px; border-radius: 3px; background: #cbd5dc; margin: 0 auto .9rem; }
+            /* Ahorra espacio para que el teclado no tape el cobro. */
+            #modal-cobrar .cobro-icono { display: none; }
+            #modal-cobrar h3#titulo-cobro { margin-bottom: .75rem; }
+        }
+        @keyframes cobro-subir { from { transform: translateY(100%); } to { transform: none; } }
+        @media (prefers-reduced-motion: reduce) { #modal-cobrar .cobro-sheet { animation: none !important; } }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans antialiased">
@@ -844,12 +888,13 @@
         </div>
     </div>
 
-    <div id="modal-cobrar" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden transition-opacity">
-        <div class="bg-white p-6 rounded-2xl w-11/12 max-w-sm text-center shadow-2xl">
-            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+    <div id="modal-cobrar" class="cobro-modal fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden transition-opacity" role="dialog" aria-modal="true" aria-labelledby="titulo-cobro">
+        <div class="cobro-sheet bg-white p-6 rounded-2xl w-11/12 max-w-sm text-center shadow-2xl">
+            <div class="cobro-handle" aria-hidden="true"></div>
+            <div class="cobro-icono w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span class="text-green-500 text-3xl">💵</span>
             </div>
-            <h3 class="text-xl font-bold mb-4 text-gray-800">Completar Venta</h3>
+            <h3 id="titulo-cobro" class="text-xl font-bold mb-4 text-gray-800">Completar Venta</h3>
             
             <div class="bg-gray-50 p-4 rounded-xl mb-4 border border-gray-100 flex justify-between items-center">
                 <span class="text-gray-500 text-sm font-semibold">Total a cobrar:</span>
@@ -864,14 +909,16 @@
                 </div>
             </div>
 
+            <div id="cobro-rapido" class="cobro-rapido mb-4" role="group" aria-label="Montos rápidos de efectivo"></div>
+
             <div class="flex justify-between items-center mb-6 px-2">
                 <span class="text-gray-500 text-sm font-bold">Cambio (Vuelto):</span>
                 <span class="text-2xl font-black text-green-500" id="modal-vuelto">Q0.00</span>
             </div>
 
             <div class="flex space-x-3">
-                <button onclick="cerrarModalCobro()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-bold transition-colors">Cancelar</button>
-                <button id="btn-finalizar-venta" onclick="confirmarVenta()" class="flex-1 bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-bold shadow-md transition-colors opacity-50 cursor-not-allowed" disabled>Confirmar</button>
+                <button onclick="cerrarModalCobro()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-4 rounded-xl font-bold transition-colors">Cancelar</button>
+                <button id="btn-finalizar-venta" onclick="confirmarVenta()" class="flex-[1.4] bg-green-500 hover:bg-green-600 text-white py-4 rounded-xl font-bold shadow-md transition-colors opacity-50 cursor-not-allowed" disabled>Confirmar</button>
             </div>
         </div>
     </div>
@@ -886,5 +933,6 @@
     <script src="./pdf-comun.js"></script>
     <script src="./pdf-categoria.js"></script>
     <script src="./categorias.js"></script>
+    <script src="./modal-bloqueo.js"></script>
 </body>
 </html>

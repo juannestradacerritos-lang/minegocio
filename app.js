@@ -1595,8 +1595,59 @@
             btn.disabled = true;
             btn.classList.add('opacity-50', 'cursor-not-allowed');
 
+            renderizarEfectivoRapido();
+            document.body.classList.add('cobro-abierto');
             document.getElementById('modal-cobrar').classList.remove('hidden');
-            setTimeout(() => document.getElementById('input-efectivo').focus(), 100);
+            ajustarModalCobroTeclado();
+            // En teléfonos no se abre el teclado solo: se eligen montos rápidos o se toca el campo.
+            if (!window.matchMedia('(pointer: coarse)').matches) {
+                setTimeout(() => document.getElementById('input-efectivo').focus(), 100);
+            }
+        }
+
+        // Botones con billetes habituales para no depender del teclado.
+        function renderizarEfectivoRapido() {
+            const contenedor = document.getElementById('cobro-rapido');
+            if (!contenedor) return;
+            const total = Math.round(totalVentaActual * 100) / 100;
+            const montos = [...new Set([5, 10, 20, 50, 100, 200].map(b => Math.ceil(total / b) * b))]
+                .filter(m => m > total)
+                .sort((a, b) => a - b)
+                .slice(0, 3);
+            const opciones = [{ valor: total, etiqueta: `Q${total.toFixed(2).replace(/\.00$/, '')}`, nota: 'Exacto' },
+                ...montos.map(m => ({ valor: m, etiqueta: `Q${m}`, nota: 'Billete' }))];
+            contenedor.innerHTML = opciones.map(o =>
+                `<button type="button" class="cobro-chip" data-valor="${o.valor}" onclick="establecerEfectivoRapido(${o.valor})"><small>${o.nota}</small>${o.etiqueta}</button>`
+            ).join('');
+        }
+
+        function establecerEfectivoRapido(valor) {
+            const campo = document.getElementById('input-efectivo');
+            campo.value = String(valor);
+            campo.blur();
+            calcularVuelto();
+            navigator.vibrate?.(10);
+        }
+
+        function marcarEfectivoRapido(efectivo) {
+            document.querySelectorAll('#cobro-rapido .cobro-chip').forEach(chip => {
+                chip.classList.toggle('activo', Math.abs(Number(chip.dataset.valor) - efectivo) < 0.005);
+            });
+        }
+
+        // Mantiene la hoja visible por encima del teclado en móviles (PWA).
+        function ajustarModalCobroTeclado() {
+            const modal = document.getElementById('modal-cobrar');
+            const vv = window.visualViewport;
+            if (!modal || !vv || modal.classList.contains('hidden')) return;
+            modal.style.top = `${vv.offsetTop}px`;
+            modal.style.height = `${vv.height}px`;
+            modal.style.bottom = 'auto';
+        }
+
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', ajustarModalCobroTeclado);
+            window.visualViewport.addEventListener('scroll', ajustarModalCobroTeclado);
         }
 
         function abrirModalCarritoVacio() {
@@ -1609,7 +1660,10 @@
         }
 
         function cerrarModalCobro() {
-            document.getElementById('modal-cobrar').classList.add('hidden');
+            const modal = document.getElementById('modal-cobrar');
+            modal.classList.add('hidden');
+            modal.style.top = modal.style.height = modal.style.bottom = '';
+            document.body.classList.remove('cobro-abierto');
         }
 
         function cerrarTecladoYCobrar(event) {
@@ -1623,6 +1677,7 @@
             const campoEfectivo = document.getElementById('input-efectivo');
             // Algunos teclados móviles usan coma decimal.
             const efectivo = parseFloat(campoEfectivo.value.replace(',', '.')) || 0;
+            marcarEfectivoRapido(efectivo);
             const vuelto = efectivo - totalVentaActual;
             const textoVuelto = document.getElementById('modal-vuelto');
             const btn = document.getElementById('btn-finalizar-venta');

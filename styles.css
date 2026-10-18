@@ -387,6 +387,22 @@ body.dark-mode .category-picker-menu { background: #102331; border-color: #35546
 body.dark-mode .category-picker-option { color: #b9cad3; }
 body.dark-mode .category-picker-option:hover, body.dark-mode .category-picker-option:focus-visible,
 body.dark-mode .category-picker-option[aria-selected="true"] { background: #153d3b; color: #84ded4; }
+.category-chips { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; }
+.category-chip {
+    min-height: 38px;
+    padding: .45rem .95rem;
+    border: 1px solid #d5dee8;
+    border-radius: 999px !important;
+    background: #f8fafc;
+    color: #42566a;
+    font-size: .8rem;
+    font-weight: 700;
+}
+.category-chip:hover { border-color: #9fcac5; background: #fff; }
+.category-chip.activa { background: var(--teal); border-color: var(--teal); color: #fff; }
+body.dark-mode .category-chip { background: #0b1d29; border-color: #355468; color: #b9cad3; }
+body.dark-mode .category-chip:hover { background: #102b39; border-color: #42b8ad; }
+body.dark-mode .category-chip.activa { background: #168c86; border-color: #168c86; color: #fff; }
 .ranking-list { display: grid; gap: .65rem; }
 .ranking-item { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: .75rem; padding: .8rem; border: 1px solid var(--ui-border); border-radius: 12px; background: rgba(248,250,252,.75); }
 .ranking-position { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: var(--teal-soft); color: var(--ui-primary-dark); font-weight: 900; }
@@ -1002,7 +1018,13 @@ body.dark-mode .text-teal-700 { color: #84ded4 !important; }
 body.dark-mode .bg-green-50 { background-color: #123326 !important; }
 body.dark-mode .bg-orange-50 { background-color: #382817 !important; }
 body.dark-mode .bg-red-50 { background-color: #3b2024 !important; }
-body.dark-mode [id^="modal-"] { background: rgba(2, 8, 15, .72); }
+body.dark-mode div[id^="modal-"] { background: rgba(2, 8, 15, .72); }
+/* Colores legibles para los importes dentro de los modales en modo oscuro. */
+body.dark-mode [id^="modal-"] .text-blue-600 { color: #8bbcf5 !important; }
+body.dark-mode [id^="modal-"] .text-green-500,
+body.dark-mode [id^="modal-"] .text-green-600 { color: #5fdc8f !important; }
+body.dark-mode [id^="modal-"] .text-red-500 { color: #ff8f94 !important; }
+body.dark-mode [id^="modal-"] .text-teal-600 { color: #4fd1c5 !important; }
 body.dark-mode #modal-lector .scanner-panel { border: 1px solid #294354; }
 body.dark-mode #modal-producto-agregado .bg-green-100,
 body.dark-mode #modal-cobrar .bg-green-100 { background-color: #163b2c !important; }
@@ -1036,7 +1058,7 @@ button:disabled { cursor: not-allowed; filter: saturate(.65); }
 @keyframes navSelect {
     50% { transform: scale(.96); }
 }
-[id^="modal-"]:not(.hidden) { animation: modalBackdropIn .2s ease-out both; }
+div[id^="modal-"]:not(.hidden) { animation: modalBackdropIn .2s ease-out both; }
 [id^="modal-"]:not(.hidden) > div { animation: modalPanelIn .28s cubic-bezier(.22, 1, .36, 1) both; }
 @keyframes modalBackdropIn { from { opacity: 0; } }
 @keyframes modalPanelIn {
@@ -1046,7 +1068,7 @@ button:disabled { cursor: not-allowed; filter: saturate(.65); }
 #app-toast {
     position: fixed;
     left: 50%;
-    bottom: calc(5.8rem + env(safe-area-inset-bottom));
+    top: calc(4.9rem + env(safe-area-inset-top));
     z-index: 80;
     width: max-content;
     max-width: calc(100% - 2rem);
@@ -1059,7 +1081,7 @@ button:disabled { cursor: not-allowed; filter: saturate(.65); }
     font-size: .875rem;
     font-weight: 700;
     text-align: center;
-    transform: translate(-50%, 18px);
+    transform: translate(-50%, -18px);
     opacity: 0;
     pointer-events: none;
     transition: opacity .22s ease, transform .22s ease;
@@ -1083,9 +1105,6 @@ button:disabled { cursor: not-allowed; filter: saturate(.65); }
     animation: giroBoton .7s linear infinite;
 }
 @keyframes giroBoton { to { transform: rotate(360deg); } }
-@media (min-width: 1024px) {
-    #app-toast { bottom: 1.5rem; }
-}
 @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
     #app-content main > section:not(.hidden),
@@ -1610,3 +1629,43 @@ body.dark-mode #login-screen > div > div:first-child {
 .startup-logo { width: 84px; height: 84px; border: 0; border-radius: 22px; box-shadow: 0 14px 36px rgba(0, 0, 0, .35), 0 0 0 1px rgba(213, 168, 75, .45); }
 #app-content header .brand-icon { width: 42px; height: 42px; border: 0; border-radius: 11px; box-shadow: 0 0 0 1px rgba(213, 168, 75, .55); }
 #login-screen > div > div:first-child { width: 4.5rem; height: 4.5rem; margin: 0 0 1.5rem; border-radius: 18px; box-shadow: 0 10px 26px rgba(16, 38, 61, .25); }
+
+/* ---------- Botón para descargar el PDF por categoría ---------- */
+.pdf-category-btn {
+    width: 100%;
+    min-height: 48px;
+    margin-bottom: 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .55rem;
+    padding: .6rem 1rem;
+    border: 1px solid #b9ded8;
+    background: #eff9f7;
+    color: #115e59;
+    font-size: .85rem;
+    font-weight: 800;
+}
+.pdf-category-btn:hover { background: #dff3ef; border-color: #7bc3ba; }
+body.dark-mode .pdf-category-btn { background: #153d3b; border-color: #2c6b67; color: #84ded4; }
+body.dark-mode .pdf-category-btn:hover { background: #1b504c; border-color: #42b8ad; }
+
+/* ---------- Campos numéricos sin flechas nativas ---------- */
+/* Las flechas del navegador no se pueden adaptar al diseño; se ocultan y el campo se escribe directamente. */
+input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; appearance: none; margin: 0; display: none; }
+
+/* ---------- Administración de categorías ---------- */
+.cat-list { display: grid; gap: .5rem; max-height: 40vh; overflow-y: auto; margin-top: 1rem; }
+.cat-item { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .65rem .8rem; border: 1px solid var(--c-border); border-radius: 12px; background: var(--c-surface-2); }
+.cat-item span { display: block; color: var(--c-text); font-size: .9rem; font-weight: 700; overflow-wrap: anywhere; }
+.cat-item small { display: block; margin-top: .1rem; color: var(--c-muted); font-size: .72rem; }
+.cat-delete { flex: 0 0 auto; padding: .4rem .75rem; border: 1px solid #f1d2d5; background: #fff8f8; color: #b4232f; font-size: .78rem; font-weight: 800; }
+.cat-delete:hover:not(:disabled) { background: #fdebec; }
+.cat-delete:disabled { opacity: .4; cursor: not-allowed; }
+body.dark-mode .cat-delete { background: #2a1a21; border-color: #573139; color: #ffabb3; }
+body.dark-mode .cat-delete:hover:not(:disabled) { background: #452329; }
+@media (max-width: 640px) {
+    #form-categoria input { font-size: 16px !important; }
+}

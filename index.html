@@ -19,6 +19,29 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <link rel="stylesheet" href="./styles.css">
+
+    <style>
+        /* Corrige el scroll en "Vender": ninguna lista debe atrapar el desplazamiento vertical de la página. */
+        #lista-vender {
+            overflow-x: auto;
+            overflow-y: hidden;          /* evita que la lista capture el gesto vertical */
+            overscroll-behavior-x: contain;
+            overscroll-behavior-y: auto; /* el scroll vertical pasa a la página */
+            touch-action: pan-x pan-y;
+            -webkit-overflow-scrolling: touch;
+            scroll-snap-type: none !important; /* el snap hacía que se trabara al deslizar */
+        }
+        #lista-vender > div { flex: 0 0 auto; }
+        #lista-vender > div:hover { transform: none !important; }
+
+        /* El carrito crece con su contenido y la página completa hace el scroll. */
+        #carrito-items, .cart-list {
+            max-height: none !important;
+            overflow: visible !important;
+            overscroll-behavior: auto;
+        }
+        #tab-vender { overflow: visible; }
+    </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans antialiased">
 
@@ -124,6 +147,19 @@
                     </div>
                 </div>
 
+                <!-- PDF de ventas por categoría -->
+                <div class="chart-card bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-6 md:col-span-2">
+                    <div class="mb-4">
+                        <h3 class="font-bold text-gray-700">Ventas por categoría</h3>
+                        <p class="text-xs text-gray-500 mt-1">Elige una categoría y descarga el PDF con sus ventas.</p>
+                    </div>
+                    <span id="etiqueta-filtro-categoria" class="block text-xs mb-2 font-semibold text-gray-500">Categoría del PDF a descargar:</span>
+                    <div id="filtro-categoria-chips" class="category-chips" role="radiogroup" aria-labelledby="etiqueta-filtro-categoria"></div>
+                    <button id="btn-pdf-categoria" type="button" class="pdf-category-btn" style="margin-bottom:0">
+                        <span aria-hidden="true">⇩</span><span>Descargar PDF de ventas por categoría</span>
+                    </button>
+                </div>
+
                 <!-- Ventas de hoy (se usa flex en vez de grid para no heredar los estilos de las tarjetas del resumen) -->
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 md:col-span-2">
                     <div class="flex items-start justify-between gap-3 border-b border-gray-100 pb-3 mb-4">
@@ -181,17 +217,15 @@
             <!-- 4. PESTAÑA: VENDER -->
             <section id="tab-vender" class="fade-in hidden">
                 <h2 class="text-2xl font-bold mb-4 text-gray-800">Caja Registradora</h2>
-                <p class="text-sm text-gray-500 font-medium">Busca productos, agrégalos al carrito y completa el cobro.</p>
-                
-                <div class="flex items-center justify-between gap-3 mb-3">
-                    <p class="text-sm text-gray-500 font-semibold">Toca un producto o escanea su código:</p>
-                    <button type="button" onclick="abrirLectorCodigo('vender')" class="shrink-0 bg-teal-600 hover:bg-teal-700 text-white px-4 py-3 font-bold" aria-label="Escanear producto para vender">
-                        Escanear
+
+                <div class="flex items-stretch gap-2 mb-4">
+                    <div class="relative flex-1 min-w-0">
+                        <span class="absolute left-4 top-3.5 text-gray-400" aria-hidden="true">🔍</span>
+                        <input type="search" id="buscar-venta" placeholder="Buscar por nombre o código..." class="w-full p-3 pl-10 border border-gray-300" oninput="renderizarListaVenta()" aria-label="Buscar producto para vender">
+                    </div>
+                    <button type="button" onclick="abrirLectorCodigo('vender')" class="shrink-0 bg-teal-600 hover:bg-teal-700 text-white px-4 font-bold flex items-center gap-2" aria-label="Escanear producto para vender">
+                        <span aria-hidden="true">▦</span><span>Escanear</span>
                     </button>
-                </div>
-                <div class="relative mb-4">
-                    <span class="absolute left-4 top-3.5 text-gray-400" aria-hidden="true">🔍</span>
-                    <input type="search" id="buscar-venta" placeholder="Buscar por nombre o código..." class="w-full p-3 pl-10 border border-gray-300" oninput="renderizarListaVenta()" aria-label="Buscar producto para vender">
                 </div>
                 <div class="flex overflow-x-auto space-x-3 pb-4 mb-2" id="lista-vender"></div>
 
@@ -232,25 +266,6 @@
                         <p class="text-xs font-bold uppercase tracking-wider text-gray-400">Unidades vendidas</p>
                         <p id="grafico-unidades-vendidas" class="text-2xl font-black text-gray-700 mt-2">0</p>
                     </div>
-                </div>
-                <div class="chart-card bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-4">
-                    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-4">
-                        <div>
-                            <h3 class="font-bold text-gray-700">Productos más vendidos</h3>
-                            <p class="text-xs text-gray-500 mt-1">Filtra las ventas por categoría.</p>
-                        </div>
-                        <div class="w-full sm:w-64">
-                            <span id="etiqueta-filtro-categoria" class="block text-xs mb-1 font-semibold text-gray-500">Categoría</span>
-                            <div id="selector-categoria-ventas" class="category-picker">
-                                <button id="filtro-categoria-boton" type="button" class="category-picker-trigger" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="etiqueta-filtro-categoria filtro-categoria-texto" onclick="alternarMenuCategorias()">
-                                    <span id="filtro-categoria-texto">Todas las categorías</span>
-                                    <span class="category-picker-chevron" aria-hidden="true">⌄</span>
-                                </button>
-                                <div id="filtro-categoria-menu" class="category-picker-menu hidden" role="listbox" aria-labelledby="etiqueta-filtro-categoria"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="lista-mas-vendidos" class="ranking-list"></div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="chart-card bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
@@ -867,5 +882,9 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
 
     <script src="./app.js"></script>
+    <script src="./aviso-carrito.js"></script>
+    <script src="./pdf-comun.js"></script>
+    <script src="./pdf-categoria.js"></script>
+    <script src="./categorias.js"></script>
 </body>
 </html>

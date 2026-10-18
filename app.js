@@ -406,60 +406,27 @@
             return [...new Set([...categoriasVentasBase, ...categoriasInventario])];
         }
 
+        // Selección de categoría solo para el PDF: botones visibles, sin desplegable.
         function renderizarMenuCategorias() {
-            const menu = document.getElementById('filtro-categoria-menu');
-            const texto = document.getElementById('filtro-categoria-texto');
-            if (!menu || !texto) return;
+            const contenedor = document.getElementById('filtro-categoria-chips');
+            if (!contenedor) return;
             const categorias = obtenerCategoriasVentas();
             if (categoriaVentasSeleccionada !== 'todas' && !categorias.includes(categoriaVentasSeleccionada)) {
                 categoriaVentasSeleccionada = 'todas';
             }
-            opcionesCategoriasVentas = [{ valor: 'todas', texto: 'Todas las categorías' }, ...categorias.map(categoria => ({ valor: categoria, texto: categoria }))];
-            texto.textContent = opcionesCategoriasVentas.find(opcion => opcion.valor === categoriaVentasSeleccionada)?.texto || 'Todas las categorías';
-            menu.innerHTML = opcionesCategoriasVentas.map((opcion, indice) => {
+            opcionesCategoriasVentas = [{ valor: 'todas', texto: 'Todas' }, ...categorias.map(categoria => ({ valor: categoria, texto: categoria }))];
+            contenedor.innerHTML = opcionesCategoriasVentas.map((opcion, indice) => {
                 const activa = opcion.valor === categoriaVentasSeleccionada;
-                return `<button type="button" class="category-picker-option" role="option" aria-selected="${activa}" onclick="seleccionarCategoriaVentasPorIndice(${indice})"><span>${escaparHTML(opcion.texto)}</span><span class="category-picker-check" aria-hidden="true">${activa ? '✓' : ''}</span></button>`;
+                return `<button type="button" class="category-chip${activa ? ' activa' : ''}" role="radio" aria-checked="${activa}" onclick="seleccionarCategoriaVentasPorIndice(${indice})">${escaparHTML(opcion.texto)}</button>`;
             }).join('');
-        }
-
-        function alternarMenuCategorias() {
-            const boton = document.getElementById('filtro-categoria-boton');
-            const menu = document.getElementById('filtro-categoria-menu');
-            if (!boton || !menu) return;
-            const abrir = menu.classList.contains('hidden');
-            if (abrir) renderizarMenuCategorias();
-            menu.classList.toggle('hidden', !abrir);
-            boton.setAttribute('aria-expanded', abrir ? 'true' : 'false');
-            if (abrir) requestAnimationFrame(() => menu.querySelector('[aria-selected="true"]')?.focus());
-        }
-
-        function cerrarMenuCategorias() {
-            document.getElementById('filtro-categoria-menu')?.classList.add('hidden');
-            document.getElementById('filtro-categoria-boton')?.setAttribute('aria-expanded', 'false');
         }
 
         function seleccionarCategoriaVentasPorIndice(indice) {
             const opcion = opcionesCategoriasVentas[indice];
             if (!opcion) return;
             categoriaVentasSeleccionada = opcion.valor;
-            cerrarMenuCategorias();
-            renderizarGraficos();
-            document.getElementById('filtro-categoria-boton')?.focus();
+            renderizarMenuCategorias();
         }
-
-        document.addEventListener('click', event => {
-            const selector = document.getElementById('selector-categoria-ventas');
-            if (selector && !selector.contains(event.target)) cerrarMenuCategorias();
-        });
-
-        document.addEventListener('keydown', event => {
-            if (event.key !== 'Escape') return;
-            const boton = document.getElementById('filtro-categoria-boton');
-            if (boton?.getAttribute('aria-expanded') === 'true') {
-                cerrarMenuCategorias();
-                boton.focus();
-            }
-        });
 
         function renderizarGraficos() {
             const porProducto = {};
@@ -467,7 +434,8 @@
             let totalVentas = 0;
             let unidadesVendidas = 0;
             renderizarMenuCategorias();
-            const filtro = categoriaVentasSeleccionada;
+            // Los gráficos siempre muestran todas las ventas; la categoría elegida solo afecta al PDF.
+            const filtro = 'todas';
 
             ventas.forEach(venta => {
                 const fecha = obtenerFechaVenta(venta.fecha);
@@ -495,8 +463,6 @@
 
             const productos = Object.entries(porProducto).map(([nombre, valor]) => ({ nombre, ...valor }));
             const ordenados = [...productos].sort((a, b) => b.cantidad - a.cantidad);
-            const ranking = document.getElementById('lista-mas-vendidos');
-            ranking.innerHTML = ordenados.length ? ordenados.slice(0, 8).map((producto, indice) => `<div class="ranking-item"><span class="ranking-position">${indice + 1}</span><div class="min-w-0"><strong class="block text-sm text-gray-700 truncate">${escaparHTML(producto.nombre)}</strong><span class="text-xs text-gray-500">${escaparHTML(producto.categoria)} · Q${producto.importe.toFixed(2)}</span></div><strong class="text-teal-600">${producto.cantidad.toFixed(2).replace(/\.00$/, '')}</strong></div>`).join('') : '<p class="text-center text-gray-400 py-6">No hay ventas en esta categoría.</p>';
             const dias = Object.entries(porDia).sort(([a], [b]) => a.localeCompare(b)).slice(-10)
                 .map(([fecha, total]) => ({ nombre: formatearFechaCorta(fecha), valor: total }));
 
@@ -774,6 +740,7 @@
             document.getElementById('resumen-venta').innerText = `Q${ventasRealizadas.toFixed(2)}`;
             document.getElementById('resumen-ganancia').innerText = `Q${(ventaTotal - costoTotal).toFixed(2)}`;
             renderizarVentasHoy();
+            renderizarMenuCategorias();
         }
 
         function renderizarFaltantes() {

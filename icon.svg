@@ -1,10 +1,29 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="108" fill="#10263d"/>
-  <path d="M80 112h352v288H80z" fill="#fff" opacity=".08"/>
-  <path d="M80 112h352v14H80z" fill="#d5a84b"/>
-  <rect x="112" y="164" width="128" height="128" rx="22" fill="#168c86"/>
-  <rect x="272" y="164" width="128" height="58" rx="16" fill="#f8fafc"/>
-  <rect x="272" y="246" width="128" height="46" rx="15" fill="#77d6c8"/>
-  <rect x="112" y="326" width="288" height="30" rx="15" fill="#f8fafc"/>
-  <text x="176" y="246" text-anchor="middle" font-family="Arial, sans-serif" font-size="58" font-weight="700" fill="#fff">MN</text>
+  <defs>
+    <linearGradient id="fondo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1d4a66"/>
+      <stop offset="1" stop-color="#0b1d2e"/>
+    </linearGradient>
+    <linearGradient id="moneda" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f5d991"/>
+      <stop offset="1" stop-color="#d5a84b"/>
+    </linearGradient>
+  </defs>
+  <!-- Fondo a sangre: sirve para iconos "maskable"; el contenido queda en la zona segura central. -->
+  <rect width="512" height="512" fill="url(#fondo)"/>
+  <circle cx="256" cy="256" r="196" fill="#fff" opacity=".05"/>
+
+  <!-- Caja de inventario en perspectiva -->
+  <g stroke="#0b1d2e" stroke-width="6" stroke-linejoin="round">
+    <path d="M256 108 384 182 256 256 128 182Z" fill="#77d6c8"/>
+    <path d="M128 182 256 256V404L128 330Z" fill="#168c86"/>
+    <path d="M384 182V330L256 404V256Z" fill="#0f6d69"/>
+  </g>
+  <!-- Cinta de la caja -->
+  <path d="M192 145 320 219 288 237 160 163Z" fill="#f8fafc" opacity=".9"/>
+
+  <!-- Moneda de venta -->
+  <circle cx="352" cy="352" r="62" fill="url(#moneda)" stroke="#0b1d2e" stroke-width="8"/>
+  <circle cx="352" cy="352" r="47" fill="none" stroke="#a67c1f" stroke-width="3" opacity=".6"/>
+  <text x="352" y="376" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="68" font-weight="700" fill="#10263d">Q</text>
 </svg>

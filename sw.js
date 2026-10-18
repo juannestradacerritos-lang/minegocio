@@ -1,5 +1,5 @@
-const CACHE_NAME = 'mi-negocio-v58';
-const APP_SHELL = ['./', './index.html', './manifest.json', './icon.svg'];
+const CACHE_NAME = 'mi-negocio-v71';
+const APP_SHELL = ['./', './index.html', './styles.css', './app.js', './manifest.json', './icon.svg'];
 const PAGINA_OFFLINE = './index.html';
 const RECURSOS_EXTERNOS = [
   'https://cdn.tailwindcss.com',
@@ -25,7 +25,8 @@ self.addEventListener('install', event => {
 
     // Cada archivo se guarda por separado para que un fallo no invalide toda la instalación.
     const resultadosLocales = await Promise.allSettled(
-      APP_SHELL.map(recurso => cache.add(recurso))
+      // 'reload' evita que la caché HTTP del navegador entregue archivos viejos al instalar una versión nueva.
+      APP_SHELL.map(recurso => cache.add(new Request(recurso, { cache: 'reload' })))
     );
 
     // index.html es imprescindible para mostrar la aplicación sin conexión.
@@ -36,8 +37,13 @@ self.addEventListener('install', event => {
 
     // Las bibliotecas externas también se intentan guardar sin bloquear la instalación.
     await Promise.allSettled(RECURSOS_EXTERNOS.map(recurso => cache.add(recurso)));
-    await self.skipWaiting();
+    // No se llama a skipWaiting() aquí: la versión nueva queda en espera hasta que el usuario
+    // pulse "Actualizar" en la aplicación (mensaje SKIP_WAITING).
   })());
+});
+
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 self.addEventListener('activate', event => {

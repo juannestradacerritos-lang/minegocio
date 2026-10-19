@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -21,23 +21,6 @@
     <link rel="stylesheet" href="./styles.css">
 
     <style>
-        /* Resumen diario primero, con cantidades separadas. */
-        #tab-resumen:not(.hidden) { display: flex; flex-direction: column; align-items: stretch; gap: 1rem; }
-        #tab-resumen > * { width: 100%; margin-bottom: 0; }
-        #tab-resumen > #resumen-diario { min-height: 0; background: var(--c-surface); color: var(--c-text); text-align: left; }
-        #tab-resumen > #resumen-diario::after { display: none; }
-        #tab-resumen > #resumen-diario p { color: var(--c-muted); }
-        #resumen-unidades, #ventas-hoy-unidades { font-size: 1rem !important; line-height: 1.5; }
-        #lista-vender .truncate { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; min-height: 2.6em; }
-        .cart-checkout { position: sticky; bottom: calc(5.5rem + env(safe-area-inset-bottom)); z-index: 20; background: var(--c-surface); padding: 1rem; border-radius: 12px; box-shadow: 0 -6px 20px rgba(15,42,67,.08); }
-        .cart-checkout > div { margin-bottom: .5rem; }
-        .cart-checkout #carrito-total { font-size: 1.8rem; }
-        body.dark-mode #tab-resumen > #resumen-diario { background: var(--c-surface) !important; }
-        @media (min-width: 1024px) { .cart-checkout { bottom: 1rem; } }
-        .categoria-descargas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; }
-        .categoria-descargas .pdf-category-btn { width: 100%; margin: 0 !important; min-width: 0; white-space: normal; }
-        #modal-imagen-categoria .imagen-reporte { display: block; width: 100%; height: auto; margin-bottom: 1rem; }
-
         /* Corrige el scroll en "Vender": ninguna lista debe atrapar el desplazamiento vertical de la página. */
         #lista-vender {
             overflow-x: auto;
@@ -71,30 +54,14 @@
         #modal-cobrar .cobro-handle { display: none; }
         @keyframes cobro-aparecer { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
 
-        /* Dos opciones por fila; cualquier opción sobrante queda centrada. */
-        #modal-cobrar .cobro-rapido { display: flex; flex-wrap: wrap; justify-content: center; gap: .65rem; margin: 1rem 0; }
-        #modal-cobrar .cobro-chip {
-            flex: 0 0 calc((100% - .65rem) / 2); min-width: 0;
-            min-height: 64px; padding: .65rem .5rem; border: 1px solid #d5dee5; border-radius: 12px !important;
-            background: #f4f7f9; color: #16324f; font-weight: 800; font-size: 1.15rem; line-height: 1.25;
-            text-align: center; overflow-wrap: anywhere; font-variant-numeric: tabular-nums;
+        .cobro-rapido { display: grid; grid-template-columns: repeat(4, 1fr); gap: .5rem; }
+        .cobro-chip {
+            min-height: 48px; padding: .4rem .25rem; border: 1px solid #d5dee5; border-radius: 12px;
+            background: #f4f7f9; color: #16324f; font-weight: 800; font-size: .95rem; line-height: 1.1;
             touch-action: manipulation; -webkit-tap-highlight-color: transparent;
             transition: background .15s, border-color .15s, transform .1s;
         }
-        #modal-cobrar .cobro-chip small { display: block; margin-bottom: .2rem; font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #5b6f81; }
-        #modal-cobrar .cobro-sheet { padding: 1.5rem; }
-        #modal-cobrar .cobro-icono { width: 48px; height: 48px; margin-bottom: .75rem; font-size: 1.5rem; }
-        #modal-cobrar #titulo-cobro { font-size: 1.35rem; margin-bottom: 1rem; }
-        #modal-total-cobro, #modal-vuelto { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-        #modal-cobrar #input-efectivo { min-height: 60px; font-size: 1.5rem !important; }
-        #modal-cobrar #btn-finalizar-venta { min-height: 52px; }
-        #modal-cobrar .cobro-chip:hover { border-color: #168c86; }
-        #modal-cobrar .cobro-chip.activo { background: #dcfce7; border-color: #22c55e; color: #166534; box-shadow: 0 0 0 2px rgba(34,197,94,.15); }
-        #modal-cobrar .cobro-chip.activo small { color: #166534; }
-        body.dark-mode #modal-cobrar .cobro-chip { background: #102331; border-color: #355468; color: #dce8ee; }
-        body.dark-mode #modal-cobrar .cobro-chip small { color: #9fb2c0; }
-        body.dark-mode #modal-cobrar .cobro-chip.activo { background: #12361f; border-color: #22c55e; color: #86efac; }
-        body.dark-mode #modal-cobrar .cobro-chip.activo small { color: #86efac; }
+        .cobro-chip small { display: block; font-size: .6rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #5b6f81; }
         .cobro-chip:active { transform: scale(.95); }
         .cobro-chip.activo { background: #dcfce7; border-color: #22c55e; color: #166534; }
         .cobro-chip.activo small { color: #166534; }
@@ -197,12 +164,12 @@
 
             <!-- 1. PESTAÑA: RESUMEN -->
             <section id="tab-resumen" class="fade-in block">
-                <h2 class="text-2xl font-bold mb-6 text-gray-800">Resumen del negocio</h2>
+                <h2 class="text-2xl font-bold mb-6 text-gray-800">Resumen de Inventario</h2>
                 
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6 text-center">
-                    <p class="text-gray-500 text-sm font-semibold uppercase tracking-wider">Margen estimado del stock</p>
+                    <p class="text-gray-500 text-sm font-semibold uppercase tracking-wider">Ganancia Neta Proyectada</p>
                     <p class="text-5xl font-black text-green-500 my-3" id="resumen-ganancia">Q0.00</p>
-                    <p class="text-sm text-gray-400">Estimación con precio base o mediano, sin descontar gastos</p>
+                    <p class="text-sm text-gray-400">Al vender todo el stock actual</p>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4 mb-8">
@@ -228,26 +195,20 @@
                 <div class="chart-card bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-6 md:col-span-2">
                     <div class="mb-4">
                         <h3 class="font-bold text-gray-700">Ventas por categoría</h3>
-                        <p class="text-xs text-gray-500 mt-1">Descarga las ventas de la categoría para el día seleccionado arriba.</p>
-                    </div>
-                    <div class="mb-4">
-                        <label for="categoria-fecha-dia" class="block text-xs font-semibold text-gray-500 mb-2">Día</label>
-                        <input id="categoria-fecha-dia" type="date" required class="w-full p-3 border border-gray-200 rounded-xl">
+                        <p class="text-xs text-gray-500 mt-1">Elige una categoría y descarga el PDF con sus ventas.</p>
                     </div>
                     <span id="etiqueta-filtro-categoria" class="block text-xs mb-2 font-semibold text-gray-500">Categoría del PDF a descargar:</span>
                     <div id="filtro-categoria-chips" class="category-chips" role="radiogroup" aria-labelledby="etiqueta-filtro-categoria"></div>
-                    <p id="categoria-periodo" class="text-xs text-gray-500 mt-4 mb-2" aria-live="polite"></p>
-                    <div class="categoria-descargas">
-                        <button id="btn-imagen-categoria" type="button" class="pdf-category-btn"><span aria-hidden="true">⇩</span><span>Descargar imagen</span></button>
-                        <button id="btn-pdf-categoria" type="button" class="pdf-category-btn"><span aria-hidden="true">⇩</span><span>Descargar PDF</span></button>
-                    </div>
+                    <button id="btn-pdf-categoria" type="button" class="pdf-category-btn" style="margin-bottom:0">
+                        <span aria-hidden="true">⇩</span><span>Descargar PDF de ventas por categoría</span>
+                    </button>
                 </div>
 
                 <!-- Ventas de hoy (se usa flex en vez de grid para no heredar los estilos de las tarjetas del resumen) -->
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 md:col-span-2">
                     <div class="flex items-start justify-between gap-3 border-b border-gray-100 pb-3 mb-4">
                         <div>
-                            <h3 id="ventas-dia-titulo" class="font-bold text-gray-700">Ventas de hoy</h3>
+                            <h3 class="font-bold text-gray-700">Ventas de hoy</h3>
                             <p id="ventas-hoy-fecha" class="text-xs text-gray-500 mt-1"></p>
                         </div>
                         <span id="ventas-hoy-total" class="text-2xl font-black text-teal-600">Q0.00</span>
@@ -263,10 +224,6 @@
                         </div>
                     </div>
                     <div id="lista-ventas-hoy" class="movement-list"></div>
-                    <div class="flex justify-between items-center border-t border-gray-100 pt-4 mt-4">
-                        <span id="ventas-dia-total-etiqueta" class="text-sm font-bold text-gray-700">Total de ventas de hoy</span>
-                        <strong id="ventas-hoy-total-final" class="text-2xl text-teal-600">Q0.00</strong>
-                    </div>
                 </div>
 
 
@@ -297,7 +254,7 @@
                         <span aria-hidden="true">←</span><span>Regresar</span>
                     </button>
                 </div>
-                <p class="text-sm text-gray-500 mb-6 font-medium">Productos agotados o por debajo de su límite de alerta personalizado.</p>
+                <p class="text-sm text-gray-500 mb-6 font-medium">Productos agotados o que están por terminarse (5 o menos).</p>
                 <div id="lista-faltantes" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </section>
 
@@ -328,7 +285,7 @@
                         <p class="text-center text-gray-400 mt-10">El carrito está vacío</p>
                     </div>
                     
-                    <div class="border-t pt-4 cart-checkout">
+                    <div class="border-t pt-4">
                         <div class="flex justify-between items-center mb-5">
                             <span class="text-gray-500 font-semibold">Total a Cobrar:</span>
                             <span class="text-4xl font-black text-blue-600" id="carrito-total">Q0.00</span>
@@ -457,6 +414,7 @@
                             <div class="settings-panel-heading">
                                 <span>Cuenta</span>
                                 <small>Administra tu sesión actual.</small>
+                                <small id="cuenta-actual" class="break-all" aria-live="polite"></small>
                             </div>
                             <button onclick="cerrarSesion()" class="settings-action">
                                 <span class="settings-action-icon" aria-hidden="true">↪</span>
@@ -620,15 +578,6 @@
     </div>
 
     <!-- MODALES OCULTOS -->
-    <div id="modal-imagen-categoria" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden p-4" role="dialog" aria-modal="true" aria-labelledby="titulo-imagen-categoria">
-        <div class="bg-white p-4 rounded-2xl w-full max-w-lg shadow-2xl">
-            <div class="flex justify-between items-center mb-4">
-                <h3 id="titulo-imagen-categoria" class="text-lg font-bold">Imagen de ventas</h3>
-                <button id="btn-cerrar-imagen-categoria" type="button" class="text-3xl" aria-label="Cerrar imagen">×</button>
-            </div>
-            <div id="vista-imagen-categoria"></div>
-        </div>
-    </div>
     <input id="archivo-restauracion" type="file" accept="application/json,.json" class="hidden" onchange="prepararRestauracion(event)">
 
     <div id="modal-restaurar" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden p-4" role="dialog" aria-modal="true" aria-labelledby="titulo-restaurar">

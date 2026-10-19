@@ -1,231 +1,371 @@
-// Descarga un PDF con las ventas agrupadas por categoría.
-// Usa la categoría elegida en Resumen ("Todas" o una en particular) y el diseño compartido de pdf-comun.js.
+// Categorías editables: se pueden agregar, renombrar y eliminar desde los selectores de "Categoría"
+// (Registrar producto y Editar producto). Se guardan en la cuenta del usuario.
 (function () {
-    function periodoSeleccionado() {
-        const selector = document.getElementById('categoria-fecha-dia');
-        if (!selector.value) selector.value = fechaLocalActual();
-        const desde = selector.value;
-        const hasta = desde;
-        const inicio = desde ? new Date(`${desde}T00:00:00`) : null;
-        const fin = hasta ? new Date(`${hasta}T00:00:00`) : null;
-        if (fin) fin.setDate(fin.getDate() + 1);
-        const formato = valor => new Date(`${valor}T00:00:00`).toLocaleDateString('es-GT');
-        const texto = formato(desde);
-        return { desde, hasta, inicio, fin, texto, valido: !desde || !hasta || desde <= hasta };
+    const NUEVA = '__nueva__';
+    const BASE = ['Verduras', 'Abarrotes', 'Plásticos para el hogar', 'Vajilla de porcelana', 'Granos y frijoles'];
+    const IDS_SELECT = ['nuevo-categoria', 'editar-categoria'];
+    let categorias = [...BASE];
+    let selectOrigen = null;
+    let desuscribir = null;
+    let categoriaEnEdicion = null;
+    let guardandoNombre = false;
+
+    const normalizar = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    const claveLocal = () => `categorias_${auth.currentUser?.uid || 'anon'}`;
+    const productosEn = nombre => inventario.filter(p => (p.categoria || 'Otros') === nombre).length;
+
+    function sincronizar(select) {
+        if (typeof sincronizarSelectorPersonalizado === 'function') sincronizarSelectorPersonalizado(select);
     }
 
-    function recopilar(filtro, periodo) {
-        const grupos = {};
-        const detalle = [];
-        let total = 0, unidades = 0;
-        ventas.forEach(venta => {
-            const fecha = obtenerFechaVenta(venta.fecha);
-            if ((periodo.inicio || periodo.fin) && (!fecha || (periodo.inicio && fecha < periodo.inicio) || (periodo.fin && fecha >= periodo.fin))) return;
-            const items = [];
-            let totalFila = 0;
-            (venta.items || []).forEach(item => {
-                const nombreBase = String(item.nombre || '').replace(/ \((mediano|grande)\)$/i, '');
-                const producto = inventario.find(p => p.id === item.productoId) || inventario.find(p => p.nombre === nombreBase);
-                const categoria = item.categoria || producto?.categoria || 'Otros';
-                if (filtro !== 'todas' && categoria !== filtro) return;
-                const cantidad = Number(item.cantidad) || 0;
-                const importe = (Number(item.precio) || 0) * cantidad;
-                const grupo = grupos[categoria] || (grupos[categoria] = { productos: {}, importe: 0, cantidad: 0 });
-                const nombre = item.nombre || 'Producto';
-                const fila = grupo.productos[nombre] || (grupo.productos[nombre] = { importe: 0, cantidad: 0 });
-                fila.importe += importe; fila.cantidad += cantidad;
-                grupo.importe += importe; grupo.cantidad += cantidad;
-                total += importe; unidades += cantidad;
-                totalFila += importe;
-                items.push({ nombre, cantidad, importe });
-            });
-            if (items.length) detalle.push({ fecha, items, total: totalFila });
+    function poblarSelect(select) {
+        const previo = select.value;
+        select.replaceChildren();
+        categorias.forEach(c => select.add(new Option(c, c)));
+        // Conserva una categoría antigua mientras algún producto todavía la use.
+        const conservar = previo && previo !== NUEVA && !categorias.includes(previo) && productosEn(previo) > 0;
+        if (conservar) select.add(new Option(previo, previo));
+        select.add(new Option('＋ Agregar nueva categoría…', NUEVA));
+        const valido = [...select.options].some(o => o.value === previo && previo !== NUEVA);
+        select.value = valido ? previo : select.options[0].value;
+        sincronizar(select);
+    }
+
+    function aplicar() {
+        // El filtro de Gráficos y el PDF por categoría usan esta misma lista.
+        if (typeof categoriasVentasBase !== 'undefined') categoriasVentasBase.splice(0, categoriasVentasBase.length, ...categorias);
+        IDS_SELECT.forEach(id => {
+            const select = document.getElementById(id);
+            if (select) poblarSelect(select);
         });
-        detalle.sort((a, b) => (b.fecha?.getTime() || 0) - (a.fecha?.getTime() || 0));
-        return { grupos, total, unidades, detalle };
+        if (typeof renderizarMenuCategorias === 'function') renderizarMenuCategorias();
+        if (!document.getElementById('modal-categorias')?.classList.contains('hidden')) renderizarLista();
     }
 
-    const porcentaje = (parte, total) => (total > 0 ? parte / total * 100 : 0);
-
-    function renderizarVentasCategoria() {
-        const periodo = periodoSeleccionado();
-        const estadoPeriodo = document.getElementById('categoria-periodo');
-        estadoPeriodo.textContent = periodo.valido ? '' : 'La fecha Desde no puede ser posterior a Hasta.';
-        estadoPeriodo.classList.toggle('hidden', periodo.valido);
-        document.getElementById('btn-pdf-categoria').disabled = !periodo.valido;
-        document.getElementById('btn-imagen-categoria').disabled = !periodo.valido;
+    function guardar() {
+        try { localStorage.setItem(claveLocal(), JSON.stringify(categorias)); } catch (e) { /* sin almacenamiento local */ }
+        if (!auth.currentUser) return;
+        coleccionUsuario('configuracion').doc('categorias').set({ lista: categorias })
+            .catch(() => mostrarAviso('No se pudo sincronizar las categorías', 'error'));
     }
 
-    function construirPDF(filtro, periodo) {
-        const { grupos, total, unidades, detalle } = recopilar(filtro, periodo);
-        const categorias = Object.keys(grupos).sort((a, b) => grupos[b].importe - grupos[a].importe);
-        if (!categorias.length) return null;
+    // ---------- Ventana de administración ----------
+    function crearModal() {
+        const modal = document.createElement('div');
+        modal.id = 'modal-categorias';
+        modal.className = 'fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden p-4';
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+        modal.setAttribute('aria-labelledby', 'titulo-categorias');
+        modal.innerHTML = `
+            <div class="bg-white p-6 w-full max-w-md shadow-2xl" style="max-height:calc(100dvh - 2rem);overflow-y:auto">
+                <div class="flex items-start justify-between mb-1">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-wider text-teal-600">Catálogo</p>
+                        <h3 id="titulo-categorias" class="text-xl font-bold text-gray-800 mt-1">Categorías</h3>
+                    </div>
+                    <button type="button" id="btn-x-categorias" class="text-2xl text-gray-400" aria-label="Cerrar">×</button>
+                </div>
+                <p class="text-sm text-gray-500">Edita los nombres incluso si tienen productos, agrega categorías o elimina las vacías.</p>
+                <p id="categoria-edicion-etiqueta" class="hidden mt-3 text-sm font-bold text-teal-600"></p>
+                <form id="form-categoria" class="flex flex-wrap gap-2 mt-4">
+                    <input id="categoria-nueva-input" type="text" maxlength="40" autocomplete="off" class="min-w-0 flex-1 p-3 border border-gray-200" placeholder="Nombre de la nueva categoría" aria-label="Nombre de la categoría" required>
+                    <button id="btn-guardar-categoria" type="submit" class="shrink-0 bg-teal-600 hover:bg-teal-700 text-white px-4 font-bold">Agregar</button>
+                    <button id="btn-cancelar-edicion-categoria" type="button" class="hidden bg-gray-100 text-gray-700 px-3 py-2 font-bold">Cancelar</button>
+                </form>
+                <div id="lista-categorias" class="cat-list"></div>
+                <p class="mt-3 text-xs text-gray-500">Solo se pueden eliminar categorías que no tengan productos.</p>
+                <button type="button" id="btn-listo-categorias" class="w-full mt-5 bg-gray-100 text-gray-700 py-3 font-bold">Listo</button>
+            </div>`;
+        document.body.appendChild(modal);
 
-        const totalProductos = categorias.reduce((t, c) => t + Object.keys(grupos[c].productos).length, 0);
-        const doc = PDFInforme.crearDocumento({
-            titulo: 'Ventas por categor\u00EDa',
-            subtitulo: filtro === 'todas' ? 'Categor\u00EDa: todas las categor\u00EDas' : `Categor\u00EDa: ${filtro}`,
-            etiquetaBanda: 'Informe de ventas',
-            detalleBanda: periodo.texto
+        modal.addEventListener('click', e => { if (e.target === modal) cerrarModal(); });
+        modal.querySelector('#btn-x-categorias').addEventListener('click', cerrarModal);
+        modal.querySelector('#btn-listo-categorias').addEventListener('click', cerrarModal);
+        modal.querySelector('#form-categoria').addEventListener('submit', evento => {
+            if (categoriaEnEdicion !== null) renombrarCategoria(evento);
+            else agregarCategoria(evento);
         });
+        modal.querySelector('#btn-cancelar-edicion-categoria').addEventListener('click', cancelarEdicionCategoria);
+        document.addEventListener('keydown', e => {
+            if (e.key !== 'Escape') return;
+            // Si la confirmación está abierta, Escape solo cierra esa ventana.
+            if (confirmacionAbierta()) return cerrarConfirmacion();
+            if (!modal.classList.contains('hidden')) cerrarModal();
+        });
+        return modal;
+    }
 
-        doc.tarjetas([
-            { etiqueta: 'TOTAL VENDIDO', valor: PDFInforme.dinero(total), color: '0.835 0.659 0.294' },
-            { etiqueta: 'UNIDADES / LIBRAS', valor: PDFInforme.cantidad(unidades), color: '0.31 0.47 0.64' },
-            { etiqueta: 'CATEGOR\u00CDAS', valor: String(categorias.length), color: '0.086 0.549 0.525' },
-            { etiqueta: 'PRODUCTOS', valor: String(totalProductos), color: '0.46 0.40 0.66' }
-        ]);
+    function renderizarLista() {
+        const lista = document.getElementById('lista-categorias');
+        lista.replaceChildren();
+        const nombres = [...new Set([...categorias, ...inventario.map(p => p.categoria || 'Otros')])];
+        nombres.forEach(nombre => {
+            const usados = productosEn(nombre);
+            const fila = document.createElement('div');
+            fila.className = 'cat-item';
 
-        // Con varias categorías, primero un resumen comparativo.
-        if (categorias.length > 1) {
-            doc.seccion('Resumen por categor\u00EDa', 'de mayor a menor venta');
-            doc.tabla('CATEGOR\u00CDA');
-            categorias.forEach((nombre, i) => doc.fila({
-                n: i + 1, nombre, cantidad: grupos[nombre].cantidad, importe: grupos[nombre].importe,
-                pct: porcentaje(grupos[nombre].importe, total), par: i % 2 === 0
-            }));
+            const info = document.createElement('div');
+            info.className = 'min-w-0';
+            const titulo = document.createElement('span');
+            titulo.textContent = nombre;
+            const detalle = document.createElement('small');
+            detalle.textContent = usados ? `${usados} producto${usados === 1 ? '' : 's'}` : 'Sin productos';
+            info.append(titulo, detalle);
+
+            const borrar = document.createElement('button');
+            borrar.type = 'button';
+            borrar.className = 'cat-delete';
+            borrar.textContent = 'Eliminar';
+            borrar.disabled = usados > 0 || categorias.length <= 1;
+            borrar.title = usados > 0 ? 'Tiene productos asignados' : categorias.length <= 1 ? 'Debe quedar al menos una categoría' : '';
+            borrar.setAttribute('aria-label', `Eliminar la categoría ${nombre}`);
+            borrar.addEventListener('click', () => eliminarCategoria(nombre));
+
+            const editar = document.createElement('button');
+            editar.type = 'button';
+            editar.className = 'text-teal-600 font-bold px-2 py-2';
+            editar.textContent = 'Editar';
+            editar.disabled = guardandoNombre;
+            editar.setAttribute('aria-label', `Editar el nombre de la categoría ${nombre}`);
+            editar.addEventListener('click', () => editarCategoria(nombre));
+            borrar.disabled = borrar.disabled || guardandoNombre;
+            const acciones = document.createElement('div');
+            acciones.className = 'flex flex-wrap justify-end items-center gap-2 shrink-0';
+            acciones.append(editar, borrar);
+            fila.append(info, acciones);
+            lista.appendChild(fila);
+        });
+    }
+
+    window.abrirCategoriasCatalogo = () => abrirModal();
+
+    function cancelarEdicionCategoria() {
+        if (guardandoNombre) return;
+        categoriaEnEdicion = null;
+        const campo = document.getElementById('categoria-nueva-input');
+        campo.value = '';
+        campo.placeholder = 'Nombre de la nueva categoría';
+        document.getElementById('btn-guardar-categoria').textContent = 'Agregar';
+        document.getElementById('btn-cancelar-edicion-categoria').classList.add('hidden');
+        document.getElementById('categoria-edicion-etiqueta').classList.add('hidden');
+    }
+
+    function editarCategoria(nombre) {
+        if (guardandoNombre) return;
+        categoriaEnEdicion = nombre;
+        const campo = document.getElementById('categoria-nueva-input');
+        campo.value = nombre;
+        campo.placeholder = 'Nuevo nombre';
+        const etiqueta = document.getElementById('categoria-edicion-etiqueta');
+        etiqueta.textContent = `Editar: ${nombre}`;
+        etiqueta.classList.remove('hidden');
+        document.getElementById('btn-guardar-categoria').textContent = 'Guardar';
+        document.getElementById('btn-cancelar-edicion-categoria').classList.remove('hidden');
+        campo.focus();
+        campo.select();
+    }
+
+    async function renombrarCategoria(evento) {
+        evento.preventDefault();
+        if (guardandoNombre || categoriaEnEdicion === null) return;
+        const anterior = categoriaEnEdicion;
+        const nombre = document.getElementById('categoria-nueva-input').value.replace(/\s+/g, ' ').trim();
+        if (!nombre) return mostrarAviso('Escribe el nuevo nombre', 'error');
+        if (nombre === anterior) return cancelarEdicionCategoria();
+        const existentes = [...categorias, ...inventario.map(p => p.categoria || 'Otros')];
+        if (existentes.some(c => c !== anterior && normalizar(c) === normalizar(nombre))) {
+            return mostrarAviso('Ya existe una categoría con ese nombre', 'error');
         }
-
-        doc.seccion(categorias.length > 1 ? 'Detalle por categor\u00EDa' : 'Detalle de productos', 'productos de mayor a menor importe');
-        doc.tabla('PRODUCTO');
-        categorias.forEach(nombre => {
-            const grupo = grupos[nombre];
-            const productos = Object.entries(grupo.productos).sort(([, a], [, b]) => b.importe - a.importe);
-            // Barra de la categoría con su subtotal, seguida de sus productos.
-            doc.grupo({
-                nombre,
-                detalle: `${productos.length} producto${productos.length === 1 ? '' : 's'}`,
-                cantidad: grupo.cantidad,
-                importe: grupo.importe,
-                pct: porcentaje(grupo.importe, total)
+        const usuario = auth.currentUser;
+        if (!usuario) return mostrarAviso('Inicia sesión para guardar el nombre', 'error');
+        if (!navigator.onLine) return mostrarAviso('Conéctate a internet para cambiar el nombre', 'error');
+        const productos = inventario.filter(p => (p.categoria || 'Otros') === anterior);
+        // Un único lote evita dejar productos con el nombre antiguo si falla el guardado.
+        if (productos.length > 499) return mostrarAviso('No se puede renombrar más de 499 productos a la vez', 'error');
+        const listaNueva = categorias.map(c => c === anterior ? nombre : c);
+        if (!listaNueva.includes(nombre)) listaNueva.push(nombre);
+        const seleccionados = IDS_SELECT.map(id => document.getElementById(id)?.value);
+        const boton = document.getElementById('btn-guardar-categoria');
+        guardandoNombre = true;
+        establecerCargaBoton(boton, true);
+        document.getElementById('categoria-nueva-input').disabled = true;
+        document.getElementById('btn-cancelar-edicion-categoria').disabled = true;
+        renderizarLista();
+        try {
+            const batch = db.batch();
+            const coleccion = coleccionUsuario('productos');
+            productos.forEach(p => batch.update(coleccion.doc(p.id), { categoria: nombre }));
+            batch.set(coleccionUsuario('configuracion').doc('categorias'), { lista: listaNueva }, { merge: true });
+            await batch.commit();
+            if (auth.currentUser?.uid !== usuario.uid) return;
+            categorias = listaNueva;
+            inventario.forEach(p => { if ((p.categoria || 'Otros') === anterior) p.categoria = nombre; });
+            carrito.forEach(p => { if (p.categoria === anterior) p.categoria = nombre; });
+            try { localStorage.setItem(claveLocal(), JSON.stringify(categorias)); } catch (e) { /* sin almacenamiento local */ }
+            aplicar();
+            IDS_SELECT.forEach((id, indice) => {
+                const select = document.getElementById(id);
+                if (select && seleccionados[indice] === anterior) {
+                    select.value = nombre;
+                    select.dataset.prev = nombre;
+                    sincronizar(select);
+                }
             });
-            productos.forEach(([producto, fila], i) => doc.fila({
-                n: i + 1, nombre: producto, cantidad: fila.cantidad, importe: fila.importe,
-                pct: porcentaje(fila.importe, total), par: i % 2 === 1
-            }));
-        });
-        doc.seccion('Ventas del periodo', `${detalle.length} ventas`);
-        doc.tabla('FECHA / PRODUCTOS');
-        detalle.forEach((venta, i) => {
-            const fecha = venta.fecha ? venta.fecha.toLocaleDateString('es-GT') : 'Sin fecha';
-            doc.grupo({ nombre: fecha, detalle: `Venta ${i + 1}`, cantidad: venta.items.reduce((s, item) => s + item.cantidad, 0), importe: venta.total, pct: porcentaje(venta.total, total) });
-            // Los importes de cada producto ya están en el detalle agrupado anterior.
-            venta.items.forEach((item, j) => {
-                doc.fila({ n: j + 1, nombre: item.nombre, cantidad: item.cantidad, importe: item.importe, pct: porcentaje(item.importe, total), par: j % 2 === 0 });
-            });
-        });
-        doc.total('TOTAL DE VENTAS', unidades, total);
-
-        return doc.finalizar();
+            actualizarResumen();
+            renderizarCatalogo();
+            renderizarListaVenta();
+            renderizarFaltantes();
+            mostrarAviso('Nombre actualizado sin eliminar productos', 'exito');
+        } catch (error) {
+            mostrarAviso('No se pudo cambiar el nombre. Inténtalo de nuevo.', 'error');
+        } finally {
+            guardandoNombre = false;
+            establecerCargaBoton(boton, false);
+            document.getElementById('categoria-nueva-input').disabled = false;
+            document.getElementById('btn-cancelar-edicion-categoria').disabled = false;
+            cancelarEdicionCategoria();
+            renderizarLista();
+        }
     }
 
-    function descargarPDFCategoria() {
-        const filtro = categoriaVentasSeleccionada;
-        const periodo = periodoSeleccionado();
-        if (!periodo.valido) return mostrarAviso('Revisa el rango de fechas', 'error');
-        const bytes = construirPDF(filtro, periodo);
-        if (!bytes) {
-            mostrarAviso('No hay ventas en esta categor\u00EDa para descargar', 'error');
+    function abrirModal(select) {
+        selectOrigen = select || null;
+        const modal = document.getElementById('modal-categorias') || crearModal();
+        cancelarEdicionCategoria();
+        renderizarLista();
+        modal.classList.remove('hidden');
+        setTimeout(() => document.getElementById('categoria-nueva-input')?.focus(), 100);
+    }
+
+    function cerrarModal() {
+        if (guardandoNombre) return;
+        document.getElementById('modal-categorias')?.classList.add('hidden');
+        selectOrigen = null;
+    }
+
+    function agregarCategoria(evento) {
+        evento.preventDefault();
+        const campo = document.getElementById('categoria-nueva-input');
+        const nombre = campo.value.replace(/\s+/g, ' ').trim();
+        if (!nombre) return mostrarAviso('Escribe el nombre de la categoría', 'error');
+        if (categorias.some(c => normalizar(c) === normalizar(nombre))) {
+            return mostrarAviso('Esa categoría ya existe', 'error');
+        }
+        categorias.push(nombre);
+        guardar();
+        aplicar();
+        if (selectOrigen) {
+            selectOrigen.value = nombre;
+            selectOrigen.dataset.prev = nombre;
+            sincronizar(selectOrigen);
+        }
+        campo.value = '';
+        mostrarAviso(`Categoría “${nombre}” agregada`, 'exito');
+    }
+
+    // ---------- Confirmación para eliminar (ventana propia, sin el cuadro del navegador) ----------
+    let categoriaPorEliminar = null;
+
+    function confirmacionAbierta() {
+        const m = document.getElementById('modal-confirmar-categoria');
+        return Boolean(m) && !m.classList.contains('hidden');
+    }
+
+    function cerrarConfirmacion() {
+        categoriaPorEliminar = null;
+        document.getElementById('modal-confirmar-categoria')?.classList.add('hidden');
+    }
+
+    function crearModalConfirmacion() {
+        const modal = document.createElement('div');
+        modal.id = 'modal-confirmar-categoria';
+        modal.className = 'fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center hidden p-4';
+        modal.style.zIndex = '60';
+        modal.setAttribute('role', 'alertdialog');
+        modal.setAttribute('aria-modal', 'true');
+        modal.setAttribute('aria-labelledby', 'titulo-confirmar-categoria');
+        modal.innerHTML = `
+            <div class="bg-white p-6 w-full max-w-sm text-center shadow-2xl">
+                <div class="confirm-icon" aria-hidden="true">!</div>
+                <p class="text-xs font-bold uppercase tracking-wider text-red-500 mb-2">Eliminar categoría</p>
+                <h3 id="titulo-confirmar-categoria" class="text-xl font-bold text-gray-800">¿Eliminar esta categoría?</h3>
+                <p id="texto-confirmar-categoria" class="mt-2 text-sm leading-relaxed text-gray-500"></p>
+                <div class="flex gap-3 mt-5">
+                    <button type="button" id="btn-cancelar-categoria" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 font-bold">Cancelar</button>
+                    <button type="button" id="btn-aceptar-categoria" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 font-bold shadow-md">Aceptar</button>
+                </div>
+            </div>`;
+        document.body.appendChild(modal);
+
+        modal.addEventListener('click', e => { if (e.target === modal) cerrarConfirmacion(); });
+        modal.querySelector('#btn-cancelar-categoria').addEventListener('click', cerrarConfirmacion);
+        modal.querySelector('#btn-aceptar-categoria').addEventListener('click', () => {
+            const nombre = categoriaPorEliminar;
+            cerrarConfirmacion();
+            if (nombre) borrarCategoria(nombre);
+        });
+        return modal;
+    }
+
+    function eliminarCategoria(nombre) {
+        if (productosEn(nombre) > 0 || categorias.length <= 1) return;
+        const modal = document.getElementById('modal-confirmar-categoria') || crearModalConfirmacion();
+        categoriaPorEliminar = nombre;
+        modal.querySelector('#texto-confirmar-categoria').textContent = `Se eliminará la categoría “${nombre}” de la lista.`;
+        modal.classList.remove('hidden');
+        setTimeout(() => modal.querySelector('#btn-cancelar-categoria')?.focus(), 100);
+    }
+
+    function borrarCategoria(nombre) {
+        if (productosEn(nombre) > 0 || categorias.length <= 1) return;
+        categorias = categorias.filter(c => c !== nombre);
+        guardar();
+        aplicar();
+        mostrarAviso(`Categoría “${nombre}” eliminada`);
+    }
+
+    // ---------- Selectores ----------
+    IDS_SELECT.forEach(id => {
+        const select = document.getElementById(id);
+        if (!select) return;
+        // Recuerda el valor vigente antes de abrir la lista, para poder restaurarlo si se elige "Agregar nueva".
+        select.closest('.app-select')?.querySelector('.app-select-trigger')
+            ?.addEventListener('click', () => { select.dataset.prev = select.value; });
+        select.addEventListener('change', () => {
+            if (select.value !== NUEVA) return;
+            const previo = select.dataset.prev;
+            const valido = [...select.options].some(o => o.value === previo && previo !== NUEVA);
+            select.value = valido ? previo : select.options[0].value;
+            sincronizar(select);
+            abrirModal(select);
+        });
+    });
+
+    aplicar();
+
+    // Carga las categorías guardadas de la cuenta y las mantiene sincronizadas.
+    auth.onAuthStateChanged(async user => {
+        if (desuscribir) { desuscribir(); desuscribir = null; }
+        if (!user) {
+            categorias = [...BASE];
+            aplicar();
             return;
         }
-        const slug = filtro === 'todas' ? 'todas' : filtro.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-        PDFInforme.descargar(bytes, `ventas-categoria-${slug}-${periodo.desde || 'inicio'}-${periodo.hasta || 'actualidad'}.pdf`);
-        mostrarAviso('PDF descargado', 'exito');
-    }
+        try {
+            const guardadas = JSON.parse(localStorage.getItem(claveLocal()));
+            if (Array.isArray(guardadas) && guardadas.length) categorias = guardadas;
+        } catch (e) { /* datos locales inválidos */ }
+        aplicar();
 
-    let urlsImagen = [];
-
-    function cerrarImagenCategoria() {
-        document.getElementById('modal-imagen-categoria').classList.add('hidden');
-        document.getElementById('vista-imagen-categoria').replaceChildren();
-        urlsImagen.forEach(url => URL.revokeObjectURL(url));
-        urlsImagen = [];
-    }
-
-    function mostrarImagenCategoria(descargar) {
-        const periodo = periodoSeleccionado();
-        if (!periodo.valido) return mostrarAviso('Revisa el rango de fechas', 'error');
-        const filtro = categoriaVentasSeleccionada;
-        const { detalle, total, unidades } = recopilar(filtro, periodo);
-        if (!detalle.length) return mostrarAviso('No hay ventas en este periodo', 'error');
-        const filas = [];
-        detalle.forEach((venta, i) => {
-            filas.push({ nombre: `Venta ${i + 1} · ${venta.fecha ? venta.fecha.toLocaleDateString('es-GT') : 'Sin fecha'}`, importe: venta.total, grupo: true });
-            venta.items.forEach(item => filas.push(item));
-        });
-        cerrarImagenCategoria();
-        const vista = document.getElementById('vista-imagen-categoria');
-        const paginas = Math.ceil(filas.length / 32);
-        const slug = filtro.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]+/g, '-');
-        for (let pagina = 0; pagina < paginas; pagina++) {
-            const bloque = filas.slice(pagina * 32, (pagina + 1) * 32);
-            const canvas = document.createElement('canvas');
-            canvas.width = 1080;
-            canvas.height = 420 + bloque.length * 64;
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            const texto = (valor, x, y, color = '#16324f', font = '24px sans-serif', alineacion = 'left') => {
-                ctx.fillStyle = color; ctx.font = font; ctx.textAlign = alineacion;
-                ctx.fillText(String(valor), x, y);
-            };
-            ctx.fillStyle = '#10263d'; ctx.fillRect(0, 0, 1080, 130);
-            texto('MI NEGOCIO · Ventas por categoría', 48, 55, '#ffffff', 'bold 32px sans-serif');
-            texto(periodo.texto, 48, 99, '#d4e1eb');
-            texto(filtro === 'todas' ? 'Todas las categorías' : filtro, 48, 175, '#16324f', 'bold 28px sans-serif');
-            texto(`${detalle.length} ventas · ${PDFInforme.cantidad(unidades)} unidades / libras`, 48, 218);
-            texto('PRODUCTO / FECHA', 48, 270, '#64748b', 'bold 20px sans-serif');
-            texto('CANTIDAD', 815, 270, '#64748b', 'bold 20px sans-serif', 'right');
-            texto('IMPORTE', 1032, 270, '#64748b', 'bold 20px sans-serif', 'right');
-            bloque.forEach((fila, i) => {
-                const y = 290 + i * 64;
-                ctx.fillStyle = fila.grupo ? '#dcf0ec' : i % 2 ? '#f3f6f8' : '#ffffff';
-                ctx.fillRect(32, y, 1016, 64);
-                ctx.font = `${fila.grupo ? 'bold ' : ''}24px sans-serif`;
-                let nombre = fila.nombre;
-                while (nombre.length > 1 && ctx.measureText(nombre).width > 620) nombre = nombre.slice(0, -1);
-                if (nombre !== fila.nombre) nombre = nombre.slice(0, -3) + '…';
-                texto(nombre, 48, y + 40, '#16324f', ctx.font);
-                if (!fila.grupo) texto(PDFInforme.cantidad(fila.cantidad), 815, y + 40, '#16324f', '24px sans-serif', 'right');
-                texto(PDFInforme.dinero(fila.importe), 1032, y + 40, '#16324f', 'bold 24px sans-serif', 'right');
-            });
-            const yTotal = 302 + bloque.length * 64;
-            ctx.fillStyle = '#10263d'; ctx.fillRect(32, yTotal, 1016, 60);
-            texto('TOTAL DE VENTAS DEL PERIODO', 48, yTotal + 39, '#ffffff', 'bold 24px sans-serif');
-            texto(PDFInforme.dinero(total), 1032, yTotal + 39, '#ffffff', 'bold 28px sans-serif', 'right');
-            texto(`Página ${pagina + 1} de ${paginas}`, 1032, canvas.height - 20, '#64748b', '20px sans-serif', 'right');
-            const contenedor = document.createElement('div');
-            vista.appendChild(contenedor);
-            canvas.toBlob(blob => {
-                if (!blob || !contenedor.isConnected) return;
-                const url = URL.createObjectURL(blob);
-                urlsImagen.push(url);
-                const imagen = document.createElement('img');
-                imagen.src = url; imagen.alt = `Ventas por categoría, página ${pagina + 1}`;
-                imagen.className = 'imagen-reporte';
-                const enlace = document.createElement('a');
-                enlace.href = url;
-                enlace.download = `ventas-${slug}-${periodo.desde || 'inicio'}-${periodo.hasta || 'actualidad'}-${pagina + 1}.png`;
-                enlace.textContent = `Descargar imagen${paginas > 1 ? ` ${pagina + 1}` : ''} (PNG)`;
-                enlace.className = 'pdf-category-btn';
-                contenedor.append(imagen, enlace);
-                // Un informe largo conserva enlaces individuales para evitar bloqueos de descargas múltiples.
-                if (descargar && paginas === 1) enlace.click();
-            }, 'image/png');
-        }
-        document.getElementById('modal-imagen-categoria').classList.remove('hidden');
-        if (descargar && paginas > 1) mostrarAviso('Descarga cada página con su botón de imagen', 'exito');
-    }
-
-    document.getElementById('btn-imagen-categoria').addEventListener('click', () => mostrarImagenCategoria(true));
-    document.getElementById('btn-cerrar-imagen-categoria').addEventListener('click', cerrarImagenCategoria);
-
-    window.renderizarVentasCategoria = renderizarVentasCategoria;
-    document.getElementById('categoria-fecha-dia').addEventListener('change', () => {
-        renderizarVentasCategoria();
-        renderizarVentasHoy();
+        await persistenciaFirestore;
+        if (auth.currentUser !== user) return;
+        desuscribir = coleccionUsuario('configuracion').doc('categorias').onSnapshot(snap => {
+            const lista = snap.exists ? snap.data().lista : null;
+            if (!Array.isArray(lista) || !lista.length) return;
+            categorias = lista.filter(c => typeof c === 'string' && c.trim());
+            try { localStorage.setItem(claveLocal(), JSON.stringify(categorias)); } catch (e) { /* sin almacenamiento local */ }
+            aplicar();
+        }, error => console.warn('No se pudieron leer las categorías:', error));
     });
-    renderizarVentasHoy();
-    document.getElementById('btn-pdf-categoria')?.addEventListener('click', descargarPDFCategoria);
-    renderizarVentasCategoria();
 })();

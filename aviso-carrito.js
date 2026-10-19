@@ -1,5 +1,4 @@
-// Muestra "Agregado +N" cada vez que se añade un producto al carrito.
-// N es la cantidad acumulada de ese producto en el carrito (1.ª vez +1, 2.ª vez +2, ...).
+// Confirma la cantidad acumulada sin confundirla con el último incremento.
 (function () {
     const original = window.agregarAlCarrito;
     if (typeof original !== 'function') return;
@@ -20,7 +19,7 @@
         despues.forEach((cantidad, clave) => {
             if (cantidad > (antes.get(clave) || 0)) { nombre = clave; total = cantidad; }
         });
-        if (nombre !== null) mostrarAviso(`${nombre} · Agregado +${formatear(total)}`, 'exito');
+        if (nombre !== null) mostrarAviso(`${nombre} · Ahora tienes ${formatear(total)} en el carrito`, 'exito');
     }
 
     window.agregarAlCarrito = function (...args) {

@@ -252,6 +252,24 @@
 
     window.PDFInforme = { crearDocumento, descargar, dinero, cantidad, fechaGeneracion };
 
+    // Abrir el formulario no depende de consultas a la nube ni de elementos auxiliares.
+    window.abrirModalReportes = function () {
+        const modal = document.getElementById('modal-reportes');
+        if (!modal) return;
+        const fecha = modal.querySelector('#fecha-reporte');
+        if (fecha) {
+            const hoy = new Date();
+            fecha.value = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
+        }
+        const estado = modal.querySelector('#estado-reporte');
+        if (estado) {
+            estado.textContent = '';
+            estado.classList.add('hidden');
+        }
+        modal.classList.remove('hidden');
+        fecha?.focus({ preventScroll: true });
+    };
+
     // Reemplaza el PDF del "Reporte de ventas" de Ajustes por el diseño compartido.
     window.descargarReportePDF = function (reporte) {
         const partes = String(reporte.rangoTexto || '').split(' \u2014 ');

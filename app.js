@@ -270,6 +270,14 @@
             // Conserva el arranque el tiempo suficiente para que la transición sea perceptible.
             const tiempoRestante = Math.max(0, DURACION_MINIMA_CARGA - (performance.now() - inicioCarga));
             if (tiempoRestante) await new Promise(resolve => setTimeout(resolve, tiempoRestante));
+            // Ignora un arranque pendiente si la sesión cambió mientras esperábamos.
+            if (auth.currentUser?.uid !== user?.uid) return;
+
+            const cuentaActual = document.getElementById('cuenta-actual');
+            if (cuentaActual) cuentaActual.textContent = user ? (user.email || 'Sesión sin Google') : '';
+            const avatarActual = document.getElementById('user-avatar');
+            avatarActual.removeAttribute('src');
+            avatarActual.classList.add('hidden');
 
             if (user) {
                 loginScreen.classList.add('hidden');
@@ -283,6 +291,7 @@
 
                 // Espera la activación del almacenamiento local antes de abrir las suscripciones.
                 await persistenciaFirestore;
+                if (auth.currentUser?.uid !== user.uid) return;
                 iniciarLecturaInventario();
                 iniciarLecturaVentas();
                 iniciarLecturaMovimientos();
@@ -311,9 +320,11 @@
             setTimeout(() => startupScreen.classList.add('hidden'), 550);
         });
 
-        // NUEVO MÉTODO (IGUAL AL DEL PANEL UNIVERSITARIO)
         function loginConGoogle() {
-            auth.signInWithPopup(provider).catch((error) => {
+            // Pide elegir cuenta en cada intento, aunque Google siga conectado en el navegador.
+            const selectorCuenta = new firebase.auth.GoogleAuthProvider();
+            selectorCuenta.setCustomParameters({ prompt: 'select_account' });
+            auth.signInWithPopup(selectorCuenta).catch((error) => {
                 alert("Error al iniciar sesión: " + error.message);
             });
         }
@@ -324,9 +335,19 @@
             });
         }
 
-        function cerrarSesion() {
-            auth.signOut();
-            cerrarMenuAjustes();
+        async function cerrarSesion() {
+            try {
+                await auth.signOut();
+                cerrarLectorCodigo();
+                cerrarSelectorPersonalizado();
+                cerrarAccionesCatalogo();
+                document.querySelectorAll('[id^="modal-"][role="dialog"], #modal-reportes, #modal-cobrar').forEach(modal => modal.classList.add('hidden'));
+                document.getElementById('app-content').classList.add('hidden');
+                document.getElementById('login-screen').classList.remove('hidden');
+                mostrarAviso('Sesión cerrada. En Google elige «Usar otra cuenta».');
+            } catch (error) {
+                alert('No se pudo cerrar la sesión: ' + error.message);
+            }
         }
 
         function iniciarLecturaInventario() {

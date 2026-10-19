@@ -932,38 +932,57 @@
 
         function abrirModalEditar(id) {
             const producto = inventario.find(p => p.id === id);
-            if (!producto) return;
+            if (!producto) return mostrarAviso('No se encontró el producto. Actualiza el catálogo.', 'error');
 
+            const modal = document.getElementById('modal-editar');
+            if (!modal) return mostrarAviso('No se encontró el formulario de edición. Actualiza la aplicación.', 'error');
+            const asignar = (idCampo, valor) => {
+                const campo = document.getElementById(idCampo);
+                if (campo) campo.value = valor;
+            };
             productoAEditar = id;
-            document.getElementById('editar-stock-minimo').value = limiteStock(producto);
-            document.getElementById('reposicion-cantidad').value = '';
-            document.getElementById('reposicion-costo').value = '';
-            document.getElementById('editar-codigo').value = producto.codigo || '';
-            document.getElementById('editar-nombre').value = producto.nombre || '';
-            document.getElementById('editar-unidad-venta').value = producto.unidadVenta || 'unidad';
-            actualizarEtiquetasUnidadEdicion();
             const stock = Number(producto.stock) || 0;
             const costoUnitario = Number(producto.costo) || 0;
-            document.getElementById('editar-stock').value = stock;
-            document.getElementById('editar-costo').value = costoUnitario * stock;
-            document.getElementById('editar-precio').value = Number(producto.precio) || 0;
-            document.getElementById('editar-precio-unidad').value = Number(producto.precioUnidad) || '';
-            document.getElementById('editar-tamanos').value = producto.tieneTamanos ? 'si' : 'no';
-            document.getElementById('editar-precio-mediano').value = Number(producto.precioMediano) || '';
-            document.getElementById('editar-precio-grande').value = Number(producto.precioGrande) || '';
-            actualizarCamposTamanos('editar');
-            actualizarCostoUnitarioEdicion();
+            asignar('editar-stock-minimo', limiteStock(producto));
+            asignar('reposicion-cantidad', '');
+            asignar('reposicion-costo', '');
+            asignar('editar-codigo', producto.codigo || '');
+            asignar('editar-nombre', producto.nombre || '');
+            asignar('editar-unidad-venta', producto.unidadVenta || 'unidad');
+            asignar('editar-stock', stock);
+            asignar('editar-costo', (costoUnitario * stock).toFixed(2));
+            asignar('editar-precio', Number(producto.precio) || 0);
+            asignar('editar-precio-unidad', producto.precioUnidad ?? '');
+            asignar('editar-tamanos', producto.tieneTamanos ? 'si' : 'no');
+            asignar('editar-precio-mediano', producto.precioMediano ?? '');
+            asignar('editar-precio-grande', producto.precioGrande ?? '');
 
             const selectorCategoria = document.getElementById('editar-categoria');
             const categoria = producto.categoria || 'Otros';
-            if (![...selectorCategoria.options].some(opcion => opcion.value === categoria)) {
-                selectorCategoria.add(new Option(categoria, categoria));
+            if (selectorCategoria) {
+                if (![...selectorCategoria.options].some(opcion => opcion.value === categoria)) {
+                    selectorCategoria.add(new Option(categoria, categoria));
+                }
+                selectorCategoria.value = categoria;
             }
-            selectorCategoria.value = categoria;
-            ['editar-categoria', 'editar-unidad-venta', 'editar-tamanos'].forEach(id => {
-                sincronizarSelectorPersonalizado(document.getElementById(id));
+            // Una etiqueta auxiliar ausente no debe impedir abrir y completar el formulario.
+            modal.classList.remove('hidden');
+            const actualizaciones = [
+                () => actualizarEtiquetasUnidadEdicion(),
+                () => actualizarCamposTamanos('editar'),
+                () => actualizarCostoUnitarioEdicion(),
+                ...['editar-categoria', 'editar-unidad-venta', 'editar-tamanos'].map(idCampo => () => {
+                    const campo = document.getElementById(idCampo);
+                    if (campo) sincronizarSelectorPersonalizado(campo);
+                })
+            ];
+            actualizaciones.forEach(actualizar => {
+                try {
+                    actualizar();
+                } catch (error) {
+                    console.warn('No se pudo actualizar un elemento auxiliar de la edición:', error);
+                }
             });
-            document.getElementById('modal-editar').classList.remove('hidden');
         }
 
         function cerrarModalEditar() {

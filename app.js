@@ -34,6 +34,7 @@
         const db = firebase.firestore();
         const auth = firebase.auth();
         const provider = new firebase.auth.GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
 
         // Cada cuenta guarda sus datos en una ruta independiente.
         function coleccionUsuario(nombre) {

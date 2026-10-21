@@ -1013,7 +1013,9 @@
             const precioMediano = parseFloat(document.getElementById('editar-precio-mediano').value);
             const precioGrande = parseFloat(document.getElementById('editar-precio-grande').value);
             const precio = tieneTamanos && unidadVenta !== 'ambas' ? precioMediano : precioIngresado;
-            const stockMinimo = Number(document.getElementById('editar-stock-minimo').value);
+            const stockMinimoInput = document.getElementById('editar-stock-minimo');
+            const stockMinimo = stockMinimoInput ? Number(stockMinimoInput.value) : 5;
+
             if ((unidadVenta === 'unidad' && !Number.isInteger(stock)) || !Number.isFinite(stockMinimo) || stockMinimo < 0) {
                 mostrarAviso('Las unidades deben ser enteras y el límite de alerta válido', 'error');
                 return;
@@ -1371,40 +1373,113 @@
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) cerrarLectorCodigo();
         });
-
+    
         function prepararMejorasInterfaz() {
+            // 1. Proteger la sección de resumen de manera completamente segura
             const resumen = document.getElementById('tab-resumen');
-            const diaria = document.getElementById('lista-ventas-hoy').parentElement;
-            const selectorDia = document.getElementById('categoria-fecha-dia').parentElement;
-            diaria.insertBefore(selectorDia, diaria.firstElementChild);
-            diaria.id = 'resumen-diario';
-            resumen.insertBefore(diaria, resumen.children[1]);
-            document.getElementById('resumen-unidades').previousElementSibling.textContent = 'Existencias';
-            document.getElementById('ventas-hoy-unidades').nextElementSibling.textContent = 'Cantidades vendidas';
-            const cantidad = document.getElementById('cantidad-producto-escaneado').parentElement;
-            cantidad.id = 'bloque-cantidad-escaneada';
-            const presentacion = document.getElementById('bloque-presentacion-escaneada');
-            presentacion.parentElement.insertBefore(presentacion, cantidad);
-            presentacion.querySelector('.product-choice-step').innerHTML = '<span>1</span> Elige la presentación';
-            cantidad.querySelector('.product-choice-step').innerHTML = '<span>2</span> Indica la cantidad';
-            ['nuevo', 'editar'].forEach(prefijo => {
-                const bloque = document.createElement('div');
-                bloque.className = 'mb-5';
-                bloque.innerHTML = `<label for="${prefijo}-stock-minimo" class="block text-sm mb-2">Avisar cuando el stock llegue a</label><input id="${prefijo}-stock-minimo" type="number" min="0" step="0.01" value="5" class="w-full p-3 border border-gray-200" required>`;
-                const form = document.getElementById(`form-${prefijo}`);
-                form.insertBefore(bloque, form.querySelector('button[type="submit"]'));
-            });
-            const reposicion = document.createElement('div');
-            reposicion.className = 'mb-5';
-            reposicion.innerHTML = '<details><summary class="font-bold text-teal-600">Registrar nueva compra</summary><p class="text-xs text-gray-500 my-2">Se suma al stock y calcula el costo promedio. No cambia el costo de la compra anterior.</p><label for="reposicion-cantidad">Cantidad recibida</label><input id="reposicion-cantidad" type="number" min="0.01" step="0.01" class="w-full p-3 mb-2"><label for="reposicion-costo">Costo de esta compra (Q)</label><input id="reposicion-costo" type="number" min="0" step="0.01" class="w-full p-3 mb-2"><button type="button" onclick="aplicarReposicionEdicion()" class="bg-teal-600 text-white p-3 w-full">Aplicar compra a la edición</button><p class="text-xs text-gray-500 mt-2">Después pulsa Guardar para confirmar.</p></details>';
-            const form = document.getElementById('form-editar');
-            form.insertBefore(reposicion, form.querySelector('button[type="submit"]'));
-            const costoEdicion = document.getElementById('editar-costo');
-            const etiquetaCosto = document.querySelector('label[for="editar-costo"]') || costoEdicion.closest('.relative')?.previousElementSibling;
-            if (etiquetaCosto) etiquetaCosto.textContent = 'Costo del stock restante (Q)';
-            actualizarEtiquetasUnidad();
-        }
+            const listaVentasHoy = document.getElementById('lista-ventas-hoy');
+            const selectorDia = document.getElementById('categoria-fecha-dia');
 
+            if (listaVentasHoy && selectorDia && resumen) {
+                const diaria = listaVentasHoy.parentElement;
+                const contenedorSelector = selectorDia.parentElement;
+                if (diaria && contenedorSelector) {
+                    if (diaria.firstElementChild && diaria.firstElementChild !== contenedorSelector) {
+                        try {
+                            diaria.insertBefore(contenedorSelector, diaria.firstElementChild);
+                        } catch (e) {
+                            diaria.appendChild(contenedorSelector);
+                        }
+                    }
+                    diaria.id = 'resumen-diario';
+                    if (!resumen.contains(diaria) && resumen.children[1]) {
+                        try {
+                            resumen.insertBefore(diaria, resumen.children[1]);
+                        } catch (e) {
+                            resumen.appendChild(diaria);
+                        }
+                    }
+                }
+            }
+
+            // 2. Textos de unidades con validación de existencia
+            const unidadesEl = document.getElementById('resumen-unidades');
+            if (unidadesEl && unidadesEl.previousElementSibling) {
+                unidadesEl.previousElementSibling.textContent = 'Existencias';
+            }
+            const ventasHoyUnidadesEl = document.getElementById('ventas-hoy-unidades');
+            if (ventasHoyUnidadesEl && ventasHoyUnidadesEl.nextElementSibling) {
+                ventasHoyUnidadesEl.nextElementSibling.textContent = 'Cantidades vendidas';
+            }
+
+            // 3. Bloques de escaneo protegidos
+            const cantidadEscaneada = document.getElementById('cantidad-producto-escaneado');
+            if (cantidadEscaneada && cantidadEscaneada.parentElement) {
+                const cantidad = cantidadEscaneada.parentElement;
+                cantidad.id = 'bloque-cantidad-escaneada';
+                const stepCantidad = cantidad.querySelector('.product-choice-step');
+                if (stepCantidad) stepCantidad.innerHTML = '<span>2</span> Indica la cantidad';
+            }
+
+            const presentacionEscaneada = document.getElementById('bloque-presentacion-escaneada');
+            if (presentacionEscaneada && presentacionEscaneada.parentElement && cantidadEscaneada) {
+                const presentacion = presentacionEscaneada;
+                const cantidad = cantidadEscaneada.parentElement;
+                if (presentacion.parentElement === cantidad.parentElement) {
+                    try {
+                        if (cantidad.previousSibling !== presentacion) {
+                            presentacion.parentElement.insertBefore(presentacion, cantidad);
+                        }
+                    } catch (e) {
+                        // Ignorar conflicto de nodos
+                    }
+                }
+                const stepPresentacion = presentacion.querySelector('.product-choice-step');
+                if (stepPresentacion) stepPresentacion.innerHTML = '<span>1</span> Elige la presentación';
+            }
+
+            // 4. Agregar campos de stock mínimo dinámicamente si el formulario existe
+            ['nuevo', 'editar'].forEach(prefijo => {
+                const form = document.getElementById(`form-${prefijo}`);
+                if (form && !document.getElementById(`${prefijo}-stock-minimo`)) {
+                    const bloque = document.createElement('div');
+                    bloque.className = 'mb-5';
+                    bloque.innerHTML = `<label for="${prefijo}-stock-minimo" class="block text-sm mb-2">Avisar cuando el stock llegue a</label><input id="${prefijo}-stock-minimo" type="number" min="0" step="0.01" value="5" class="w-full p-3 border border-gray-200" required>`;
+                    const btnSubmit = form.querySelector('button[type="submit"]');
+                    if (btnSubmit && btnSubmit.parentNode === form) {
+                        form.insertBefore(bloque, btnSubmit);
+                    } else {
+                        form.appendChild(bloque);
+                    }
+                }
+            });
+
+            // 5. Agregar reposición al formulario de edición si existe
+            const formEditar = document.getElementById('form-editar');
+            if (formEditar && !document.getElementById('reposicion-cantidad')) {
+                const reposicion = document.createElement('div');
+                reposicion.className = 'mb-5';
+                reposicion.innerHTML = '<details><summary class="font-bold text-teal-600">Registrar nueva compra</summary><p class="text-xs text-gray-500 my-2">Se suma al stock y calcula el costo promedio. No cambia el costo de la compra anterior.</p><label for="reposicion-cantidad">Cantidad recibida</label><input id="reposicion-cantidad" type="number" min="0.01" step="0.01" class="w-full p-3 mb-2"><label for="reposicion-costo">Costo de esta compra (Q)</label><input id="reposicion-costo" type="number" min="0" step="0.01" class="w-full p-3 mb-2"><button type="button" onclick="aplicarReposicionEdicion()" class="bg-teal-600 text-white p-3 w-full">Aplicar compra a la edición</button><p class="text-xs text-gray-500 mt-2">Después pulsa Guardar para confirmar.</p></details>';
+                const btnSubmit = formEditar.querySelector('button[type="submit"]');
+                if (btnSubmit && btnSubmit.parentNode === formEditar) {
+                    formEditar.insertBefore(reposicion, btnSubmit);
+                } else {
+                    formEditar.appendChild(reposicion);
+                }
+            }
+
+            // 6. Etiqueta de costo en edición
+            const costoEdicion = document.getElementById('editar-costo');
+            if (costoEdicion) {
+                const etiquetaCosto = document.querySelector('label[for="editar-costo"]') || costoEdicion.closest('.relative')?.previousElementSibling;
+                if (etiquetaCosto) etiquetaCosto.textContent = 'Costo del stock restante (Q)';
+            }
+
+            if (typeof actualizarEtiquetasUnidad === 'function') {
+                actualizarEtiquetasUnidad();
+            }
+        }
+        
         function aplicarReposicionEdicion() {
             const cantidad = Number(document.getElementById('reposicion-cantidad').value);
             const costoCampo = document.getElementById('reposicion-costo');

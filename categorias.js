@@ -1,4 +1,4 @@
-// Categorías editables: se pueden agregar y eliminar desde los selectores de "Categoría"
+// Categorías editables: se pueden agregar, renombrar y eliminar desde los selectores de "Categoría"
 // (Registrar producto y Editar producto). Se guardan en la cuenta del usuario.
 (function () {
     const NUEVA = '__nueva__';
@@ -7,6 +7,8 @@
     let categorias = [...BASE];
     let selectOrigen = null;
     let desuscribir = null;
+    let categoriaEnEdicion = null;
+    let guardandoNombre = false;
 
     const normalizar = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
     const claveLocal = () => `categorias_${auth.currentUser?.uid || 'anon'}`;
@@ -64,10 +66,12 @@
                     </div>
                     <button type="button" id="btn-x-categorias" class="text-2xl text-gray-400" aria-label="Cerrar">×</button>
                 </div>
-                <p class="text-sm text-gray-500">Agrega categorías nuevas o elimina las que ya no uses.</p>
-                <form id="form-categoria" class="flex gap-2 mt-4">
-                    <input id="categoria-nueva-input" type="text" maxlength="40" autocomplete="off" class="min-w-0 flex-1 p-3 border border-gray-200" placeholder="Nombre de la nueva categoría" aria-label="Nombre de la nueva categoría">
-                    <button type="submit" class="shrink-0 bg-teal-600 hover:bg-teal-700 text-white px-4 font-bold">Agregar</button>
+                <p class="text-sm text-gray-500">Edita los nombres incluso si tienen productos, agrega categorías o elimina las vacías.</p>
+                <p id="categoria-edicion-etiqueta" class="hidden mt-3 text-sm font-bold text-teal-600"></p>
+                <form id="form-categoria" class="flex flex-wrap gap-2 mt-4">
+                    <input id="categoria-nueva-input" type="text" maxlength="40" autocomplete="off" class="min-w-0 flex-1 p-3 border border-gray-200" placeholder="Nombre de la nueva categoría" aria-label="Nombre de la categoría" required>
+                    <button id="btn-guardar-categoria" type="submit" class="shrink-0 bg-teal-600 hover:bg-teal-700 text-white px-4 font-bold">Agregar</button>
+                    <button id="btn-cancelar-edicion-categoria" type="button" class="hidden bg-gray-100 text-gray-700 px-3 py-2 font-bold">Cancelar</button>
                 </form>
                 <div id="lista-categorias" class="cat-list"></div>
                 <p class="mt-3 text-xs text-gray-500">Solo se pueden eliminar categorías que no tengan productos.</p>
@@ -78,7 +82,11 @@
         modal.addEventListener('click', e => { if (e.target === modal) cerrarModal(); });
         modal.querySelector('#btn-x-categorias').addEventListener('click', cerrarModal);
         modal.querySelector('#btn-listo-categorias').addEventListener('click', cerrarModal);
-        modal.querySelector('#form-categoria').addEventListener('submit', agregarCategoria);
+        modal.querySelector('#form-categoria').addEventListener('submit', evento => {
+            if (categoriaEnEdicion !== null) renombrarCategoria(evento);
+            else agregarCategoria(evento);
+        });
+        modal.querySelector('#btn-cancelar-edicion-categoria').addEventListener('click', cancelarEdicionCategoria);
         document.addEventListener('keydown', e => {
             if (e.key !== 'Escape') return;
             // Si la confirmación está abierta, Escape solo cierra esa ventana.
@@ -89,45 +97,152 @@
     }
 
     function renderizarLista() {
-        const lista = document.getElementById('lista-categorias');
-        lista.replaceChildren();
-        categorias.forEach(nombre => {
-            const usados = productosEn(nombre);
-            const fila = document.createElement('div');
-            fila.className = 'cat-item';
+    const lista = document.getElementById('lista-categorias');
+    if (!lista) return; // <-- Protege contra elementos nulos si la sección no está abierta ( error de consola)
+    
+    lista.replaceChildren();
+    const nombres = [...new Set([...categorias, ...inventario.map(p => p.categoria || 'Otros')])];
+    nombres.forEach(nombre => {
+        const usados = productosEn(nombre);
+        const fila = document.createElement('div');
+        fila.className = 'cat-item';
 
-            const info = document.createElement('div');
-            info.className = 'min-w-0';
-            const titulo = document.createElement('span');
-            titulo.textContent = nombre;
-            const detalle = document.createElement('small');
-            detalle.textContent = usados ? `${usados} producto${usados === 1 ? '' : 's'}` : 'Sin productos';
-            info.append(titulo, detalle);
+        const info = document.createElement('div');
+        info.className = 'min-w-0';
+        const titulo = document.createElement('span');
+        titulo.textContent = nombre;
+        const detalle = document.createElement('small');
+        detalle.textContent = usados ? `${usados} producto${usados === 1 ? '' : 's'}` : 'Sin productos';
+        info.append(titulo, detalle);
 
-            const borrar = document.createElement('button');
-            borrar.type = 'button';
-            borrar.className = 'cat-delete';
-            borrar.textContent = 'Eliminar';
-            borrar.disabled = usados > 0 || categorias.length <= 1;
-            borrar.title = usados > 0 ? 'Tiene productos asignados' : categorias.length <= 1 ? 'Debe quedar al menos una categoría' : '';
-            borrar.setAttribute('aria-label', `Eliminar la categoría ${nombre}`);
-            borrar.addEventListener('click', () => eliminarCategoria(nombre));
+        const borrar = document.createElement('button');
+        borrar.type = 'button';
+        borrar.className = 'cat-delete';
+        borrar.textContent = 'Eliminar';
+        borrar.disabled = usados > 0 || categorias.length <= 1;
+        borrar.title = usados > 0 ? 'Tiene productos asignados' : categorias.length <= 1 ? 'Debe quedar al menos una categoría' : '';
+        borrar.setAttribute('aria-label', `Eliminar la categoría ${nombre}`);
+        borrar.addEventListener('click', () => eliminarCategoria(nombre));
 
-            fila.append(info, borrar);
-            lista.appendChild(fila);
-        });
+        const editar = document.createElement('button');
+        editar.type = 'button';
+        editar.className = 'text-teal-600 font-bold px-2 py-2';
+        editar.textContent = 'Editar';
+        editar.disabled = guardandoNombre;
+        editar.setAttribute('aria-label', `Editar el nombre de la categoría ${nombre}`);
+        editar.addEventListener('click', () => editarCategoria(nombre));
+        borrar.disabled = borrar.disabled || guardandoNombre;
+        
+        const acciones = document.createElement('div');
+        acciones.className = 'flex flex-wrap justify-end items-center gap-2 shrink-0';
+        acciones.append(editar, borrar);
+        
+        fila.append(info, acciones);
+        lista.appendChild(fila);
+    });
+}
+    window.abrirCategoriasCatalogo = () => abrirModal();
+
+    function cancelarEdicionCategoria() {
+        if (guardandoNombre) return;
+        categoriaEnEdicion = null;
+        const campo = document.getElementById('categoria-nueva-input');
+        campo.value = '';
+        campo.placeholder = 'Nombre de la nueva categoría';
+        document.getElementById('btn-guardar-categoria').textContent = 'Agregar';
+        document.getElementById('btn-cancelar-edicion-categoria').classList.add('hidden');
+        document.getElementById('categoria-edicion-etiqueta').classList.add('hidden');
+    }
+
+    function editarCategoria(nombre) {
+        if (guardandoNombre) return;
+        categoriaEnEdicion = nombre;
+        const campo = document.getElementById('categoria-nueva-input');
+        campo.value = nombre;
+        campo.placeholder = 'Nuevo nombre';
+        const etiqueta = document.getElementById('categoria-edicion-etiqueta');
+        etiqueta.textContent = `Editar: ${nombre}`;
+        etiqueta.classList.remove('hidden');
+        document.getElementById('btn-guardar-categoria').textContent = 'Guardar';
+        document.getElementById('btn-cancelar-edicion-categoria').classList.remove('hidden');
+        campo.focus();
+        campo.select();
+    }
+
+    async function renombrarCategoria(evento) {
+        evento.preventDefault();
+        if (guardandoNombre || categoriaEnEdicion === null) return;
+        const anterior = categoriaEnEdicion;
+        const nombre = document.getElementById('categoria-nueva-input').value.replace(/\s+/g, ' ').trim();
+        if (!nombre) return mostrarAviso('Escribe el nuevo nombre', 'error');
+        if (nombre === anterior) return cancelarEdicionCategoria();
+        const existentes = [...categorias, ...inventario.map(p => p.categoria || 'Otros')];
+        if (existentes.some(c => c !== anterior && normalizar(c) === normalizar(nombre))) {
+            return mostrarAviso('Ya existe una categoría con ese nombre', 'error');
+        }
+        const usuario = auth.currentUser;
+        if (!usuario) return mostrarAviso('Inicia sesión para guardar el nombre', 'error');
+        if (!navigator.onLine) return mostrarAviso('Conéctate a internet para cambiar el nombre', 'error');
+        const productos = inventario.filter(p => (p.categoria || 'Otros') === anterior);
+        // Un único lote evita dejar productos con el nombre antiguo si falla el guardado.
+        if (productos.length > 499) return mostrarAviso('No se puede renombrar más de 499 productos a la vez', 'error');
+        const listaNueva = categorias.map(c => c === anterior ? nombre : c);
+        if (!listaNueva.includes(nombre)) listaNueva.push(nombre);
+        const seleccionados = IDS_SELECT.map(id => document.getElementById(id)?.value);
+        const boton = document.getElementById('btn-guardar-categoria');
+        guardandoNombre = true;
+        establecerCargaBoton(boton, true);
+        document.getElementById('categoria-nueva-input').disabled = true;
+        document.getElementById('btn-cancelar-edicion-categoria').disabled = true;
+        renderizarLista();
+        try {
+            const batch = db.batch();
+            const coleccion = coleccionUsuario('productos');
+            productos.forEach(p => batch.update(coleccion.doc(p.id), { categoria: nombre }));
+            batch.set(coleccionUsuario('configuracion').doc('categorias'), { lista: listaNueva }, { merge: true });
+            await batch.commit();
+            if (auth.currentUser?.uid !== usuario.uid) return;
+            categorias = listaNueva;
+            inventario.forEach(p => { if ((p.categoria || 'Otros') === anterior) p.categoria = nombre; });
+            carrito.forEach(p => { if (p.categoria === anterior) p.categoria = nombre; });
+            try { localStorage.setItem(claveLocal(), JSON.stringify(categorias)); } catch (e) { /* sin almacenamiento local */ }
+            aplicar();
+            IDS_SELECT.forEach((id, indice) => {
+                const select = document.getElementById(id);
+                if (select && seleccionados[indice] === anterior) {
+                    select.value = nombre;
+                    select.dataset.prev = nombre;
+                    sincronizar(select);
+                }
+            });
+            actualizarResumen();
+            renderizarCatalogo();
+            renderizarListaVenta();
+            renderizarFaltantes();
+            mostrarAviso('Nombre actualizado sin eliminar productos', 'exito');
+        } catch (error) {
+            mostrarAviso('No se pudo cambiar el nombre. Inténtalo de nuevo.', 'error');
+        } finally {
+            guardandoNombre = false;
+            establecerCargaBoton(boton, false);
+            document.getElementById('categoria-nueva-input').disabled = false;
+            document.getElementById('btn-cancelar-edicion-categoria').disabled = false;
+            cancelarEdicionCategoria();
+            renderizarLista();
+        }
     }
 
     function abrirModal(select) {
         selectOrigen = select || null;
         const modal = document.getElementById('modal-categorias') || crearModal();
+        cancelarEdicionCategoria();
         renderizarLista();
-        document.getElementById('categoria-nueva-input').value = '';
         modal.classList.remove('hidden');
         setTimeout(() => document.getElementById('categoria-nueva-input')?.focus(), 100);
     }
 
     function cerrarModal() {
+        if (guardandoNombre) return;
         document.getElementById('modal-categorias')?.classList.add('hidden');
         selectOrigen = null;
     }

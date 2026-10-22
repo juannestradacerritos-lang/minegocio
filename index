@@ -1,0 +1,996 @@
+ <!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Mi Negocio · Inventario y Ventas</title>
+    <meta name="description" content="Control de inventario, ventas y reportes para tu negocio.">
+
+    <!-- Configuración PWA -->
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#155a4c">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Mi Negocio">
+    <link rel="icon" href="./icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="./icon.svg">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="stylesheet" href="./styles.css">
+
+    <style>
+        /* Resumen diario primero, con cantidades separadas. */
+        #tab-resumen:not(.hidden) { display: flex; flex-direction: column; align-items: stretch; gap: 1rem; }
+        #tab-resumen > * { width: 100%; margin-bottom: 0; }
+        #tab-resumen > #resumen-diario { min-height: 0; background: var(--c-surface); color: var(--c-text); text-align: left; }
+        #tab-resumen > #resumen-diario::after { display: none; }
+        #tab-resumen > #resumen-diario p { color: var(--c-muted); }
+        #resumen-unidades, #ventas-hoy-unidades { font-size: 1rem !important; line-height: 1.5; }
+        #lista-vender .truncate { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; min-height: 2.6em; }
+        .cart-checkout { position: sticky; bottom: calc(5.5rem + env(safe-area-inset-bottom)); z-index: 20; background: var(--c-surface); padding: 1rem; border-radius: 12px; box-shadow: 0 -6px 20px rgba(15,42,67,.08); }
+        .cart-checkout > div { margin-bottom: .5rem; }
+        .cart-checkout #carrito-total { font-size: 1.8rem; }
+        body.dark-mode #tab-resumen > #resumen-diario { background: var(--c-surface) !important; }
+        @media (min-width: 1024px) { .cart-checkout { bottom: 1rem; } }
+        .categoria-descargas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; }
+        .categoria-descargas .pdf-category-btn { width: 100%; margin: 0 !important; min-width: 0; white-space: normal; }
+        #modal-imagen-categoria .imagen-reporte { display: block; width: 100%; height: auto; margin-bottom: 1rem; }
+
+        /* Corrige el scroll en "Vender": ninguna lista debe atrapar el desplazamiento vertical de la página. */
+        #lista-vender {
+            overflow-x: auto;
+            overflow-y: hidden;          /* evita que la lista capture el gesto vertical */
+            overscroll-behavior-x: contain;
+            overscroll-behavior-y: auto; /* el scroll vertical pasa a la página */
+            touch-action: pan-x pan-y;
+            -webkit-overflow-scrolling: touch;
+            scroll-snap-type: none !important; /* el snap hacía que se trabara al deslizar */
+        }
+        #lista-vender > div { flex: 0 0 auto; }
+        #lista-vender > div:hover { transform: none !important; }
+
+        /* El carrito crece con su contenido y la página completa hace el scroll. */
+        #carrito-items, .cart-list {
+            max-height: none !important;
+            overflow: visible !important;
+            overscroll-behavior: auto;
+        }
+        #tab-vender { overflow: visible; }
+
+        /* ===== Bloqueo del scroll de fondo con un modal abierto ===== */
+        body.modal-abierto { position: fixed; left: 0; right: 0; width: 100%; overflow: hidden; }
+        .fixed[id^="modal-"] { overscroll-behavior: contain; touch-action: none; }
+        /* Si el contenido del modal es más alto que la pantalla, se desplaza dentro de sí mismo. */
+        .fixed[id^="modal-"] > div { max-height: 100%; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; }
+
+        /* ===== Cobro: hoja inferior en teléfonos ===== */
+        body.cobro-abierto { overflow: hidden; }
+        #modal-cobrar .cobro-sheet { animation: cobro-aparecer .22s ease-out; }
+        #modal-cobrar .cobro-handle { display: none; }
+        @keyframes cobro-aparecer { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+
+        /* Dos opciones por fila; cualquier opción sobrante queda centrada. */
+        #modal-cobrar .cobro-rapido { display: flex; flex-wrap: wrap; justify-content: center; gap: .65rem; margin: 1rem 0; }
+        #modal-cobrar .cobro-chip {
+            flex: 0 0 calc((100% - .65rem) / 2); min-width: 0;
+            min-height: 64px; padding: .65rem .5rem; border: 1px solid #d5dee5; border-radius: 12px !important;
+            background: #f4f7f9; color: #16324f; font-weight: 800; font-size: 1.15rem; line-height: 1.25;
+            text-align: center; overflow-wrap: anywhere; font-variant-numeric: tabular-nums;
+            touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+            transition: background .15s, border-color .15s, transform .1s;
+        }
+        #modal-cobrar .cobro-chip small { display: block; margin-bottom: .2rem; font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #5b6f81; }
+        #modal-cobrar .cobro-sheet { padding: 1.5rem; }
+        #modal-cobrar .cobro-icono { width: 48px; height: 48px; margin-bottom: .75rem; font-size: 1.5rem; }
+        #modal-cobrar #titulo-cobro { font-size: 1.35rem; margin-bottom: 1rem; }
+        #modal-total-cobro, #modal-vuelto { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+        #modal-cobrar #input-efectivo { min-height: 60px; font-size: 1.5rem !important; }
+        #modal-cobrar #btn-finalizar-venta { min-height: 52px; }
+        #modal-cobrar .cobro-chip:hover { border-color: #168c86; }
+        #modal-cobrar .cobro-chip.activo { background: #dcfce7; border-color: #22c55e; color: #166534; box-shadow: 0 0 0 2px rgba(34,197,94,.15); }
+        #modal-cobrar .cobro-chip.activo small { color: #166534; }
+        body.dark-mode #modal-cobrar .cobro-chip { background: #102331; border-color: #355468; color: #dce8ee; }
+        body.dark-mode #modal-cobrar .cobro-chip small { color: #9fb2c0; }
+        body.dark-mode #modal-cobrar .cobro-chip.activo { background: #12361f; border-color: #22c55e; color: #86efac; }
+        body.dark-mode #modal-cobrar .cobro-chip.activo small { color: #86efac; }
+        .cobro-chip:active { transform: scale(.95); }
+        .cobro-chip.activo { background: #dcfce7; border-color: #22c55e; color: #166534; }
+        .cobro-chip.activo small { color: #166534; }
+        body.dark-mode .cobro-chip { background: #102331; border-color: #294354; color: #dce8ee; }
+        body.dark-mode .cobro-chip small { color: #9fb2c0; }
+        body.dark-mode .cobro-chip.activo { background: #12361f; border-color: #22c55e; color: #86efac; }
+        body.dark-mode .cobro-chip.activo small { color: #86efac; }
+        body.dark-mode .cobro-handle { background: #3a5468; }
+
+        @media (max-width: 640px) {
+            #modal-cobrar.cobro-modal { align-items: flex-end; padding: 0; }
+            #modal-cobrar .cobro-sheet {
+                width: 100%; max-width: none; max-height: 100%; overflow-y: auto; overscroll-behavior: contain;
+                border-radius: 24px 24px 0 0; padding: .75rem 1.25rem calc(1.25rem + env(safe-area-inset-bottom));
+                animation-name: cobro-subir;
+            }
+            #modal-cobrar .cobro-handle { display: block; width: 44px; height: 5px; border-radius: 3px; background: #cbd5dc; margin: 0 auto .9rem; }
+            /* Ahorra espacio para que el teclado no tape el cobro. */
+            #modal-cobrar .cobro-icono { display: none; }
+            #modal-cobrar h3#titulo-cobro { margin-bottom: .75rem; }
+        }
+        @keyframes cobro-subir { from { transform: translateY(100%); } to { transform: none; } }
+        @media (prefers-reduced-motion: reduce) { #modal-cobrar .cobro-sheet { animation: none !important; } }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans antialiased">
+
+    <div id="app-toast" role="status" aria-live="polite"></div>
+
+    <!-- Aviso de nueva versión de la aplicación (PWA). -->
+    <div id="update-banner" class="hidden" role="alert">
+        <div class="update-banner-text">
+            <strong>Nueva versión disponible</strong>
+            <span>Actualiza para obtener las últimas mejoras.</span>
+        </div>
+        <div class="update-banner-actions">
+            <button id="btn-posponer-actualizacion" type="button" class="update-later">Después</button>
+            <button id="btn-actualizar-app" type="button" class="update-now">Actualizar</button>
+        </div>
+    </div>
+
+    <!-- Evita mostrar brevemente el acceso mientras Firebase recupera la sesión. -->
+    <div id="startup-screen" role="status" aria-live="polite" aria-label="Cargando aplicación">
+        <div class="startup-brand">
+            <div class="startup-logo" aria-hidden="true">
+                <img src="./icon.svg" alt="">
+            </div>
+            <div class="startup-spinner" aria-hidden="true"></div>
+            <p class="text-sm font-semibold tracking-wide">Cargando Mi Negocio…</p>
+        </div>
+    </div>
+
+    <!-- ================= PANTALLA DE LOGIN ================= -->
+    <div id="login-screen" class="hidden fixed inset-0 bg-gray-50 z-50 flex flex-col items-center justify-center px-4 transition-opacity duration-300">
+        <div class="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 max-w-sm w-full text-center">
+            <div class="w-20 h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl shadow-inner" aria-hidden="true">
+                <img src="./icon.svg" alt="">
+            </div>
+            <p class="text-[11px] font-bold uppercase tracking-[.18em] text-gray-400 mb-3">Inventario · Ventas</p>
+            <h1 class="text-2xl font-black text-gray-800 mb-2">Mi Negocio</h1>
+            <p class="text-gray-500 text-sm mb-8">Ingresa para administrar tu negocio.</p>
+            
+            <button onclick="loginConGoogle()" class="w-full bg-white border border-gray-300 text-gray-700 font-bold py-3 px-4 rounded-xl shadow-sm hover:bg-gray-50 active:bg-gray-100 transition-all flex items-center justify-center space-x-3">
+                <svg class="w-5 h-5" viewBox="0 0 48 48" aria-hidden="true">
+                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                </svg>
+                <span>Continuar con Google</span>
+            </button>
+            <button onclick="iniciarModoPrueba()" class="w-full mt-3 border border-blue-200 text-blue-700 font-bold py-3 px-4 rounded-xl hover:bg-blue-50 active:bg-blue-100 transition-all">
+                Iniciar sesión sin Google
+            </button>
+        </div>
+    </div>
+
+    <!-- ================= CONTENIDO DE LA APLICACIÓN ================= -->
+    <div id="app-content" class="hidden pb-28">
+        
+        <header class="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-40 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <span class="brand-icon" aria-hidden="true">
+                    <img src="./icon.svg" alt="">
+                </span>
+                <div class="brand-copy">
+                    <h1 class="text-xl font-bold tracking-wide">Mi Negocio</h1>
+                    <p>Inventario y punto de venta</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3 relative">
+                <img id="user-avatar" src="" alt="Perfil" class="w-8 h-8 rounded-full border-2 border-white shadow-sm hidden">
+            </div>
+        </header>
+
+        <main class="max-w-4xl mx-auto p-4">
+
+            <!-- 1. PESTAÑA: RESUMEN -->
+            <section id="tab-resumen" class="fade-in block">
+                <div class="page-heading">
+                    <div><p class="eyebrow">Bienvenida</p><h2 class="text-2xl font-bold text-gray-800">Resumen del negocio</h2></div>
+                </div>
+                <div class="quick-actions" aria-label="Acciones frecuentes">
+                    <button type="button" class="quick-action quick-action-primary" onclick="cambiarTab('vender', document.getElementById('nav-vender'))"><span aria-hidden="true">🛒</span><span>Registrar una venta</span></button>
+                    <button type="button" class="quick-action" onclick="cambiarTab('nuevo')"><span aria-hidden="true">＋</span><span>Agregar producto</span></button>
+                </div>
+                
+                <div class="summary-hero bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6 text-center">
+                    <p class="text-gray-500 text-sm font-semibold">Ganancia posible del inventario</p>
+                    <p class="text-5xl font-black text-green-500 my-3" id="resumen-ganancia">Q0.00</p>
+                    <p class="text-sm text-gray-400">Si vendes todo al precio configurado, antes de gastos.</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-8">
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                        <p class="text-sm text-gray-500 font-semibold mb-1">Costo (Inversión)</p>
+                        <p class="text-2xl font-bold text-red-500" id="resumen-costo">Q0.00</p>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                        <p class="text-sm text-gray-500 font-semibold mb-1">Ventas Realizadas</p>
+                        <p class="text-2xl font-bold text-blue-600" id="resumen-venta">Q0.00</p>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                        <p class="text-sm text-gray-500 font-semibold mb-1">Productos</p>
+                        <p class="text-2xl font-bold text-gray-700" id="resumen-variedad">0</p>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                        <p class="text-sm text-gray-500 font-semibold mb-1">Unidades</p>
+                        <p class="text-2xl font-bold text-gray-700" id="resumen-unidades">0</p>
+                    </div>
+                </div>
+
+                <!-- PDF de ventas por categoría -->
+                <div class="chart-card bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-6 md:col-span-2">
+                    <div class="mb-4">
+                        <h3 class="font-bold text-gray-700">Ventas por categoría</h3>
+                        <p class="text-xs text-gray-500 mt-1">Descarga las ventas de la categoría para el día seleccionado arriba.</p>
+                    </div>
+                    <div class="mb-4">
+                        <label for="categoria-fecha-dia" class="block text-xs font-semibold text-gray-500 mb-2">Día</label>
+                        <input id="categoria-fecha-dia" type="date" required class="w-full p-3 border border-gray-200 rounded-xl">
+                    </div>
+                    <span id="etiqueta-filtro-categoria" class="block text-xs mb-2 font-semibold text-gray-500">Categoría del PDF a descargar:</span>
+                    <div id="filtro-categoria-chips" class="category-chips" role="radiogroup" aria-labelledby="etiqueta-filtro-categoria"></div>
+                    <p id="categoria-periodo" class="text-xs text-gray-500 mt-4 mb-2" aria-live="polite"></p>
+                    <div class="categoria-descargas">
+                        <button id="btn-imagen-categoria" type="button" class="pdf-category-btn"><span aria-hidden="true">⇩</span><span>Descargar imagen</span></button>
+                        <button id="btn-pdf-categoria" type="button" class="pdf-category-btn"><span aria-hidden="true">⇩</span><span>Descargar PDF</span></button>
+                    </div>
+                </div>
+
+                <!-- Ventas de hoy (se usa flex en vez de grid para no heredar los estilos de las tarjetas del resumen) -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 md:col-span-2">
+                    <div class="flex items-start justify-between gap-3 border-b border-gray-100 pb-3 mb-4">
+                        <div>
+                            <h3 id="ventas-dia-titulo" class="font-bold text-gray-700">Ventas de hoy</h3>
+                            <p id="ventas-hoy-fecha" class="text-xs text-gray-500 mt-1"></p>
+                        </div>
+                        <span id="ventas-hoy-total" class="text-2xl font-black text-teal-600">Q0.00</span>
+                    </div>
+                    <div class="flex gap-3 mb-4">
+                        <div class="flex-1 bg-gray-50 p-3 rounded-xl text-center">
+                            <strong id="ventas-hoy-cantidad" class="block text-xl text-gray-700">0</strong>
+                            <span class="text-xs text-gray-500">Ventas</span>
+                        </div>
+                        <div class="flex-1 bg-gray-50 p-3 rounded-xl text-center">
+                            <strong id="ventas-hoy-unidades" class="block text-xl text-gray-700">0</strong>
+                            <span class="text-xs text-gray-500">Unidades / libras</span>
+                        </div>
+                    </div>
+                    <div id="lista-ventas-hoy" class="movement-list"></div>
+                    <div class="flex justify-between items-center border-t border-gray-100 pt-4 mt-4">
+                        <span id="ventas-dia-total-etiqueta" class="text-sm font-bold text-gray-700">Total de ventas de hoy</span>
+                        <strong id="ventas-hoy-total-final" class="text-2xl text-teal-600">Q0.00</strong>
+                    </div>
+                </div>
+
+
+            </section>
+
+            <!-- 2. PESTAÑA: CATÁLOGO -->
+            <section id="tab-catalogo" class="fade-in hidden">
+                <div class="inventory-page-header">
+                    <div class="inventory-heading-copy"><p class="eyebrow">Productos y existencias</p><h2 class="text-2xl font-bold text-gray-800">Inventario</h2><p class="section-intro">Controla tus productos, precios y existencias de un vistazo.</p></div>
+                    <button type="button" onclick="cambiarTab('nuevo')" class="primary-action"><span aria-hidden="true">＋</span> Agregar producto</button>
+                </div>
+                <div class="relative mb-6 catalog-search">
+                    <span class="absolute left-4 top-3.5 text-gray-400" aria-hidden="true">🔍</span>
+                    <input type="search" id="buscar-producto" placeholder="Buscar producto..." aria-label="Buscar producto por nombre o código" class="w-full p-3 pl-10 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm" oninput="renderizarCatalogo()">
+                </div>
+                <div class="catalog-filters">
+                    <div class="catalog-filters-heading">
+                        <span class="catalog-filter-label">Categorías</span>
+                        <span id="catalogo-cantidad" class="catalog-count" aria-live="polite"></span>
+                    </div>
+                    <div id="catalogo-categorias" class="catalog-category-list" aria-label="Filtrar productos por categoría"></div>
+                    <button type="button" onclick="abrirCategoriasCatalogo()" class="catalog-edit-categories"><span aria-hidden="true">⚙</span> Editar categorías</button>
+                </div>
+                
+                <div id="lista-catalogo" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </section>
+
+            <!-- 3. PESTAÑA: ALERTAS (FALTANTES) -->
+            <section id="tab-faltantes" class="fade-in hidden">
+                <div class="inventory-page-header">
+                    <h2 class="text-2xl font-bold text-gray-800">Alertas de Stock</h2>
+                    <button type="button" onclick="cambiarTab('ajustes')" class="settings-back" aria-label="Regresar a Ajustes">
+                        <span aria-hidden="true">←</span><span>Regresar</span>
+                    </button>
+                </div>
+                <p class="text-sm text-gray-500 mb-6 font-medium">Productos agotados o por debajo de su límite de alerta personalizado.</p>
+                <div id="lista-faltantes" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </section>
+
+            <!-- 4. PESTAÑA: VENDER -->
+            <section id="tab-vender" class="fade-in hidden">
+                <div class="page-heading"><div><p class="eyebrow">Atiende a tus clientes</p><h2 class="text-2xl font-bold text-gray-800">Registrar venta</h2></div></div>
+                <p class="section-intro">Toca un producto para añadirlo a la venta.</p>
+
+                <div class="flex items-stretch gap-2 mb-4">
+                    <div class="relative flex-1 min-w-0">
+                        <span class="absolute left-4 top-3.5 text-gray-400" aria-hidden="true">🔍</span>
+                        <input type="search" id="buscar-venta" placeholder="Buscar producto..." class="w-full p-3 pl-10 border border-gray-300" oninput="renderizarListaVenta()" aria-label="Buscar por nombre o código">
+                    </div>
+                    <button type="button" onclick="abrirLectorCodigo('vender')" class="shrink-0 bg-teal-600 hover:bg-teal-700 text-white px-4 font-bold flex items-center gap-2" aria-label="Escanear producto para vender">
+                        <span aria-hidden="true">▦</span><span>Escanear</span>
+                    </button>
+                </div>
+                <div class="flex overflow-x-auto space-x-3 pb-4 mb-2" id="lista-vender"></div>
+
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                    <div class="cart-header">
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-bold text-gray-700">Carrito de Compras</h3>
+                            <span id="carrito-cantidad" class="cart-badge hidden">0</span>
+                        </div>
+                        <button id="btn-vaciar-carrito" type="button" onclick="vaciarCarrito()" class="cart-clear hidden">Vaciar</button>
+                    </div>
+                    <div id="carrito-items" class="cart-list">
+                        <p class="text-center text-gray-400 mt-10">El carrito está vacío</p>
+                    </div>
+                    
+                    <div class="border-t pt-4 cart-checkout">
+                        <div class="flex justify-between items-center mb-5">
+                            <span class="text-gray-500 font-semibold">Total a Cobrar:</span>
+                            <span class="text-4xl font-black text-blue-600" id="carrito-total">Q0.00</span>
+                        </div>
+                        <button onclick="abrirModalCobro()" class="w-full bg-green-500 text-white font-bold py-4 rounded-xl shadow-md hover:bg-green-600 active:bg-green-700 text-lg transition-transform transform active:scale-95">
+                            Cobrar Venta
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5. PESTAÑA: GRÁFICOS -->
+            <section id="tab-graficos" class="fade-in hidden">
+                <h2 class="text-2xl font-bold mb-2 text-gray-800">Gráficos</h2>
+                <p class="text-sm text-gray-500 mb-6 font-medium">Resumen de las ventas registradas.</p>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                        <p class="text-xs font-bold uppercase tracking-wider text-gray-400">Ventas totales</p>
+                        <p id="grafico-total-ventas" class="text-2xl font-black text-blue-600 mt-2">Q0.00</p>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                        <p class="text-xs font-bold uppercase tracking-wider text-gray-400">Unidades vendidas</p>
+                        <p id="grafico-unidades-vendidas" class="text-2xl font-black text-gray-700 mt-2">0</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="chart-card bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                        <h3 class="font-bold text-gray-700 border-b border-gray-100 pb-3 mb-4">Ventas por producto · Barras</h3>
+                        <div class="chart-wrap"><canvas id="grafico-barras"></canvas></div>
+                    </div>
+                    <div class="chart-card bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                        <h3 class="font-bold text-gray-700 border-b border-gray-100 pb-3 mb-4">Tendencia de ventas · Línea</h3>
+                        <div class="chart-wrap"><canvas id="grafico-lineal"></canvas></div>
+                    </div>
+                    <div class="chart-card bg-white p-5 rounded-2xl shadow-sm border border-gray-100 md:col-span-2">
+                        <h3 class="font-bold text-gray-700 border-b border-gray-100 pb-3 mb-4">Unidades por producto · Pastel</h3>
+                        <div class="chart-wrap"><canvas id="grafico-pastel"></canvas></div>
+                        <div id="leyenda-pastel"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PESTAÑA: AJUSTES -->
+            <section id="tab-ajustes" class="fade-in hidden">
+                <div class="settings-header">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800">Ajustes</h2>
+                        <p class="text-sm text-gray-500 font-medium">Personaliza la aplicación y administra la información de tu negocio.</p>
+                    </div>
+                    <button type="button" onclick="volverDesdeAjustes()" class="settings-back" aria-label="Regresar a la pantalla anterior">
+                        <span aria-hidden="true">←</span><span>Regresar</span>
+                    </button>
+                </div>
+
+                <div class="settings-grid">
+                    <div class="settings-column">
+                        <div class="settings-panel settings-panel-featured">
+                            <div class="settings-panel-heading">
+                                <span>Datos y reportes</span>
+                                <small>Protege y descarga la información de tu negocio.</small>
+                            </div>
+                            <button onclick="abrirModalRespaldo()" class="settings-action">
+                                <span class="settings-action-icon" aria-hidden="true">⬡</span>
+                                <span class="settings-action-copy"><strong>Respaldar todos los datos</strong><small>Guarda inventario, ventas, movimientos y reportes en JSON</small></span>
+                                <span class="settings-action-arrow" aria-hidden="true">›</span>
+                            </button>
+                            <button onclick="abrirSelectorRestauracion()" class="settings-action">
+                                <span class="settings-action-icon" aria-hidden="true">↥</span>
+                                <span class="settings-action-copy"><strong>Restaurar respaldo</strong><small>Recupera los datos desde un archivo JSON guardado</small></span>
+                                <span class="settings-action-arrow" aria-hidden="true">›</span>
+                            </button>
+                            <button onclick="abrirModalExportarInventario()" class="settings-action">
+                                <span class="settings-action-icon" aria-hidden="true">⇩</span>
+                                <span class="settings-action-copy"><strong>Descargar inventario</strong><small>Exporta todos los productos en formato CSV</small></span>
+                                <span class="settings-action-arrow" aria-hidden="true">›</span>
+                            </button>
+                            <button onclick="abrirModalReportes()" class="settings-action">
+                                <span class="settings-action-icon" aria-hidden="true">▤</span>
+                                <span class="settings-action-copy"><strong>Reporte de ventas</strong><small>Genera, guarda y descarga informes en PDF</small></span>
+                                <span class="settings-action-arrow" aria-hidden="true">›</span>
+                            </button>
+                            <button onclick="cambiarTab('graficos')" class="settings-action">
+                                <span class="settings-action-icon" aria-hidden="true">▥</span>
+                                <span class="settings-action-copy"><strong>Gráficos de ventas</strong><small>Consulta cómo han cambiado tus ventas</small></span>
+                                <span class="settings-action-arrow" aria-hidden="true">›</span>
+                            </button>
+                        </div>
+
+                        <div class="settings-panel">
+                            <div class="settings-panel-heading">
+                                <span>Inventario</span>
+                                <small>Consulta y administra tus existencias.</small>
+                            </div>
+                            <button onclick="cambiarTab('faltantes')" class="settings-action">
+                                <span class="settings-action-icon" aria-hidden="true">!</span>
+                                <span class="settings-action-copy"><strong>Alertas de stock</strong><small>Revisa productos agotados o por terminarse</small></span>
+                                <span class="settings-action-arrow" aria-hidden="true">›</span>
+                            </button>
+                            <button onclick="abrirModalMovimientos()" class="settings-action">
+                                <span class="settings-action-icon" aria-hidden="true">↕</span>
+                                <span class="settings-action-copy"><strong>Historial de movimientos</strong><small>Consulta entradas, ajustes y salidas por ventas</small></span>
+                                <span class="settings-action-arrow" aria-hidden="true">›</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="settings-column">
+                        <div class="settings-panel">
+                            <div class="settings-panel-heading">
+                                <span>Preferencias</span>
+                                <small>Ajusta la apariencia.</small>
+                            </div>
+                            <label for="interruptor-modo-oscuro" class="settings-action settings-action-control">
+                                <span class="flex items-center gap-4 min-w-0">
+                                    <span class="settings-action-icon" aria-hidden="true">◐</span>
+                                    <span class="settings-action-copy"><strong>Modo oscuro</strong><small>Mejora la lectura nocturna</small></span>
+                                </span>
+                                <span class="theme-switch">
+                                    <input id="interruptor-modo-oscuro" type="checkbox" onchange="cambiarModoOscuro(this.checked)" aria-label="Activar modo oscuro">
+                                    <span class="theme-slider" aria-hidden="true"></span>
+                                </span>
+                            </label>
+                        </div>
+
+                        <div class="settings-panel">
+                            <div class="settings-panel-heading">
+                                <span>Cuenta</span>
+                                <small>Administra tu sesión actual.</small>
+                            </div>
+                            <button onclick="cerrarSesion()" class="settings-action">
+                                <span class="settings-action-icon" aria-hidden="true">↪</span>
+                                <span class="settings-action-copy"><strong>Cerrar sesión</strong><small>Salir de esta cuenta de forma segura</small></span>
+                                <span class="settings-action-arrow" aria-hidden="true">›</span>
+                            </button>
+                        </div>
+
+                        <div class="settings-panel settings-danger">
+                            <div class="settings-panel-heading">
+                                <span>Zona de peligro</span>
+                                <small>Estas acciones no se pueden deshacer.</small>
+                            </div>
+                            <button onclick="limpiarInventario()" class="settings-action settings-action-danger">
+                                <span class="settings-action-icon" aria-hidden="true">×</span>
+                                <span class="settings-action-copy"><strong>Borrar inventario</strong><small>Elimina todos los productos</small></span>
+                                <span class="settings-action-arrow" aria-hidden="true">›</span>
+                            </button>
+                            <button onclick="limpiarVentas()" class="settings-action settings-action-danger">
+                                <span class="settings-action-icon" aria-hidden="true">×</span>
+                                <span class="settings-action-copy"><strong>Borrar ventas</strong><small>Elimina todo el historial</small></span>
+                                <span class="settings-action-arrow" aria-hidden="true">›</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 6. PESTAÑA: NUEVO PRODUCTO -->
+            <section id="tab-nuevo" class="fade-in hidden">
+                <div class="page-heading"><div><p class="eyebrow">Inventario</p><h2 class="text-2xl font-bold text-gray-800">Agregar producto</h2></div></div>
+                <p class="section-intro">Completa estos datos para venderlo y controlar sus existencias.</p>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <form id="form-nuevo" onsubmit="guardarProducto(event)">
+                        <div class="mb-5">
+                            <label class="block text-sm font-medium text-gray-600 mb-2">Código de barras <span class="label-optional">(opcional)</span></label>
+                            <div class="flex gap-2">
+                                <input type="text" id="nuevo-codigo" inputmode="numeric" autocomplete="off" class="min-w-0 flex-1 p-4 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg" placeholder="Escanea o escribe el código">
+                                <button type="button" onclick="abrirLectorCodigo()" class="shrink-0 bg-teal-600 hover:bg-teal-700 text-white px-4 font-bold" aria-label="Escanear código con la cámara">Escanear</button>
+                            </div>
+                            <p id="estado-codigo" class="mt-2 text-xs text-gray-500" aria-live="polite">Puedes usar la cámara trasera o escribir el número.</p>
+                        </div>
+
+                        <div class="mb-5">
+                            <label class="block text-sm font-medium text-gray-600 mb-2">Nombre del producto</label>
+                            <input type="text" id="nuevo-nombre" required class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg" placeholder="Ej. Tomate (Unidad)">
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4 mb-5">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-2">Categoría</label>
+                                <select id="nuevo-categoria" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white text-lg">
+                                    <option value="Verduras">Verduras</option>
+                                    <option value="Abarrotes">Abarrotes</option>
+                                    <option value="Plásticos para el hogar">Plásticos para el hogar</option>
+                                    <option value="Vajilla de porcelana">Vajilla de porcelana</option>
+                                    <option value="Granos y frijoles">Granos y frijoles</option>
+                                    <option value="Otros">Otros</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-2">¿Cómo lo vendes?</label>
+                                <select id="nuevo-unidad-venta" onchange="actualizarEtiquetasUnidad()" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white text-lg">
+                                    <option value="unidad">Unidad</option>
+                                    <option value="libra">Libra</option>
+                                    <option value="ambas">Unidad y libra</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-5">
+                            <label class="block text-sm font-medium text-gray-600 mb-2">¿Tiene más de un tamaño?</label>
+                            <select id="nuevo-tamanos" onchange="actualizarCamposTamanos('nuevo')" class="w-full p-4 bg-gray-50 border border-gray-200 text-lg">
+                                <option value="no">No, solo uno</option>
+                                <option value="si">Sí, mediano y grande</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-5">
+                            <label id="nuevo-stock-label" class="block text-sm font-medium text-gray-600 mb-2">Unidades que trae</label>
+                            <input type="number" id="nuevo-stock" required min="0.01" step="0.01" oninput="actualizarCostoUnitario()" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg" placeholder="Ej. 12">
+                            <p id="nuevo-unidad-ayuda" class="mt-2 text-xs text-gray-500">Existencias disponibles en unidades.</p>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4 mb-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-2">¿Cuánto pagaste por el paquete?</label>
+                                <div class="relative">
+                                    <span class="absolute left-4 top-4 text-gray-500 font-bold">Q</span>
+                                    <input type="number" id="nuevo-costo" required min="0" step="0.01" oninput="actualizarCostoUnitario()" class="w-full p-4 pl-9 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg" placeholder="Ej. 95.00">
+                                </div>
+                            </div>
+                            <div id="nuevo-precio-base-wrap">
+                                <label id="nuevo-precio-label" class="block text-sm font-medium text-gray-600 mb-2">Precio de venta por unidad</label>
+                                <div class="relative">
+                                    <span class="absolute left-4 top-4 text-gray-500 font-bold">Q</span>
+                                    <input type="number" id="nuevo-precio" required min="0" step="0.01" class="w-full p-4 pl-9 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg" placeholder="Ej. 13.00">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="nuevo-precios-tamanos" class="hidden grid grid-cols-2 gap-4 mb-5">
+                            <div>
+                                <label for="nuevo-precio-mediano" class="block text-sm font-medium text-gray-600 mb-2">Precio mediano</label>
+                                <div class="relative">
+                                    <span class="absolute left-4 top-4 text-gray-500 font-bold">Q</span>
+                                    <input type="number" id="nuevo-precio-mediano" min="0" step="0.01" class="w-full p-4 pl-9 bg-gray-50 border border-gray-200 text-lg" placeholder="Ej. 2.00">
+                                </div>
+                            </div>
+                            <div>
+                                <label for="nuevo-precio-grande" class="block text-sm font-medium text-gray-600 mb-2">Precio grande</label>
+                                <div class="relative">
+                                    <span class="absolute left-4 top-4 text-gray-500 font-bold">Q</span>
+                                    <input type="number" id="nuevo-precio-grande" min="0" step="0.01" class="w-full p-4 pl-9 bg-gray-50 border border-gray-200 text-lg" placeholder="Ej. 3.00">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="nuevo-datos-ambas" class="hidden mb-5">
+                            <label class="block text-sm font-medium text-gray-600 mb-2">Precio por unidad</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-4 text-gray-500 font-bold">Q</span>
+                                <input type="number" id="nuevo-precio-unidad" min="0" step="0.01" class="w-full p-4 pl-9 bg-gray-50 border border-gray-200 text-lg" placeholder="Ej. 2.00">
+                            </div>
+                            <p class="mt-2 text-xs text-gray-500">Cada unidad vendida descuenta 1 de las existencias.</p>
+                        </div>
+
+                        <div class="mb-8 rounded-lg border border-teal-100 bg-teal-50 p-3 text-sm text-teal-800">
+                            Tu costo por <span id="nuevo-costo-unidad-texto">unidad</span>: <strong id="nuevo-costo-unitario">Q0.00</strong>
+                        </div>
+
+                        <button type="submit" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-md hover:bg-blue-700 active:bg-blue-800 text-lg transition-transform transform active:scale-95">
+                            Guardar producto
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+        </main>
+
+        <nav class="app-navigation" aria-label="Navegación principal">
+            <div class="app-navigation-inner">
+                <button id="nav-vender" type="button" onclick="cambiarTab('vender', this)" class="nav-btn text-gray-400" aria-label="Registrar venta">
+                    <span class="nav-icon" aria-hidden="true">🛒</span><span>Vender</span>
+                </button>
+                <button id="nav-catalogo" type="button" onclick="cambiarTab('catalogo', this)" class="nav-btn text-gray-400" aria-label="Ver inventario">
+                    <span class="nav-icon" aria-hidden="true">▦</span><span>Inventario</span>
+                </button>
+                <button id="nav-resumen" type="button" onclick="cambiarTab('resumen', this)" class="nav-btn text-blue-600" aria-label="Ver resumen">
+                    <span class="nav-icon" aria-hidden="true">⌂</span><span>Resumen</span>
+                </button>
+                <button id="nav-mas" type="button" onclick="cambiarTab('ajustes', this)" class="nav-btn text-gray-400" aria-label="Más opciones">
+                    <span class="nav-icon nav-icon-more" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><circle cx="5" cy="12" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="19" cy="12" r="2"></circle></svg></span><span>Más</span>
+                </button>
+            </div>
+        </nav>
+    </div>
+
+    <!-- MODALES OCULTOS -->
+    <div id="modal-imagen-categoria" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden p-4" role="dialog" aria-modal="true" aria-labelledby="titulo-imagen-categoria">
+        <div class="bg-white p-4 rounded-2xl w-full max-w-lg shadow-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="titulo-imagen-categoria" class="text-lg font-bold">Imagen de ventas</h3>
+                <button id="btn-cerrar-imagen-categoria" type="button" class="text-3xl" aria-label="Cerrar imagen">×</button>
+            </div>
+            <div id="vista-imagen-categoria"></div>
+        </div>
+    </div>
+    <input id="archivo-restauracion" type="file" accept="application/json,.json" class="hidden" onchange="prepararRestauracion(event)">
+
+    <div id="modal-restaurar" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden p-4" role="dialog" aria-modal="true" aria-labelledby="titulo-restaurar">
+        <div class="bg-white p-6 w-full max-w-md shadow-2xl">
+            <p class="text-xs font-bold uppercase tracking-wider text-teal-600 mb-2">Recuperación de datos</p>
+            <h3 id="titulo-restaurar" class="text-xl font-bold text-gray-800">Restaurar respaldo</h3>
+            <p id="resumen-restauracion" class="mt-2 text-sm text-gray-500"></p>
+            <div class="my-5 grid grid-cols-3 gap-2 text-center">
+                <div class="bg-gray-50 p-3 rounded-xl"><strong id="restaurar-productos" class="block text-xl text-teal-600">0</strong><span class="text-xs text-gray-500">Productos</span></div>
+                <div class="bg-gray-50 p-3 rounded-xl"><strong id="restaurar-ventas" class="block text-xl text-teal-600">0</strong><span class="text-xs text-gray-500">Ventas</span></div>
+                <div class="bg-gray-50 p-3 rounded-xl"><strong id="restaurar-reportes" class="block text-xl text-teal-600">0</strong><span class="text-xs text-gray-500">Reportes</span></div>
+            </div>
+            <label for="modo-restauracion" class="block text-sm mb-2">Forma de restauración</label>
+            <select id="modo-restauracion" class="w-full p-3 border border-gray-200 mb-5">
+                <option value="combinar">Combinar con los datos actuales</option>
+                <option value="reemplazar">Reemplazar todos los datos actuales</option>
+            </select>
+            <p class="mb-5 text-xs text-red-500 font-semibold">Reemplazar elimina primero los datos actuales. Esta acción no se puede deshacer.</p>
+            <div class="flex gap-3">
+                <button type="button" onclick="cerrarModalRestaurar()" class="flex-1 bg-gray-100 text-gray-700 py-3 font-bold">Cancelar</button>
+                <button id="btn-confirmar-restauracion" type="button" onclick="confirmarRestauracion()" class="flex-1 bg-teal-600 text-white py-3 font-bold">Restaurar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-movimientos" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden p-4" role="dialog" aria-modal="true" aria-labelledby="titulo-movimientos">
+        <div class="bg-white p-6 w-full max-w-lg shadow-2xl">
+            <div class="flex items-start justify-between mb-4">
+                <div><p class="text-xs font-bold uppercase tracking-wider text-teal-600">Inventario</p><h3 id="titulo-movimientos" class="text-xl font-bold text-gray-800">Historial de movimientos</h3></div>
+                <button type="button" onclick="cerrarModalMovimientos()" class="text-2xl text-gray-400" aria-label="Cerrar">×</button>
+            </div>
+            <div id="lista-movimientos" class="movement-list"></div>
+        </div>
+    </div>
+
+    <div id="modal-producto-agregado" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden p-4" role="dialog" aria-modal="true" aria-labelledby="titulo-producto-agregado">
+        <div class="bg-white p-6 rounded-2xl w-full max-w-sm text-center shadow-2xl">
+            <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl" aria-hidden="true">✓</div>
+            <p class="text-xs font-bold uppercase tracking-wider text-teal-600 mb-1">Inventario actualizado</p>
+            <h3 id="titulo-producto-agregado" class="text-xl font-bold text-gray-800">Producto agregado</h3>
+            <p id="nombre-producto-agregado" class="text-sm text-gray-500 mt-2 mb-6"></p>
+            <button type="button" onclick="cerrarProductoAgregado()" class="w-full bg-teal-600 hover:bg-teal-700 text-white py-3 font-bold">Agregar otro producto</button>
+        </div>
+    </div>
+
+    <div id="modal-lector" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 hidden p-4" role="dialog" aria-modal="true" aria-labelledby="titulo-lector">
+        <div class="scanner-panel w-full max-w-md text-white shadow-2xl">
+            <div class="flex items-start justify-between p-4">
+                <div>
+                    <h3 id="titulo-lector" class="text-lg font-bold">Escanear código de barras</h3>
+                    <p id="estado-lector" class="text-xs text-slate-300 mt-1" aria-live="polite">Preparando cámara…</p>
+                </div>
+                <button type="button" onclick="cerrarLectorCodigo()" class="text-3xl leading-none text-slate-300 hover:text-white" aria-label="Cerrar lector">×</button>
+            </div>
+            <div class="scanner-visor">
+                <video id="video-lector" playsinline muted></video>
+                <div class="scanner-guia" aria-hidden="true"></div>
+            </div>
+            <div class="p-4 text-xs text-slate-300 flex items-center justify-between gap-3">
+                <span>Centra el código, evita reflejos y mantén el teléfono firme.</span>
+                <button id="btn-linterna" type="button" onclick="alternarLinterna()" class="hidden shrink-0 border border-slate-500 px-3 py-2 font-bold">🔦 Luz</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-producto-escaneado" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden p-4" role="dialog" aria-modal="true" aria-labelledby="titulo-producto-escaneado">
+        <div class="bg-white p-6 rounded-2xl w-full max-w-sm text-center shadow-2xl">
+            <div class="w-16 h-16 bg-teal-50 text-teal-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl" aria-hidden="true">▦</div>
+            <p class="text-xs font-bold uppercase tracking-wider text-teal-600 mb-1">Producto encontrado</p>
+            <h3 id="titulo-producto-escaneado" class="text-xl font-bold text-gray-800"></h3>
+            <p id="codigo-producto-escaneado" class="text-xs text-gray-400 mt-1"></p>
+            <div class="product-choice-summary my-4">
+                <p id="precio-producto-escaneado" class="text-2xl font-black text-teal-600"></p>
+                <p id="stock-producto-escaneado" class="text-sm text-gray-500 mt-1"></p>
+            </div>
+            <div class="mb-5 text-left">
+                <p class="product-choice-step"><span>1</span> Indica la cantidad</p>
+                <label id="label-cantidad-escaneada" for="cantidad-producto-escaneado" class="block text-sm mb-2">Cantidad a agregar</label>
+                <input id="cantidad-producto-escaneado" type="number" min="0.01" step="1" value="1" inputmode="decimal" class="w-full p-3 border border-gray-200 text-center text-lg font-bold" oninput="validarCantidadEscaneada()">
+                <p id="ayuda-cantidad-escaneada" class="mt-1 text-xs text-gray-500">Indica cuántas unidades deseas agregar.</p>
+            </div>
+            <div id="bloque-presentacion-escaneada" class="hidden mb-5 text-left">
+                <p class="product-choice-step"><span>2</span> Elige cómo venderlo</p>
+                <div id="opciones-producto-escaneado" class="hidden product-choice-grid">
+                    <button id="btn-agregar-libra-escaneada" type="button" class="product-choice-button option-gold"><strong>Por libra</strong><small></small></button>
+                    <button id="btn-agregar-unidad-escaneada" type="button" class="product-choice-button option-blue"><strong>Por unidad</strong><small></small></button>
+                </div>
+                <div id="opciones-tamano-escaneado" class="hidden product-choice-grid">
+                    <button id="btn-agregar-libra-tamano-escaneada" type="button" class="hidden product-choice-button option-gold"><strong>Por libra</strong><small></small></button>
+                    <button id="btn-agregar-mediano-escaneado" type="button" class="product-choice-button option-blue"><strong>Mediano</strong><small></small></button>
+                    <button id="btn-agregar-grande-escaneado" type="button" class="product-choice-button"><strong>Grande</strong><small></small></button>
+                </div>
+            </div>
+            <div class="flex gap-3 border-t border-gray-100 pt-4">
+                <button type="button" onclick="cerrarProductoEscaneado()" class="flex-1 bg-gray-100 text-gray-700 py-3 font-bold">Cancelar</button>
+                <button id="btn-agregar-escaneado" type="button" onclick="aceptarProductoEscaneado()" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white py-3 font-bold">Aceptar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-exportar-inventario" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden transition-opacity p-4" role="dialog" aria-modal="true" aria-labelledby="titulo-exportar-inventario">
+        <div class="bg-white p-6 rounded-2xl w-full max-w-sm text-center shadow-2xl">
+            <div class="w-16 h-16 bg-teal-50 text-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl" aria-hidden="true">⇩</div>
+            <p class="text-xs font-bold uppercase tracking-wider text-teal-600 mb-2">Respaldo de datos</p>
+            <h3 id="titulo-exportar-inventario" class="text-xl font-bold text-gray-800">Descargar inventario</h3>
+            <p class="mt-2 text-sm leading-relaxed text-gray-500">Se creará un archivo CSV con los productos, categorías, costos, precios y existencias.</p>
+            <div class="my-5 rounded-xl border border-gray-100 bg-gray-50 p-4 text-left">
+                <div class="flex items-center justify-between gap-3">
+                    <span class="text-sm font-semibold text-gray-500">Productos incluidos</span>
+                    <strong id="total-productos-exportar" class="text-xl text-teal-600">0</strong>
+                </div>
+            </div>
+            <div class="flex gap-3">
+                <button type="button" onclick="cerrarModalExportarInventario()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 font-bold">Cancelar</button>
+                <button id="btn-descargar-inventario" type="button" onclick="exportarCSV()" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white py-3 font-bold shadow-md">Descargar CSV</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-respaldo" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden transition-opacity p-4" role="dialog" aria-modal="true" aria-labelledby="titulo-respaldo">
+        <div class="bg-white p-6 rounded-2xl w-full max-w-sm text-center shadow-2xl">
+            <div class="w-16 h-16 bg-teal-50 text-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl" aria-hidden="true">⬡</div>
+            <p class="text-xs font-bold uppercase tracking-wider text-teal-600 mb-2">Copia de seguridad</p>
+            <h3 id="titulo-respaldo" class="text-xl font-bold text-gray-800">Respaldar todos los datos</h3>
+            <p class="mt-2 text-sm leading-relaxed text-gray-500">Se descargará un archivo JSON con todos los productos, ventas y reportes guardados en tu cuenta.</p>
+            <div class="my-5 rounded-xl border border-gray-100 bg-gray-50 p-4 text-left space-y-3">
+                <div class="flex justify-between gap-3"><span class="text-sm font-semibold text-gray-500">Productos</span><strong id="respaldo-productos" class="text-teal-600">0</strong></div>
+                <div class="flex justify-between gap-3"><span class="text-sm font-semibold text-gray-500">Ventas</span><strong id="respaldo-ventas" class="text-teal-600">0</strong></div>
+                <div class="flex justify-between gap-3"><span class="text-sm font-semibold text-gray-500">Reportes</span><strong id="respaldo-reportes" class="text-teal-600">Se consultarán al guardar</strong></div>
+            </div>
+            <p id="estado-respaldo" class="hidden mb-4 text-sm font-semibold text-teal-700" aria-live="polite"></p>
+            <div class="flex gap-3">
+                <button type="button" onclick="cerrarModalRespaldo()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 font-bold">Cancelar</button>
+                <button id="btn-crear-respaldo" type="button" onclick="descargarRespaldoCompleto()" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white py-3 font-bold shadow-md">Guardar respaldo</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-reportes" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden transition-opacity p-4" role="dialog" aria-modal="true" aria-labelledby="titulo-reportes">
+        <div class="bg-white p-6 rounded-2xl w-full max-w-md shadow-2xl">
+            <div class="flex items-start justify-between mb-5">
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-wider text-teal-600">Informes</p>
+                    <h3 id="titulo-reportes" class="text-xl font-bold text-gray-800 mt-1">Reporte de ventas</h3>
+                    <p class="text-sm text-gray-500 mt-1">Se guardará en la nube y podrás descargarlo como PDF.</p>
+                </div>
+                <button onclick="cerrarModalReportes()" aria-label="Cerrar" class="text-gray-400 hover:text-gray-700 text-2xl">×</button>
+            </div>
+            <div class="grid grid-cols-3 gap-2 mb-4">
+                <button type="button" data-periodo="diario" onclick="seleccionarPeriodoReporte('diario', this)" class="reporte-periodo activo border border-gray-200 py-3 text-sm font-bold">Diario</button>
+                <button type="button" data-periodo="semanal" onclick="seleccionarPeriodoReporte('semanal', this)" class="reporte-periodo border border-gray-200 py-3 text-sm font-bold">Semanal</button>
+                <button type="button" data-periodo="mensual" onclick="seleccionarPeriodoReporte('mensual', this)" class="reporte-periodo border border-gray-200 py-3 text-sm font-bold">Fin de mes</button>
+            </div>
+            <label for="fecha-reporte" class="block text-sm mb-2">Fecha de referencia</label>
+            <input type="date" id="fecha-reporte" class="w-full p-3 border border-gray-200 mb-5">
+            <div id="estado-reporte" class="hidden mb-4 p-3 rounded bg-teal-50 text-teal-700 text-sm font-semibold"></div>
+            <div class="flex gap-3">
+                <button onclick="cerrarModalReportes()" class="flex-1 bg-gray-100 text-gray-700 py-3 font-bold">Cancelar</button>
+                <button id="btn-generar-reporte" onclick="generarReporteVentas()" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white py-3 font-bold">Guardar y descargar PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-editar" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden transition-opacity p-4" role="dialog" aria-modal="true" aria-labelledby="titulo-editar">
+        <div class="bg-white p-6 rounded-2xl w-full max-w-md shadow-2xl">
+            <div class="flex items-start justify-between mb-5">
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-wider text-teal-600">Catálogo</p>
+                    <h3 id="titulo-editar" class="text-xl font-bold text-gray-800 mt-1">Editar producto</h3>
+                </div>
+                <button type="button" onclick="cerrarModalEditar()" aria-label="Cerrar" class="text-gray-400 hover:text-gray-700 text-2xl">×</button>
+            </div>
+            <form id="form-editar" onsubmit="guardarEdicionProducto(event)">
+                <div class="mb-5">
+                    <label for="editar-codigo" class="block text-sm font-medium text-gray-600 mb-2">Código de barras</label>
+                    <input type="text" id="editar-codigo" inputmode="numeric" autocomplete="off" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-lg" placeholder="Sin código">
+                </div>
+
+                <div class="mb-5">
+                    <label for="editar-nombre" class="block text-sm font-medium text-gray-600 mb-2">Nombre del Producto</label>
+                    <input type="text" id="editar-nombre" required class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-lg" placeholder="Ej. Tomate (Unidad)">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-5">
+                    <div>
+                        <label for="editar-categoria" class="block text-sm font-medium text-gray-600 mb-2">Categoría</label>
+                        <select id="editar-categoria" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-lg">
+                            <option value="Verduras">Verduras</option>
+                            <option value="Abarrotes">Abarrotes</option>
+                            <option value="Plásticos para el hogar">Plásticos para el hogar</option>
+                            <option value="Vajilla de porcelana">Vajilla de porcelana</option>
+                            <option value="Granos y frijoles">Granos y frijoles</option>
+                            <option value="Otros">Otros</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="editar-unidad-venta" class="block text-sm font-medium text-gray-600 mb-2">Se vende por</label>
+                        <select id="editar-unidad-venta" onchange="actualizarEtiquetasUnidadEdicion()" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-lg">
+                            <option value="unidad">Unidad</option>
+                            <option value="libra">Libra</option>
+                            <option value="ambas">Unidad y libra</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-5">
+                    <label for="editar-tamanos" class="block text-sm font-medium text-gray-600 mb-2">Tamaños disponibles</label>
+                    <select id="editar-tamanos" onchange="actualizarCamposTamanos('editar')" class="w-full p-4 bg-gray-50 border border-gray-200 text-lg">
+                        <option value="no">Un solo tamaño</option>
+                        <option value="si">Mediano y grande</option>
+                    </select>
+                </div>
+
+                <div class="mb-5">
+                    <label id="editar-stock-label" for="editar-stock" class="block text-sm font-medium text-gray-600 mb-2">Unidades disponibles</label>
+                    <input type="number" id="editar-stock" required min="0" step="0.01" oninput="actualizarCostoUnitarioEdicion()" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-lg" placeholder="Ej. 12">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-3">
+                    <div>
+                        <label for="editar-costo" class="block text-sm font-medium text-gray-600 mb-2">Costo total del paquete</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-4 text-gray-500 font-bold">Q</span>
+                            <input type="number" id="editar-costo" required min="0" step="0.01" oninput="actualizarCostoUnitarioEdicion()" class="w-full p-4 pl-9 bg-gray-50 border border-gray-200 rounded-xl text-lg" placeholder="Ej. 95.00">
+                        </div>
+                    </div>
+                    <div id="editar-precio-base-wrap">
+                        <label id="editar-precio-label" for="editar-precio" class="block text-sm font-medium text-gray-600 mb-2">Precio de venta por unidad</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-4 text-gray-500 font-bold">Q</span>
+                            <input type="number" id="editar-precio" required min="0" step="0.01" class="w-full p-4 pl-9 bg-gray-50 border border-gray-200 rounded-xl text-lg" placeholder="Ej. 13.00">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="editar-precios-tamanos" class="hidden grid grid-cols-2 gap-4 mb-5">
+                    <div>
+                        <label for="editar-precio-mediano" class="block text-sm font-medium text-gray-600 mb-2">Precio mediano</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-4 text-gray-500 font-bold">Q</span>
+                            <input type="number" id="editar-precio-mediano" min="0" step="0.01" class="w-full p-4 pl-9 bg-gray-50 border border-gray-200 text-lg">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="editar-precio-grande" class="block text-sm font-medium text-gray-600 mb-2">Precio grande</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-4 text-gray-500 font-bold">Q</span>
+                            <input type="number" id="editar-precio-grande" min="0" step="0.01" class="w-full p-4 pl-9 bg-gray-50 border border-gray-200 text-lg">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="editar-datos-ambas" class="hidden mb-5">
+                    <label for="editar-precio-unidad" class="block text-sm font-medium text-gray-600 mb-2">Precio por unidad</label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-4 text-gray-500 font-bold">Q</span>
+                        <input type="number" id="editar-precio-unidad" min="0" step="0.01" class="w-full p-4 pl-9 bg-gray-50 border border-gray-200 text-lg">
+                    </div>
+                    <p class="mt-2 text-xs text-gray-500">Cada unidad vendida descuenta 1 de las existencias.</p>
+                </div>
+
+                <div class="mb-6 rounded-lg border border-teal-100 bg-teal-50 p-3 text-sm text-teal-800">
+                    Costo calculado por <span id="editar-costo-unidad-texto">unidad</span>: <strong id="editar-costo-unitario">Q0.00</strong>
+                </div>
+
+                <div class="flex gap-3">
+                    <button type="button" onclick="cerrarModalEditar()" class="flex-1 bg-gray-100 text-gray-700 py-3 font-bold">Cancelar</button>
+                    <button id="btn-guardar-edicion" type="submit" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white py-3 font-bold">Actualizar producto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-eliminar" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden transition-opacity">
+        <div class="bg-white p-6 rounded-2xl w-11/12 max-w-sm text-center shadow-2xl">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span class="text-red-500 text-3xl">🗑️</span>
+            </div>
+            <h3 class="text-xl font-bold mb-2 text-gray-800">¿Eliminar producto?</h3>
+            <p class="text-gray-500 mb-6 text-sm">Este producto se borrará de tu catálogo en la nube y no podrás recuperarlo.</p>
+            <div class="flex space-x-3">
+                <button onclick="cerrarModalEliminar()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-bold transition-colors">Cancelar</button>
+                <button id="btn-confirmar-eliminar" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-xl font-bold shadow-md transition-colors">Sí, eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-confirmar-borrado" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden transition-opacity p-4" role="dialog" aria-modal="true" aria-labelledby="titulo-confirmar-borrado">
+        <div class="bg-white p-6 w-full max-w-sm text-center shadow-2xl">
+            <div class="confirm-icon" aria-hidden="true">!</div>
+            <p class="text-xs font-bold uppercase tracking-wider text-red-500 mb-2">Acción permanente</p>
+            <h3 id="titulo-confirmar-borrado" class="text-xl font-bold text-gray-800">¿Borrar información?</h3>
+            <p id="texto-confirmar-borrado" class="mt-2 text-sm leading-relaxed text-gray-500"></p>
+            <div id="detalle-confirmar-borrado" class="confirm-detail"></div>
+            <div class="flex gap-3">
+                <button type="button" onclick="cerrarConfirmacionBorrado()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 font-bold">Cancelar</button>
+                <button id="btn-confirmar-borrado" type="button" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 font-bold shadow-md">Sí, borrar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-carrito-vacio" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden p-4" role="dialog" aria-modal="true" aria-labelledby="titulo-carrito-vacio">
+        <div class="bg-white p-6 rounded-2xl w-full max-w-sm text-center shadow-2xl">
+            <div class="w-16 h-16 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl" aria-hidden="true">🛒</div>
+            <p class="text-xs font-bold uppercase tracking-wider text-teal-600 mb-1">Caja registradora</p>
+            <h3 id="titulo-carrito-vacio" class="text-xl font-bold text-gray-800">El carrito está vacío</h3>
+            <p class="text-sm text-gray-500 mt-2 mb-6">Agrega al menos un producto antes de cobrar. Toca un producto de la lista o escanea su código.</p>
+            <button id="btn-cerrar-carrito-vacio" type="button" onclick="cerrarModalCarritoVacio()" class="w-full bg-teal-600 hover:bg-teal-700 text-white py-3 font-bold">Entendido</button>
+        </div>
+    </div>
+
+    <div id="modal-cobrar" class="cobro-modal fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden transition-opacity" role="dialog" aria-modal="true" aria-labelledby="titulo-cobro">
+        <div class="cobro-sheet bg-white p-6 rounded-2xl w-11/12 max-w-sm text-center shadow-2xl">
+            <div class="cobro-handle" aria-hidden="true"></div>
+            <div class="cobro-icono w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span class="text-green-500 text-3xl">💵</span>
+            </div>
+            <h3 id="titulo-cobro" class="text-xl font-bold mb-4 text-gray-800">Completar Venta</h3>
+            
+            <div class="bg-gray-50 p-4 rounded-xl mb-4 border border-gray-100 flex justify-between items-center">
+                <span class="text-gray-500 text-sm font-semibold">Total a cobrar:</span>
+                <span class="text-2xl font-black text-blue-600" id="modal-total-cobro">Q0.00</span>
+            </div>
+
+            <div class="mb-4 text-left">
+                <label class="block text-sm font-medium text-gray-600 mb-2">Efectivo Recibido:</label>
+                <div class="relative">
+                    <span class="absolute left-4 top-4 text-gray-500 font-bold">Q</span>
+                    <input type="number" id="input-efectivo" min="0" step="0.01" inputmode="decimal" enterkeyhint="done" class="w-full p-4 pl-9 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-green-500 text-xl font-bold text-gray-800" placeholder="0.00" oninput="calcularVuelto()" onchange="calcularVuelto()" onkeydown="if (event.key === 'Enter') cerrarTecladoYCobrar(event)">
+                </div>
+            </div>
+
+            <div id="cobro-rapido" class="cobro-rapido mb-4" role="group" aria-label="Montos rápidos de efectivo"></div>
+
+            <div class="flex justify-between items-center mb-6 px-2">
+                <span class="text-gray-500 text-sm font-bold">Cambio (Vuelto):</span>
+                <span class="text-2xl font-black text-green-500" id="modal-vuelto">Q0.00</span>
+            </div>
+
+            <div class="flex space-x-3">
+                <button onclick="cerrarModalCobro()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-4 rounded-xl font-bold transition-colors">Cancelar</button>
+                <button id="btn-finalizar-venta" onclick="confirmarVenta()" class="flex-[1.4] bg-green-500 hover:bg-green-600 text-white py-4 rounded-xl font-bold shadow-md transition-colors opacity-50 cursor-not-allowed" disabled>Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script de Lógica, Firebase y Auth (Versión 10 Igual a Panel U) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+
+    <script src="./app.js"></script>
+    <script src="./aviso-carrito.js"></script>
+    <script src="./pdf-comun.js"></script>
+    <script src="./pdf-categoria.js"></script>
+    <script src="./categorias.js"></script>
+    <script src="./modal-bloqueo.js"></script>
+</body>
+</html>
+

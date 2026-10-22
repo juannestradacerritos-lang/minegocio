@@ -448,7 +448,7 @@
                 (venta.items || []).forEach(item => {
                     const nombreBase = String(item.nombre || '').replace(/ \((mediano|grande)\)$/i, '');
                     const producto = inventario.find(p => p.id === item.productoId) || inventario.find(p => p.nombre === nombreBase);
-                    const categoria = item.categoria || producto?.categoria || 'Otros';
+                    const categoria = producto?.categoria || item.categoria || 'Otros';
                     if (filtro !== 'todas' && categoria !== filtro) return;
                     const cantidad = Number(item.cantidad) || 0;
                     const importe = (Number(item.precio) || 0) * cantidad;
@@ -583,7 +583,7 @@
                 (venta.items || []).forEach(item => {
                     const nombreBase = String(item.nombre || 'Producto').replace(/ \((mediano|grande)\)$/i, '');
                     const producto = inventario.find(p => p.id === item.productoId) || inventario.find(p => p.nombre === nombreBase);
-                    const categoria = String(item.categoria || producto?.categoria || 'Otros');
+                    const categoria = String(producto?.categoria || item.categoria || 'Otros');
                     const cantidad = Number(item.cantidad) || 0;
                     const precio = Number(item.precio) || 0;
                     const importeItem = Number(item.importe);
@@ -645,7 +645,7 @@
                     const nombreOriginal = String(item.nombre || 'Producto');
                     const nombreBase = nombreOriginal.replace(/ \((mediano|grande)\)$/i, '');
                     const producto = inventario.find(p => p.id === item.productoId) || inventario.find(p => p.nombre === nombreBase);
-                    const categoria = item.categoria || producto?.categoria || 'Otros';
+                    const categoria = producto?.categoria || item.categoria || 'Otros';
                     if (filtro !== 'todas' && categoria !== filtro) return;
                     const cantidad = Number(item.cantidad) || 0;
                     const importe = (Number(item.precio) || 0) * cantidad;

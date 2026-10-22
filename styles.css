@@ -2128,3 +2128,35 @@ body.dark-mode, body.dark-mode::after, html:has(body.dark-mode) { background:#07
     #tab-vender .cart-list { max-height:25vh !important; }
     #tab-vender .cart-item-main { grid-template-columns:minmax(0,1fr) auto; column-gap:.3rem; }
 }
+
+
+/* Móvil sin scroll atrapado: cobro al inicio y lista en flujo normal. */
+@media (max-width:700px) {
+    #tab-vender > .bg-white { display:flex; flex-direction:column; }
+    #tab-vender .cart-header { order:0; }
+    #tab-vender .cart-checkout {
+        order:1;
+        position:static !important;
+        display:block !important;
+        z-index:auto !important;
+        margin:.1rem 0 .6rem;
+        padding:.7rem 0;
+        border-top:1px solid var(--c-border);
+        border-bottom:1px solid var(--c-border);
+        background:transparent;
+        box-shadow:none;
+        backdrop-filter:none;
+    }
+    #tab-vender .cart-list {
+        order:2;
+        min-height:0 !important;
+        max-height:none !important;
+        height:auto !important;
+        overflow:visible !important;
+        overflow-y:visible !important;
+        overscroll-behavior: auto !important;
+        touch-action:auto;
+        margin:0;
+        padding:0;
+    }
+}

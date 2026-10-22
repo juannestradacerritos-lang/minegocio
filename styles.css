@@ -2432,3 +2432,97 @@ body.dark-mode .report-format-option small { color: #b9cad3; }
     .reporte-actions { flex-direction: column; align-items: center; }
     .reporte-actions button { min-height: 52px; }
 }
+
+
+/* Resumen: lectura rápida de ventas diarias y categorías. */
+.summary-day-panel,
+.category-sales-panel {
+    border-radius: 20px;
+}
+.category-sales-list {
+    display: grid;
+    gap: .75rem;
+}
+.category-sales-row {
+    padding: .8rem .9rem;
+    border: 1px solid #e3ece8;
+    border-radius: 14px;
+    background: #f8fbf9;
+}
+.category-sales-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: .75rem;
+    color: #1f3b33;
+    font-size: .9rem;
+}
+.category-sales-heading strong {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+.category-sales-heading span {
+    flex: 0 0 auto;
+    color: #11796b;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+.category-sales-track {
+    height: 8px;
+    margin-top: .6rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e3ece8;
+}
+.category-sales-track span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #0f766e, #39b99c);
+}
+.category-sales-row small {
+    display: block;
+    margin-top: .45rem;
+    color: #71847d;
+    font-size: .75rem;
+}
+.category-sales-empty {
+    padding: 1.4rem 1rem;
+    border: 1px dashed #d4e2dc;
+    border-radius: 14px;
+    color: #74857f;
+    text-align: center;
+    font-size: .9rem;
+}
+.category-downloads {
+    margin-top: 1.1rem;
+    padding-top: .85rem;
+    border-top: 1px solid #e5ece9;
+}
+.category-downloads summary {
+    width: fit-content;
+    color: #14796d;
+    font-size: .85rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+.category-downloads[open] summary { margin-bottom: .35rem; }
+.business-summary-panel .page-heading { margin-bottom: 1rem; }
+body.dark-mode .category-sales-row {
+    border-color: #294354;
+    background: #132a39;
+}
+body.dark-mode .category-sales-heading { color: #e1edf2; }
+body.dark-mode .category-sales-heading span { color: #82dfca; }
+body.dark-mode .category-sales-track { background: #294354; }
+body.dark-mode .category-sales-row small,
+body.dark-mode .category-sales-empty { color: #aebfc9; }
+body.dark-mode .category-sales-empty { border-color: #355468; }
+body.dark-mode .category-downloads { border-color: #294354; }
+body.dark-mode .category-downloads summary { color: #82dfca; }
+
+@media (min-width: 900px) {
+    #tab-resumen { max-width: 1080px; margin-inline: auto; }
+    .summary-day-panel,
+    .category-sales-panel { padding: 1.5rem; }
+}

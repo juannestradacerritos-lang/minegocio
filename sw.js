@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mi-negocio-v94';
+const CACHE_NAME = 'mi-negocio-v95';
 const APP_SHELL = ['./', './index.html', './styles.css', './app.js', './aviso-carrito.js', './pdf-comun.js', './pdf-categoria.js', './categorias.js', './modal-bloqueo.js', './manifest.json', './icon.svg'];
 const PAGINA_OFFLINE = './index.html';
 const RECURSOS_EXTERNOS = [
@@ -102,3 +102,4 @@ self.addEventListener('fetch', event => {
     })());
   }
 });
+

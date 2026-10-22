@@ -778,7 +778,7 @@
                 <div>
                     <p class="text-xs font-bold uppercase tracking-wider text-teal-600">Informes</p>
                     <h3 id="titulo-reportes" class="text-xl font-bold text-gray-800 mt-1">Reporte de ventas</h3>
-                    <p class="text-sm text-gray-500 mt-1">Se guardará en la nube y podrás descargarlo como PDF.</p>
+                    <p class="text-sm text-gray-500 mt-1">Puedes guardar el resumen o descargar comprobantes de las ventas.</p>
                 </div>
                 <button onclick="cerrarModalReportes()" aria-label="Cerrar" class="text-gray-400 hover:text-gray-700 text-2xl">×</button>
             </div>
@@ -788,7 +788,7 @@
                 <button type="button" data-periodo="mensual" onclick="seleccionarPeriodoReporte('mensual', this)" class="reporte-periodo border border-gray-200 py-3 text-sm font-bold">Fin de mes</button>
             </div>
             <label for="fecha-reporte" class="block text-sm mb-2">Fecha de referencia</label>
-            <input type="date" id="fecha-reporte" onchange="actualizarSelectorFactura()" class="w-full p-3 border border-gray-200 mb-4">
+            <input type="date" id="fecha-reporte" onchange="actualizarResumenFacturaPeriodo()" class="w-full p-3 border border-gray-200 mb-4">
             <p class="block text-sm font-semibold mb-2">Formato de descarga</p>
             <div class="report-format-options mb-4" role="radiogroup" aria-label="Formato de descarga">
                 <label class="report-format-option activo" id="opcion-formato-reporte">
@@ -797,12 +797,12 @@
                 </label>
                 <label class="report-format-option" id="opcion-formato-factura">
                     <input type="radio" name="formato-reporte" value="factura" onchange="seleccionarTipoDocumentoReporte('factura')">
-                    <span><strong>Factura de una venta</strong><small>Detalle de una venta específica</small></span>
+                    <span><strong>Facturas de venta</strong><small>Un comprobante por cada venta del periodo</small></span>
                 </label>
             </div>
-            <div id="selector-venta-factura" class="hidden mb-4">
-                <label for="venta-factura" class="block text-sm font-semibold mb-2">Selecciona la venta</label>
-                <select id="venta-factura" class="w-full p-3 border border-gray-200 rounded-xl"></select>
+            <div id="resumen-factura-periodo" class="hidden mb-4 p-3 rounded-xl border border-gray-200 bg-gray-50">
+                <p class="text-sm font-semibold text-gray-800"><span id="cantidad-ventas-factura">0 ventas</span> en el periodo</p>
+                <p class="mt-1 text-xs text-gray-500">Se descargará un PDF con un comprobante separado por cada venta.</p>
                 <p id="sin-ventas-factura" class="hidden mt-2 text-sm text-gray-500" aria-live="polite">No hay ventas registradas en este periodo.</p>
             </div>
             <div id="estado-reporte" class="hidden mb-4 p-3 rounded bg-teal-50 text-teal-700 text-sm font-semibold" aria-live="polite"></div>

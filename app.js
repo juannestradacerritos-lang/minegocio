@@ -566,6 +566,7 @@
             let importeTotal = 0;
 
             const claveFecha = fecha => {
+                if (typeof fecha === 'string' && /^\\d{4}-\\d{2}-\\d{2}$/.test(fecha)) return fecha;
                 const fechaValida = obtenerFechaVenta(fecha);
                 if (!fechaValida) return '';
                 return `${fechaValida.getFullYear()}-${String(fechaValida.getMonth() + 1).padStart(2, '0')}-${String(fechaValida.getDate()).padStart(2, '0')}`;
@@ -576,7 +577,7 @@
                 let ventaAporta = false;
                 (venta.items || []).forEach(item => {
                     const nombreOriginal = String(item.nombre || 'Producto');
-                    const nombreBase = nombreOriginal.replace(/ \\((mediano|grande)\\)$/i, '');
+                    const nombreBase = nombreOriginal.replace(/ \((mediano|grande)\)$/i, '');
                     const producto = inventario.find(p => p.id === item.productoId) || inventario.find(p => p.nombre === nombreBase);
                     const categoria = item.categoria || producto?.categoria || 'Otros';
                     if (filtro !== 'todas' && categoria !== filtro) return;
@@ -618,7 +619,7 @@
         window.renderizarVentasCategoria = renderizarVentasCategoria;
 
         function nombreArchivoCategoria(resumen, extension) {
-            const nombre = resumen.categoriaTexto.normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')
+            const nombre = resumen.categoriaTexto.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
                 .replace(/[^a-zA-Z0-9]+/g, '_').replace(/^_|_$/g, '') || 'Todas';
             return `Ventas_${nombre}_${resumen.dia}.${extension}`;
         }

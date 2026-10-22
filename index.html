@@ -8,7 +8,7 @@
 
     <!-- Configuración PWA -->
     <link rel="manifest" href="./manifest.json">
-    <meta name="theme-color" content="#10263d">
+    <meta name="theme-color" content="#155a4c">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -197,12 +197,19 @@
 
             <!-- 1. PESTAÑA: RESUMEN -->
             <section id="tab-resumen" class="fade-in block">
-                <h2 class="text-2xl font-bold mb-6 text-gray-800">Resumen del negocio</h2>
+                <div class="page-heading">
+                    <div><p class="eyebrow">Bienvenida</p><h2 class="text-2xl font-bold text-gray-800">Resumen del negocio</h2></div>
+                </div>
+                <div class="quick-actions" aria-label="Acciones frecuentes">
+                    <button type="button" class="quick-action quick-action-primary" onclick="cambiarTab('vender', document.getElementById('nav-vender'))"><span aria-hidden="true">🛒</span><span>Registrar una venta</span></button>
+                    <button type="button" class="quick-action" onclick="cambiarTab('nuevo')"><span aria-hidden="true">＋</span><span>Agregar producto</span></button>
+                    <button type="button" class="quick-action" onclick="cambiarTab('catalogo', document.getElementById('nav-catalogo'))"><span aria-hidden="true">▦</span><span>Ver inventario</span></button>
+                </div>
                 
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6 text-center">
-                    <p class="text-gray-500 text-sm font-semibold uppercase tracking-wider">Margen estimado del stock</p>
+                <div class="summary-hero bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6 text-center">
+                    <p class="text-gray-500 text-sm font-semibold">Ganancia posible del inventario</p>
                     <p class="text-5xl font-black text-green-500 my-3" id="resumen-ganancia">Q0.00</p>
-                    <p class="text-sm text-gray-400">Estimación con precio base o mediano, sin descontar gastos</p>
+                    <p class="text-sm text-gray-400">Si vendes todo al precio configurado, antes de gastos.</p>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4 mb-8">
@@ -275,13 +282,11 @@
             <!-- 2. PESTAÑA: CATÁLOGO -->
             <section id="tab-catalogo" class="fade-in hidden">
                 <div class="inventory-page-header">
-                    <h2 class="text-2xl font-bold text-gray-800">Catálogo</h2>
-                    <button type="button" onclick="cambiarTab('ajustes')" class="settings-back" aria-label="Regresar a Ajustes">
-                        <span aria-hidden="true">←</span><span>Regresar</span>
-                    </button>
+                    <div><p class="eyebrow">Productos y existencias</p><h2 class="text-2xl font-bold text-gray-800">Inventario</h2></div>
+                    <button type="button" onclick="cambiarTab('nuevo')" class="primary-action"><span aria-hidden="true">＋</span> Agregar producto</button>
                 </div>
-                <p class="text-sm text-gray-500 font-medium">Consulta existencias, precios y edita tus productos.</p>
-                <button type="button" onclick="abrirCategoriasCatalogo()" class="my-4 bg-teal-600 hover:bg-teal-700 text-white px-4 py-3 font-bold">Editar nombres de categorías</button>
+                <p class="section-intro">Revisa lo que tienes, sus precios y las cantidades disponibles.</p>
+                <div class="catalog-toolbar"><button type="button" onclick="abrirCategoriasCatalogo()" class="secondary-action">Editar categorías</button></div>
                 <div class="relative mb-6">
                     <span class="absolute left-4 top-3.5 text-gray-400">🔍</span>
                     <input type="text" id="buscar-producto" placeholder="Buscar producto..." class="w-full p-3 pl-10 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm" onkeyup="renderizarCatalogo()">
@@ -304,7 +309,8 @@
 
             <!-- 4. PESTAÑA: VENDER -->
             <section id="tab-vender" class="fade-in hidden">
-                <h2 class="text-2xl font-bold mb-4 text-gray-800">Caja Registradora</h2>
+                <div class="page-heading"><div><p class="eyebrow">Atiende a tus clientes</p><h2 class="text-2xl font-bold text-gray-800">Registrar venta</h2></div></div>
+                <p class="section-intro">Toca un producto para añadirlo a la venta.</p>
 
                 <div class="flex items-stretch gap-2 mb-4">
                     <div class="relative flex-1 min-w-0">
@@ -411,6 +417,11 @@
                                 <span class="settings-action-copy"><strong>Reporte de ventas</strong><small>Genera, guarda y descarga informes en PDF</small></span>
                                 <span class="settings-action-arrow" aria-hidden="true">›</span>
                             </button>
+                            <button onclick="cambiarTab('graficos')" class="settings-action">
+                                <span class="settings-action-icon" aria-hidden="true">▥</span>
+                                <span class="settings-action-copy"><strong>Gráficos de ventas</strong><small>Consulta cómo han cambiado tus ventas</small></span>
+                                <span class="settings-action-arrow" aria-hidden="true">›</span>
+                            </button>
                         </div>
 
                         <div class="settings-panel">
@@ -488,12 +499,12 @@
 
             <!-- 6. PESTAÑA: NUEVO PRODUCTO -->
             <section id="tab-nuevo" class="fade-in hidden">
-                <h2 class="text-2xl font-bold mb-6 text-gray-800">Registrar Producto</h2>
-                <p class="text-sm text-gray-500 font-medium">Agrega la información, presentación, existencias y precios del producto.</p>
+                <div class="page-heading"><div><p class="eyebrow">Inventario</p><h2 class="text-2xl font-bold text-gray-800">Agregar producto</h2></div></div>
+                <p class="section-intro">Completa estos datos para venderlo y controlar sus existencias.</p>
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <form id="form-nuevo" onsubmit="guardarProducto(event)">
                         <div class="mb-5">
-                            <label class="block text-sm font-medium text-gray-600 mb-2">Código de barras</label>
+                            <label class="block text-sm font-medium text-gray-600 mb-2">Código de barras <span class="label-optional">(opcional)</span></label>
                             <div class="flex gap-2">
                                 <input type="text" id="nuevo-codigo" inputmode="numeric" autocomplete="off" class="min-w-0 flex-1 p-4 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg" placeholder="Escanea o escribe el código">
                                 <button type="button" onclick="abrirLectorCodigo()" class="shrink-0 bg-teal-600 hover:bg-teal-700 text-white px-4 font-bold" aria-label="Escanear código con la cámara">Escanear</button>
@@ -502,7 +513,7 @@
                         </div>
 
                         <div class="mb-5">
-                            <label class="block text-sm font-medium text-gray-600 mb-2">Nombre del Producto</label>
+                            <label class="block text-sm font-medium text-gray-600 mb-2">Nombre del producto</label>
                             <input type="text" id="nuevo-nombre" required class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg" placeholder="Ej. Tomate (Unidad)">
                         </div>
                         
@@ -519,7 +530,7 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-600 mb-2">Se vende por</label>
+                                <label class="block text-sm font-medium text-gray-600 mb-2">¿Cómo lo vendes?</label>
                                 <select id="nuevo-unidad-venta" onchange="actualizarEtiquetasUnidad()" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white text-lg">
                                     <option value="unidad">Unidad</option>
                                     <option value="libra">Libra</option>
@@ -529,10 +540,10 @@
                         </div>
 
                         <div class="mb-5">
-                            <label class="block text-sm font-medium text-gray-600 mb-2">Tamaños disponibles</label>
+                            <label class="block text-sm font-medium text-gray-600 mb-2">¿Tiene más de un tamaño?</label>
                             <select id="nuevo-tamanos" onchange="actualizarCamposTamanos('nuevo')" class="w-full p-4 bg-gray-50 border border-gray-200 text-lg">
-                                <option value="no">Un solo tamaño</option>
-                                <option value="si">Mediano y grande</option>
+                                <option value="no">No, solo uno</option>
+                                <option value="si">Sí, mediano y grande</option>
                             </select>
                         </div>
 
@@ -544,7 +555,7 @@
 
                         <div class="grid grid-cols-2 gap-4 mb-3">
                             <div>
-                                <label class="block text-sm font-medium text-gray-600 mb-2">Costo total del paquete</label>
+                                <label class="block text-sm font-medium text-gray-600 mb-2">¿Cuánto pagaste por el paquete?</label>
                                 <div class="relative">
                                     <span class="absolute left-4 top-4 text-gray-500 font-bold">Q</span>
                                     <input type="number" id="nuevo-costo" required min="0" step="0.01" oninput="actualizarCostoUnitario()" class="w-full p-4 pl-9 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg" placeholder="Ej. 95.00">
@@ -586,11 +597,11 @@
                         </div>
 
                         <div class="mb-8 rounded-lg border border-teal-100 bg-teal-50 p-3 text-sm text-teal-800">
-                            Costo calculado por <span id="nuevo-costo-unidad-texto">unidad</span>: <strong id="nuevo-costo-unitario">Q0.00</strong>
+                            Tu costo por <span id="nuevo-costo-unidad-texto">unidad</span>: <strong id="nuevo-costo-unitario">Q0.00</strong>
                         </div>
 
                         <button type="submit" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-md hover:bg-blue-700 active:bg-blue-800 text-lg transition-transform transform active:scale-95">
-                            Guardar Producto
+                            Guardar producto
                         </button>
                     </form>
                 </div>
@@ -598,23 +609,19 @@
 
         </main>
 
-        <nav class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.1)] z-40">
-            <div class="max-w-4xl mx-auto flex justify-between items-center px-2 py-2">
-                <button onclick="cambiarTab('vender', this)" class="nav-btn flex-1 flex flex-col items-center p-2 text-gray-400 transition-colors">
-                    <span class="text-2xl mb-1">🛒</span>
-                    <span class="text-[10px] font-medium text-center w-full">Vender</span>
+        <nav class="app-navigation" aria-label="Navegación principal">
+            <div class="app-navigation-inner">
+                <button id="nav-vender" type="button" onclick="cambiarTab('vender', this)" class="nav-btn text-gray-400" aria-label="Registrar venta">
+                    <span class="nav-icon" aria-hidden="true">🛒</span><span>Vender</span>
                 </button>
-                <button onclick="cambiarTab('resumen', this)" class="nav-btn flex-1 flex flex-col items-center p-2 text-blue-600 transition-colors">
-                    <span class="text-2xl mb-1">📊</span>
-                    <span class="text-[10px] font-semibold text-center w-full">Resumen</span>
+                <button id="nav-catalogo" type="button" onclick="cambiarTab('catalogo', this)" class="nav-btn text-gray-400" aria-label="Ver inventario">
+                    <span class="nav-icon" aria-hidden="true">▦</span><span>Inventario</span>
                 </button>
-                <button onclick="cambiarTab('graficos', this)" class="nav-btn flex-1 flex flex-col items-center p-2 text-gray-400 transition-colors">
-                    <span class="text-2xl mb-1">📈</span>
-                    <span class="text-[10px] font-medium text-center w-full">Gráficos</span>
+                <button id="nav-resumen" type="button" onclick="cambiarTab('resumen', this)" class="nav-btn text-blue-600" aria-label="Ver resumen">
+                    <span class="nav-icon" aria-hidden="true">⌂</span><span>Resumen</span>
                 </button>
-                <button onclick="cambiarTab('nuevo', this)" class="nav-btn flex-1 flex flex-col items-center p-2 text-gray-400 transition-colors">
-                    <span class="text-2xl mb-1">➕</span>
-                    <span class="text-[10px] font-medium text-center w-full">Nuevo</span>
+                <button id="nav-mas" type="button" onclick="cambiarTab('ajustes', this)" class="nav-btn text-gray-400" aria-label="Más opciones">
+                    <span class="nav-icon" aria-hidden="true">•••</span><span>Más</span>
                 </button>
             </div>
         </nav>
@@ -989,3 +996,4 @@
     <script src="./modal-bloqueo.js"></script>
 </body>
 </html>
+

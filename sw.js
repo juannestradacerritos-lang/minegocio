@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mi-negocio-v107';
+const CACHE_NAME = 'mi-negocio-v108';
 const APP_SHELL = ['./', './index.html', './styles.css', './app.js', './aviso-carrito.js', './pdf-comun.js', './pdf-categoria.js', './categorias.js', './modal-bloqueo.js', './manifest.json', './icon.svg'];
 const PAGINA_OFFLINE = './index.html';
 const RECURSOS_EXTERNOS = [

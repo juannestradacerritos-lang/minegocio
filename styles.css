@@ -2381,3 +2381,50 @@ body.dark-mode .report-format-option { background: #102331; border-color: #35546
 body.dark-mode .report-format-option.activo { background: #153b3a; border-color: #42b8ad; box-shadow: inset 0 0 0 1px #42b8ad; }
 body.dark-mode .report-format-option small { color: #b9cad3; }
 @media (max-width: 380px) { .report-format-options { grid-template-columns: 1fr; } }
+
+
+/* Acciones del reporte: descarga clara y cómoda en móvil y escritorio. */
+.reporte-actions {
+    display: grid;
+    grid-template-columns: minmax(110px, .78fr) minmax(0, 1.22fr);
+    align-items: stretch;
+}
+.reporte-actions button {
+    min-width: 0;
+    min-height: 58px;
+    padding: .85rem 1rem;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    font-size: .96rem;
+    line-height: 1.3;
+    white-space: normal;
+    transition: transform .18s ease, box-shadow .18s ease, background-color .18s ease;
+}
+.reporte-actions button:active { transform: translateY(1px); }
+.reporte-actions button:focus-visible {
+    outline: 3px solid rgba(20, 184, 166, .35);
+    outline-offset: 2px;
+}
+.reporte-actions button:first-child {
+    border-color: #d8e2e8;
+    background: #f1f5f7;
+}
+.reporte-actions .reporte-download-action {
+    background: #0f766e;
+    color: #fff;
+    box-shadow: 0 6px 16px rgba(15, 118, 110, .22);
+}
+.reporte-actions .reporte-download-action:hover { background: #0b625b; }
+.dark-mode .reporte-actions button:first-child {
+    border-color: #334653;
+    background: #203443;
+    color: #e7eef2;
+}
+.dark-mode .reporte-actions .reporte-download-action {
+    background: #0f766e;
+    color: #fff;
+}
+@media (max-width: 380px) {
+    .reporte-actions { grid-template-columns: 1fr; }
+    .reporte-actions button { min-height: 52px; }
+}

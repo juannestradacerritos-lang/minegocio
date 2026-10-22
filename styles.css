@@ -2277,3 +2277,40 @@ body.dark-mode #tab-vender .cart-checkout > button {
     #tab-vender .cart-checkout > div { align-items:center; }
     #tab-vender .cart-checkout > button { width:100% !important; }
 }
+
+
+/* Ajuste del icono Más para que permanezca dentro de su botón. */
+#app-content nav #nav-mas.nav-btn {
+    min-width:0;
+    overflow:hidden;
+    gap:.22rem;
+}
+#app-content nav #nav-mas .nav-icon-more {
+    display:grid;
+    flex:0 0 2.15rem;
+    place-items:center;
+    width:2.15rem;
+    height:2.15rem;
+    max-width:100%;
+    overflow:hidden;
+    border-radius:11px;
+    line-height:1;
+}
+#app-content nav #nav-mas .nav-icon-more svg {
+    display:block;
+    width:1.15rem;
+    height:1.15rem;
+    max-width:100%;
+    fill:currentColor;
+}
+#app-content nav #nav-mas.nav-btn > span:last-child {
+    max-width:100%;
+    white-space:nowrap;
+    line-height:1.1;
+}
+#app-content nav #nav-mas.nav-btn.text-blue-600 .nav-icon-more { background:#e5f2ea; }
+body.dark-mode #app-content nav #nav-mas.nav-btn.text-blue-600 .nav-icon-more { background:#1c3d31; }
+@media (max-width:370px) {
+    #app-content nav #nav-mas .nav-icon-more { flex-basis:2rem; width:2rem; height:2rem; }
+    #app-content nav #nav-mas .nav-icon-more svg { width:1.05rem; height:1.05rem; }
+}

@@ -807,9 +807,9 @@
                 <p id="sin-ventas-factura" class="hidden mt-2 text-sm text-gray-500" aria-live="polite">No hay ventas registradas hasta ese día.</p>
             </div>
             <div id="estado-reporte" class="hidden mb-4 p-3 rounded bg-teal-50 text-teal-700 text-sm font-semibold" aria-live="polite"></div>
-            <div class="flex gap-3">
-                <button onclick="cerrarModalReportes()" class="flex-1 bg-gray-100 text-gray-700 py-3 font-bold">Cancelar</button>
-                <button id="btn-generar-reporte" onclick="generarReporteVentas()" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white py-3 font-bold">Guardar y descargar PDF</button>
+            <div class="reporte-actions flex gap-3">
+                <button onclick="cerrarModalReportes()" class="bg-gray-100 text-gray-700 py-3 font-bold">Cancelar</button>
+                <button id="btn-generar-reporte" onclick="generarReporteVentas()" class="reporte-download-action bg-teal-600 hover:bg-teal-700 text-white py-3 font-bold">Guardar y descargar PDF</button>
             </div>
         </div>
     </div>

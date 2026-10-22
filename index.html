@@ -278,14 +278,20 @@
             <!-- 2. PESTAÑA: CATÁLOGO -->
             <section id="tab-catalogo" class="fade-in hidden">
                 <div class="inventory-page-header">
-                    <div><p class="eyebrow">Productos y existencias</p><h2 class="text-2xl font-bold text-gray-800">Inventario</h2></div>
+                    <div class="inventory-heading-copy"><p class="eyebrow">Productos y existencias</p><h2 class="text-2xl font-bold text-gray-800">Inventario</h2><p class="section-intro">Controla tus productos, precios y existencias de un vistazo.</p></div>
                     <button type="button" onclick="cambiarTab('nuevo')" class="primary-action"><span aria-hidden="true">＋</span> Agregar producto</button>
                 </div>
-                <p class="section-intro">Revisa lo que tienes, sus precios y las cantidades disponibles.</p>
-                <div class="catalog-toolbar"><button type="button" onclick="abrirCategoriasCatalogo()" class="secondary-action">Editar categorías</button></div>
-                <div class="relative mb-6">
-                    <span class="absolute left-4 top-3.5 text-gray-400">🔍</span>
-                    <input type="text" id="buscar-producto" placeholder="Buscar producto..." class="w-full p-3 pl-10 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm" onkeyup="renderizarCatalogo()">
+                <div class="relative mb-6 catalog-search">
+                    <span class="absolute left-4 top-3.5 text-gray-400" aria-hidden="true">🔍</span>
+                    <input type="search" id="buscar-producto" placeholder="Buscar producto..." aria-label="Buscar producto por nombre o código" class="w-full p-3 pl-10 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow-sm" oninput="renderizarCatalogo()">
+                </div>
+                <div class="catalog-filters">
+                    <div class="catalog-filters-heading">
+                        <span class="catalog-filter-label">Categorías</span>
+                        <span id="catalogo-cantidad" class="catalog-count" aria-live="polite"></span>
+                    </div>
+                    <div id="catalogo-categorias" class="catalog-category-list" aria-label="Filtrar productos por categoría"></div>
+                    <button type="button" onclick="abrirCategoriasCatalogo()" class="catalog-edit-categories"><span aria-hidden="true">⚙</span> Editar categorías</button>
                 </div>
                 
                 <div id="lista-catalogo" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>

@@ -2269,13 +2269,13 @@
         }
 
         function seleccionarTipoDocumentoReporte(tipo) {
-            tipoDocumentoReporte = tipo === 'factura' ? 'factura' : 'reporte';
+            tipoDocumentoReporte = tipo === 'ventas-completas' ? 'ventas-completas' : 'reporte';
             document.getElementById('opcion-formato-reporte')?.classList.toggle('activo', tipoDocumentoReporte === 'reporte');
-            document.getElementById('opcion-formato-factura')?.classList.toggle('activo', tipoDocumentoReporte === 'factura');
+            document.getElementById('opcion-formato-factura')?.classList.toggle('activo', tipoDocumentoReporte === 'ventas-completas');
             
             document.getElementById('estado-reporte')?.classList.add('hidden');
             const boton = document.getElementById('btn-generar-reporte');
-            if (boton) boton.textContent = tipoDocumentoReporte === 'factura' ? 'Descargar facturas PDF' : 'Guardar y descargar PDF';
+            if (boton) boton.textContent = tipoDocumentoReporte === 'ventas-completas' ? 'Descargar ventas de todo el periodo' : 'Guardar y descargar PDF';
             actualizarResumenFacturaPeriodo();
         }
 
@@ -2295,10 +2295,29 @@
             const mensaje = document.getElementById('sin-ventas-factura');
             const boton = document.getElementById('btn-generar-reporte');
             if (!contenedor || !cantidadTexto || !mensaje) return;
-            const cantidad = ventasEnPeriodoDelReporte().length;
+            const esTodoElPeriodo = tipoDocumentoReporte === 'ventas-completas';
+            const ventasIncluidas = esTodoElPeriodo ? ventasHastaFechaSeleccionada() : ventasEnPeriodoDelReporte();
+            const cantidad = ventasIncluidas.length;
             cantidadTexto.textContent = cantidad + (cantidad === 1 ? ' venta' : ' ventas');
             mensaje.classList.toggle('hidden', cantidad > 0);
-            if (boton) boton.disabled = tipoDocumentoReporte === 'factura' && cantidad === 0;
+            const periodos = document.getElementById('periodos-reporte');
+            const etiquetaFecha = document.getElementById('etiqueta-fecha-reporte');
+            const rango = document.getElementById('rango-ventas-completas');
+            periodos?.classList.toggle('hidden', esTodoElPeriodo);
+            if (etiquetaFecha) etiquetaFecha.textContent = esTodoElPeriodo ? 'Hasta el día' : 'Fecha de referencia';
+            if (rango) {
+                const fechaLimite = document.getElementById('fecha-reporte')?.value;
+                const limite = fechaLimite ? new Date(fechaLimite + 'T00:00:00') : new Date();
+                const primeraFecha = ventasIncluidas.length
+                    ? (obtenerFechaVenta(ventasIncluidas[0].fecha) || obtenerFechaVenta(ventasIncluidas[0].fechaLocal))
+                    : null;
+                const inicioTexto = primeraFecha
+                    ? primeraFecha.toLocaleDateString('es-GT', { day: '2-digit', month: 'short', year: 'numeric' })
+                    : 'el inicio del historial';
+                const limiteTexto = limite.toLocaleDateString('es-GT', { day: '2-digit', month: 'short', year: 'numeric' });
+                rango.textContent = 'Desde ' + inicioTexto + ' hasta ' + limiteTexto;
+            }
+            if (boton) boton.disabled = esTodoElPeriodo && cantidad === 0;
         }
 
         function obtenerRangoReporte(periodo, valorFecha) {
@@ -2491,23 +2510,48 @@
             setTimeout(() => URL.revokeObjectURL(url), 1000);
         }
 
-        function descargarFacturasPDF(ventasPeriodo) {
+        function ventasHastaFechaSeleccionada() {
+            const valorFecha = document.getElementById('fecha-reporte')?.value;
+            if (!valorFecha) return [];
+            const limite = new Date(valorFecha + 'T00:00:00');
+            limite.setDate(limite.getDate() + 1);
+            return ventas.filter(venta => {
+                const fechaVenta = obtenerFechaVenta(venta.fecha) || obtenerFechaVenta(venta.fechaLocal);
+                return fechaVenta && fechaVenta < limite;
+            }).sort((a, b) => {
+                const fechaA = obtenerFechaVenta(a.fecha) || obtenerFechaVenta(a.fechaLocal) || new Date(0);
+                const fechaB = obtenerFechaVenta(b.fecha) || obtenerFechaVenta(b.fechaLocal) || new Date(0);
+                return fechaA - fechaB;
+            });
+        }
+
+        function descargarVentasPeriodoPDF(ventasPeriodo) {
             const ancho = 595;
             const alto = 842;
             const margen = 42;
-            const paginas = [];
+            const filas = [];
             ventasPeriodo.forEach(venta => {
+                const fecha = obtenerFechaVenta(venta.fecha) || obtenerFechaVenta(venta.fechaLocal) || new Date();
+                const numero = String(venta.id || '').slice(-6).toUpperCase() || 'VENTA';
                 const items = Array.isArray(venta.items) && venta.items.length
                     ? venta.items
-                    : [{ nombre: 'Venta sin productos detallados', cantidad: 0, precio: 0 }];
-                const bloques = [items.slice(0, 16)];
-                for (let i = 16; i < items.length; i += 18) bloques.push(items.slice(i, i + 18));
-                const numeroVenta = String(venta.id || '').slice(-6).toUpperCase() || String(Date.now()).slice(-6);
-                bloques.forEach((itemsPagina, indicePaginaVenta) => {
-                    paginas.push({ venta, itemsPagina, indicePaginaVenta, totalPaginasVenta: bloques.length, numeroVenta });
+                    : [{ nombre: 'Sin detalle disponible', cantidad: 0, precio: 0, importe: Number(venta.total) || 0, unidadVenta: '' }];
+                items.forEach(item => {
+                    const cantidad = Number(item.cantidad) || 0;
+                    const precio = Number(item.precio) || 0;
+                    filas.push({
+                        fecha,
+                        numero,
+                        producto: String(item.nombre || item.producto || 'Producto'),
+                        cantidad,
+                        unidad: item.unidadVenta === 'libra' ? ' lb' : '',
+                        precio,
+                        importe: Number.isFinite(Number(item.importe)) ? Number(item.importe) : cantidad * precio
+                    });
                 });
             });
-
+            const paginas = [filas.slice(0, 16)];
+            for (let i = 16; i < filas.length; i += 18) paginas.push(filas.slice(i, i + 18));
             const objetos = [null];
             const agregarObjeto = contenido => { objetos.push(contenido); return objetos.length - 1; };
             const catalogoId = agregarObjeto('');
@@ -2515,19 +2559,18 @@
             const fuenteId = agregarObjeto('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>');
             const fuenteNegritaId = agregarObjeto('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>');
             const idsPaginas = [];
+            const fechaInicio = ventasPeriodo.reduce((masAntigua, venta) => {
+                const fecha = obtenerFechaVenta(venta.fecha) || obtenerFechaVenta(venta.fechaLocal) || new Date();
+                return !masAntigua || fecha < masAntigua ? fecha : masAntigua;
+            }, null);
+            const fechaCorte = new Date(document.getElementById('fecha-reporte').value + 'T00:00:00');
+            const fechaInicioTexto = fechaInicio.toLocaleDateString('es-GT', { day: '2-digit', month: 'long', year: 'numeric' });
+            const fechaCorteTexto = fechaCorte.toLocaleDateString('es-GT', { day: '2-digit', month: 'long', year: 'numeric' });
             const generado = new Date().toLocaleString('es-GT', { dateStyle: 'medium', timeStyle: 'short' });
+            const totalPeriodo = ventasPeriodo.reduce((suma, venta) => suma + (Number(venta.total) || 0), 0);
+            const unidadesPeriodo = filas.reduce((suma, fila) => suma + fila.cantidad, 0);
 
-            paginas.forEach((pagina, indicePagina) => {
-                const venta = pagina.venta;
-                const itemsPagina = pagina.itemsPagina;
-                const esPrimeraPaginaVenta = pagina.indicePaginaVenta === 0;
-                const esUltimaPaginaVenta = pagina.indicePaginaVenta === pagina.totalPaginasVenta - 1;
-                const fechaVenta = obtenerFechaVenta(venta.fechaLocal) || obtenerFechaVenta(venta.fecha) || new Date();
-                const fechaTexto = fechaVenta.toLocaleString('es-GT', { dateStyle: 'long', timeStyle: 'short' });
-                const numeroVenta = pagina.numeroVenta;
-                const todosItems = Array.isArray(venta.items) ? venta.items : [];
-                const total = Number(venta.total) || 0;
-                const unidades = todosItems.reduce((suma, item) => suma + (Number(item.cantidad) || 0), 0);
+            paginas.forEach((filasPagina, indicePagina) => {
                 const comandos = [];
                 const color = (r, g, b) => comandos.push(r + ' ' + g + ' ' + b + ' rg');
                 const rectangulo = (x, y, w, h, r, g, b) => comandos.push(r + ' ' + g + ' ' + b + ' rg ' + x + ' ' + y + ' ' + w + ' ' + h + ' re f');
@@ -2550,20 +2593,20 @@
                 color(.72, .82, .86);
                 texto(96, 786, 8, 'CONTROL DE INVENTARIO Y VENTAS');
                 color(1, 1, 1);
-                texto(553, 800, 9, 'FACTURA DE VENTA', true, 'derecha');
+                texto(553, 800, 9, 'VENTAS DE TODO EL PERIODO', true, 'derecha');
                 color(.72, .82, .86);
-                texto(553, 782, 8, 'N. V-' + numeroVenta, false, 'derecha');
+                texto(553, 782, 8, 'HASTA ' + fechaCorteTexto.toUpperCase(), false, 'derecha');
 
                 let inicioTabla;
-                if (esPrimeraPaginaVenta) {
+                if (indicePagina === 0) {
                     color(.063, .149, .239);
-                    texto(margen, 708, 18, 'Detalle de la venta', true);
+                    texto(margen, 708, 18, 'Ventas de todo el periodo', true);
                     color(.40, .48, .55);
-                    texto(margen, 691, 9, 'Venta realizada el ' + fechaTexto);
+                    texto(margen, 691, 9, 'Desde ' + fechaInicioTexto + ' hasta ' + fechaCorteTexto);
                     const tarjetas = [
-                        { x: 42, titulo: 'VENTA', valor: 'V-' + numeroVenta, color: [.086, .549, .525] },
-                        { x: 216, titulo: 'UNIDADES', valor: String(unidades).replace(/\.00$/, ''), color: [.31, .47, .64] },
-                        { x: 390, titulo: 'TOTAL VENDIDO', valor: 'Q' + total.toFixed(2), color: [.835, .659, .294] }
+                        { x: 42, titulo: 'VENTAS', valor: String(ventasPeriodo.length), color: [.086, .549, .525] },
+                        { x: 216, titulo: 'UNIDADES', valor: String(unidadesPeriodo).replace(/\.00$/, ''), color: [.31, .47, .64] },
+                        { x: 390, titulo: 'TOTAL VENDIDO', valor: 'Q' + totalPeriodo.toFixed(2), color: [.835, .659, .294] }
                     ];
                     tarjetas.forEach(tarjeta => {
                         rectangulo(tarjeta.x, 622, 163, 54, .96, .97, .98);
@@ -2576,7 +2619,7 @@
                     inicioTabla = 585;
                 } else {
                     color(.063, .149, .239);
-                    texto(margen, 708, 15, 'Detalle de la venta V-' + numeroVenta, true);
+                    texto(margen, 708, 15, 'Ventas de todo el periodo', true);
                     color(.40, .48, .55);
                     texto(553, 708, 9, 'Continuacion', false, 'derecha');
                     inicioTabla = 680;
@@ -2584,35 +2627,36 @@
 
                 rectangulo(margen, inicioTabla, 511, 30, .063, .149, .239);
                 color(1, 1, 1);
-                texto(54, inicioTabla + 11, 8, 'PRODUCTO', true);
-                texto(390, inicioTabla + 11, 8, 'CANTIDAD', true, 'derecha');
-                texto(466, inicioTabla + 11, 8, 'PRECIO', true, 'derecha');
-                texto(541, inicioTabla + 11, 8, 'IMPORTE', true, 'derecha');
+                texto(54, inicioTabla + 11, 7, 'FECHA', true);
+                texto(121, inicioTabla + 11, 7, 'VENTA', true);
+                texto(181, inicioTabla + 11, 7, 'PRODUCTO', true);
+                texto(395, inicioTabla + 11, 7, 'CANT.', true, 'derecha');
+                texto(468, inicioTabla + 11, 7, 'PRECIO', true, 'derecha');
+                texto(541, inicioTabla + 11, 7, 'IMPORTE', true, 'derecha');
 
                 let y = inicioTabla - 26;
-                itemsPagina.forEach((item, fila) => {
-                    if (fila % 2 === 0) rectangulo(margen, y - 9, 511, 27, .965, .973, .978);
+                filasPagina.forEach((fila, indiceFila) => {
+                    if (indiceFila % 2 === 0) rectangulo(margen, y - 9, 511, 27, .965, .973, .978);
                     color(.145, .22, .29);
-                    const nombreOriginal = String(item.nombre || item.producto || 'Producto');
-                    const nombre = nombreOriginal.length > 45 ? nombreOriginal.slice(0, 44) + '...' : nombreOriginal;
-                    const cantidad = Number(item.cantidad) || 0;
-                    const precio = Number(item.precio) || 0;
-                    const unidad = item.unidadVenta === 'libra' ? ' lb' : '';
-                    texto(54, y, 9, nombre);
-                    texto(390, y, 9, String(cantidad).replace(/\.00$/, '') + unidad, false, 'derecha');
-                    texto(466, y, 9, 'Q' + precio.toFixed(2), false, 'derecha');
-                    texto(541, y, 9, 'Q' + (cantidad * precio).toFixed(2), true, 'derecha');
+                    const fechaTexto = fila.fecha.toLocaleDateString('es-GT', { day: '2-digit', month: 'short', year: '2-digit' });
+                    const nombre = fila.producto.length > 30 ? fila.producto.slice(0, 27) + '...' : fila.producto;
+                    texto(54, y, 7, fechaTexto);
+                    texto(121, y, 7, 'V-' + fila.numero);
+                    texto(181, y, 7, nombre);
+                    texto(395, y, 7, String(fila.cantidad).replace(/\.00$/, '') + fila.unidad, false, 'derecha');
+                    texto(468, y, 7, 'Q' + fila.precio.toFixed(2), false, 'derecha');
+                    texto(541, y, 7, 'Q' + fila.importe.toFixed(2), true, 'derecha');
                     linea(margen, y - 10, 553, y - 10);
                     y -= 28;
                 });
 
-                if (esUltimaPaginaVenta) {
+                if (indicePagina === paginas.length - 1) {
                     y -= 5;
                     rectangulo(340, y - 12, 213, 34, .91, .95, .95);
                     color(.086, .549, .525);
-                    texto(353, y, 9, 'TOTAL DE LA VENTA', true);
+                    texto(353, y, 9, 'TOTAL DEL PERIODO', true);
                     color(.063, .149, .239);
-                    texto(541, y, 11, 'Q' + total.toFixed(2), true, 'derecha');
+                    texto(541, y, 11, 'Q' + totalPeriodo.toFixed(2), true, 'derecha');
                 }
 
                 linea(margen, 51, 553, 51, .78, .83, .86);
@@ -2646,21 +2690,17 @@
             const enlace = document.createElement('a');
             enlace.href = url;
             const fechaArchivo = document.getElementById('fecha-reporte')?.value || new Date().toISOString().slice(0, 10);
-            enlace.download = 'Facturas_ventas_' + fechaArchivo + '.pdf';
+            enlace.download = 'Ventas_todo_el_periodo_hasta_' + fechaArchivo + '.pdf';
             document.body.appendChild(enlace);
             enlace.click();
             enlace.remove();
             setTimeout(() => URL.revokeObjectURL(url), 1000);
         }
 
-        function generarFacturasVentas() {
-            const ventasPeriodo = ventasEnPeriodoDelReporte().sort((a, b) => {
-                const fechaA = obtenerFechaVenta(a.fecha) || obtenerFechaVenta(a.fechaLocal) || new Date(0);
-                const fechaB = obtenerFechaVenta(b.fecha) || obtenerFechaVenta(b.fechaLocal) || new Date(0);
-                return fechaA - fechaB;
-            });
+        function generarVentasPeriodoCompleto() {
+            const ventasPeriodo = ventasHastaFechaSeleccionada();
             if (!ventasPeriodo.length) {
-                mostrarAviso('No hay ventas en el periodo seleccionado.', 'error');
+                mostrarAviso('No hay ventas hasta la fecha seleccionada.', 'error');
                 return;
             }
             const boton = document.getElementById('btn-generar-reporte');
@@ -2668,11 +2708,11 @@
             boton.disabled = true;
             boton.classList.add('opacity-50');
             try {
-                descargarFacturasPDF(ventasPeriodo);
-                estado.textContent = '✓ PDF descargado con ' + ventasPeriodo.length + (ventasPeriodo.length === 1 ? ' factura de venta.' : ' facturas de venta.');
+                descargarVentasPeriodoPDF(ventasPeriodo);
+                estado.textContent = '✓ PDF único descargado con todas las ventas hasta la fecha elegida (' + ventasPeriodo.length + ').';
                 estado.classList.remove('hidden');
             } catch (error) {
-                console.error('No se pudieron generar las facturas:', error);
+                console.error('No se pudo generar el PDF consolidado de ventas:', error);
                 mostrarAviso('No se pudo generar el PDF de ventas.', 'error');
             } finally {
                 boton.disabled = false;
@@ -2681,7 +2721,7 @@
         }
 
         async function generarReporteVentas() {
-            if (tipoDocumentoReporte === 'factura') return generarFacturasVentas();
+            if (tipoDocumentoReporte === 'ventas-completas') return generarVentasPeriodoCompleto();
             const fecha = document.getElementById('fecha-reporte').value;
             if (!fecha) return alert('Selecciona una fecha de referencia.');
 

@@ -48,6 +48,7 @@
         });
 
         let inventario = [];
+        let categoriaCatalogoSeleccionada = 'todas';
         let carrito = [];
         let productoAEliminar = null;
         let productoAEditar = null;
@@ -1023,13 +1024,45 @@
         function renderizarCatalogo() {
             cerrarAccionesCatalogo();
             const contenedor = document.getElementById('lista-catalogo');
-            const busqueda = document.getElementById('buscar-producto').value.toLowerCase();
+            const campoBusqueda = document.getElementById('buscar-producto');
+            const busqueda = (campoBusqueda?.value || '').trim().toLocaleLowerCase();
             contenedor.innerHTML = '';
 
-            const filtrados = inventario.filter(p => p.nombre.toLowerCase().includes(busqueda));
+            const categorias = [...new Set(inventario.map(p => p.categoria || 'Otros'))]
+                .sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+            if (categoriaCatalogoSeleccionada !== 'todas' && !categorias.includes(categoriaCatalogoSeleccionada)) {
+                categoriaCatalogoSeleccionada = 'todas';
+            }
+
+            const filtros = document.getElementById('catalogo-categorias');
+            if (filtros) {
+                filtros.replaceChildren();
+                [['todas', 'Todas'], ...categorias.map(categoria => [categoria, categoria])].forEach(([valor, etiqueta]) => {
+                    const boton = document.createElement('button');
+                    boton.type = 'button';
+                    boton.className = `catalog-category-chip${categoriaCatalogoSeleccionada === valor ? ' activo' : ''}`;
+                    boton.textContent = etiqueta;
+                    boton.setAttribute('aria-pressed', String(categoriaCatalogoSeleccionada === valor));
+                    boton.addEventListener('click', () => {
+                        categoriaCatalogoSeleccionada = valor;
+                        renderizarCatalogo();
+                    });
+                    filtros.appendChild(boton);
+                });
+            }
+
+            const filtrados = inventario.filter(p => {
+                const nombre = String(p.nombre || '').toLocaleLowerCase();
+                const codigo = String(p.codigo || '').toLocaleLowerCase();
+                const coincideCategoria = categoriaCatalogoSeleccionada === 'todas' || (p.categoria || 'Otros') === categoriaCatalogoSeleccionada;
+                return coincideCategoria && (nombre.includes(busqueda) || codigo.includes(busqueda));
+            });
+            const contador = document.getElementById('catalogo-cantidad');
+            if (contador) contador.textContent = `${filtrados.length} ${filtrados.length === 1 ? 'producto' : 'productos'}`;
 
             if(filtrados.length === 0) {
-                contenedor.innerHTML = `<p class="text-center col-span-full text-gray-400 py-10">No se encontraron productos.</p>`;
+                const sinProductos = inventario.length === 0;
+                contenedor.innerHTML = `<div class="catalog-empty-state"><span aria-hidden="true">${sinProductos ? '📦' : '🔎'}</span><strong>${sinProductos ? 'Aún no hay productos' : 'No encontramos productos'}</strong><p>${sinProductos ? 'Agrega tu primer producto para comenzar a organizar el inventario.' : 'Prueba con otro nombre, código o categoría.'}</p>${sinProductos ? '<button type="button" onclick="cambiarTab(\'nuevo\')">Agregar producto</button>' : ''}</div>`;
                 return;
             }
 

@@ -352,6 +352,7 @@
                 ventas = [];
                 querySnapshot.forEach((doc) => ventas.push({ id: doc.id, ...doc.data({ serverTimestamps: 'estimate' }), pendiente: doc.metadata.hasPendingWrites }));
                 actualizarResumen();
+                renderizarListaVenta();
                 renderizarGraficos();
             });
         }
@@ -1884,7 +1885,30 @@
                 String(p.nombre || '').toLowerCase().includes(busqueda) ||
                 String(p.codigo || '').toLowerCase().includes(busqueda)
             ));
-            
+
+            // Prioriza los productos por la cantidad vendida acumulada, manteniendo
+            // el orden del inventario cuando dos productos tienen el mismo resultado.
+            const unidadesVendidas = new Map();
+            const ventasPorNombre = new Map();
+            ventas.forEach(venta => {
+                const lineas = Array.isArray(venta.items) ? venta.items : (Array.isArray(venta.productos) ? venta.productos : []);
+                lineas.forEach(linea => {
+                    const cantidad = Number(linea.cantidad);
+                    const total = Number.isFinite(cantidad) && cantidad > 0 ? cantidad : 1;
+                    const productoId = linea.productoId || linea.productId || linea.id;
+                    if (productoId) unidadesVendidas.set(productoId, (unidadesVendidas.get(productoId) || 0) + total);
+
+                    const nombre = String(linea.nombre || linea.producto || '').replace(/\s+\([^)]*\)$/, '').trim().toLocaleLowerCase();
+                    if (nombre) ventasPorNombre.set(nombre, (ventasPorNombre.get(nombre) || 0) + total);
+                });
+            });
+            const ordenOriginal = new Map(inventario.map((producto, indice) => [producto.id, indice]));
+            conStock.sort((a, b) => {
+                const vendidasA = unidadesVendidas.get(a.id) ?? ventasPorNombre.get(String(a.nombre || '').trim().toLocaleLowerCase()) ?? 0;
+                const vendidasB = unidadesVendidas.get(b.id) ?? ventasPorNombre.get(String(b.nombre || '').trim().toLocaleLowerCase()) ?? 0;
+                return vendidasB - vendidasA || (ordenOriginal.get(a.id) ?? 0) - (ordenOriginal.get(b.id) ?? 0);
+            });
+
             if(conStock.length === 0) {
                 if (busqueda) {
                     contenedor.innerHTML = '<div class="sale-empty-state"><span class="sale-empty-icon" aria-hidden="true">⌕</span><strong>No encontramos ese producto</strong><p>Prueba con otro nombre o código.</p></div>';

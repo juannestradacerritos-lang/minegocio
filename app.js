@@ -566,7 +566,7 @@
             let importeTotal = 0;
 
             const claveFecha = fecha => {
-                if (typeof fecha === 'string' && /^\\d{4}-\\d{2}-\\d{2}$/.test(fecha)) return fecha;
+                if (typeof fecha === 'string' && fecha.length === 10 && fecha[4] === '-' && fecha[7] === '-') return fecha;
                 const fechaValida = obtenerFechaVenta(fecha);
                 if (!fechaValida) return '';
                 return `${fechaValida.getFullYear()}-${String(fechaValida.getMonth() + 1).padStart(2, '0')}-${String(fechaValida.getDate()).padStart(2, '0')}`;

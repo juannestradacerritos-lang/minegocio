@@ -2385,12 +2385,14 @@ body.dark-mode .report-format-option small { color: #b9cad3; }
 
 /* Acciones del reporte: descarga clara y cómoda en móvil y escritorio. */
 .reporte-actions {
-    display: grid;
-    grid-template-columns: minmax(110px, .78fr) minmax(0, 1.22fr);
+    display: flex;
+    justify-content: center;
     align-items: stretch;
+    gap: .75rem;
 }
 .reporte-actions button {
     min-width: 0;
+    text-align: center;
     min-height: 58px;
     padding: .85rem 1rem;
     border: 1px solid transparent;
@@ -2406,10 +2408,12 @@ body.dark-mode .report-format-option small { color: #b9cad3; }
     outline-offset: 2px;
 }
 .reporte-actions button:first-child {
+    flex: 0 1 128px;
     border-color: #d8e2e8;
     background: #f1f5f7;
 }
 .reporte-actions .reporte-download-action {
+    flex: 0 1 220px;
     background: #0f766e;
     color: #fff;
     box-shadow: 0 6px 16px rgba(15, 118, 110, .22);
@@ -2425,6 +2429,6 @@ body.dark-mode .report-format-option small { color: #b9cad3; }
     color: #fff;
 }
 @media (max-width: 380px) {
-    .reporte-actions { grid-template-columns: 1fr; }
+    .reporte-actions { flex-direction: column; align-items: center; }
     .reporte-actions button { min-height: 52px; }
 }

@@ -2526,154 +2526,131 @@
         }
 
         function descargarVentasPeriodoPDF(ventasPeriodo) {
-            const ancho = 595;
-            const alto = 842;
-            const margen = 42;
+            // Papel de 80 mm (aprox. 226 pt), con largo variable como un ticket térmico.
+            const ancho = 226;
+            const margen = 14;
+            const contenidoAncho = ancho - margen * 2;
+            const bloques = [];
+            const totalPeriodo = ventasPeriodo.reduce((suma, venta) => suma + (Number(venta.total) || 0), 0);
             const filas = [];
+            let unidadesPeriodo = 0;
+
             ventasPeriodo.forEach(venta => {
                 const fecha = obtenerFechaVenta(venta.fecha) || obtenerFechaVenta(venta.fechaLocal) || new Date();
-                const numero = String(venta.id || '').slice(-6).toUpperCase() || 'VENTA';
                 const items = Array.isArray(venta.items) && venta.items.length
                     ? venta.items
                     : [{ nombre: 'Sin detalle disponible', cantidad: 0, precio: 0, importe: Number(venta.total) || 0, unidadVenta: '' }];
-                items.forEach(item => {
+                const itemsVenta = items.map(item => {
                     const cantidad = Number(item.cantidad) || 0;
                     const precio = Number(item.precio) || 0;
-                    filas.push({
-                        fecha,
-                        numero,
+                    unidadesPeriodo += cantidad;
+                    return {
                         producto: String(item.nombre || item.producto || 'Producto'),
                         cantidad,
                         unidad: item.unidadVenta === 'libra' ? ' lb' : '',
                         precio,
                         importe: Number.isFinite(Number(item.importe)) ? Number(item.importe) : cantidad * precio
-                    });
+                    };
                 });
+                filas.push({ fecha, items: itemsVenta, total: Number(venta.total) || 0 });
             });
-            const paginas = [filas.slice(0, 16)];
-            for (let i = 16; i < filas.length; i += 18) paginas.push(filas.slice(i, i + 18));
+
+            const fechaInicio = filas.reduce((masAntigua, venta) =>
+                !masAntigua || venta.fecha < masAntigua ? venta.fecha : masAntigua, null);
+            const fechaCorte = new Date(document.getElementById('fecha-reporte').value + 'T00:00:00');
+            const fechaInicioTexto = fechaInicio.toLocaleDateString('es-GT', { day: '2-digit', month: 'short', year: 'numeric' });
+            const fechaCorteTexto = fechaCorte.toLocaleDateString('es-GT', { day: '2-digit', month: 'short', year: 'numeric' });
+            const generado = new Date().toLocaleString('es-GT', { dateStyle: 'medium', timeStyle: 'short' });
+
+            const agregarTexto = (texto, tamano = 8, negrita = false, alineacion = 'izquierda', alto = 13) =>
+                bloques.push({ tipo: 'texto', texto: String(texto), tamano, negrita, alineacion, alto });
+            const agregarSeparador = () => bloques.push({ tipo: 'separador', alto: 9 });
+            const ajustarProducto = texto => {
+                const palabras = String(texto).split(/\s+/);
+                const renglones = [];
+                let actual = '';
+                palabras.forEach(palabra => {
+                    const siguiente = actual ? actual + ' ' + palabra : palabra;
+                    if (siguiente.length > 29 && actual) {
+                        renglones.push(actual);
+                        actual = palabra;
+                    } else actual = siguiente;
+                });
+                if (actual) renglones.push(actual);
+                return renglones.length ? renglones : ['Producto'];
+            };
+
+            agregarTexto('MI NEGOCIO', 14, true, 'centro', 20);
+            agregarTexto('RESUMEN DE VENTAS', 9, true, 'centro', 15);
+            agregarSeparador();
+            agregarTexto('Desde ' + fechaInicioTexto + ' hasta ' + fechaCorteTexto, 8, false, 'centro', 14);
+            agregarTexto(ventasPeriodo.length + (ventasPeriodo.length === 1 ? ' venta' : ' ventas') + '  ·  ' + String(unidadesPeriodo).replace(/\.00$/, '') + ' unidades', 8, false, 'centro', 14);
+            agregarSeparador();
+
+            filas.forEach((venta, indice) => {
+                agregarTexto('VENTA ' + (indice + 1) + '  ·  ' + venta.fecha.toLocaleString('es-GT', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }), 8, true, 'izquierda', 15);
+                venta.items.forEach(item => {
+                    ajustarProducto(item.producto).forEach(renglon => agregarTexto(renglon, 8, true, 'izquierda', 11));
+                    agregarTexto(
+                        String(item.cantidad).replace(/\.00$/, '') + item.unidad + ' × Q' + item.precio.toFixed(2),
+                        7,
+                        false,
+                        'izquierda',
+                        11
+                    );
+                    agregarTexto('Importe  Q' + item.importe.toFixed(2), 8, false, 'derecha', 13);
+                });
+                agregarTexto('Total de venta  Q' + venta.total.toFixed(2), 8, true, 'derecha', 15);
+                if (indice < filas.length - 1) agregarSeparador();
+            });
+
+            agregarSeparador();
+            agregarTexto('TOTAL DEL PERIODO', 9, true, 'izquierda', 16);
+            agregarTexto('Q' + totalPeriodo.toFixed(2), 16, true, 'centro', 24);
+            agregarTexto('Generado: ' + generado, 7, false, 'centro', 12);
+            agregarTexto('Gracias', 8, true, 'centro', 14);
+
+            const alto = Math.ceil(bloques.reduce((suma, bloque) => suma + bloque.alto, 0) + 24);
             const objetos = [null];
             const agregarObjeto = contenido => { objetos.push(contenido); return objetos.length - 1; };
             const catalogoId = agregarObjeto('');
             const paginasId = agregarObjeto('');
             const fuenteId = agregarObjeto('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>');
             const fuenteNegritaId = agregarObjeto('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>');
-            const idsPaginas = [];
-            const fechaInicio = ventasPeriodo.reduce((masAntigua, venta) => {
-                const fecha = obtenerFechaVenta(venta.fecha) || obtenerFechaVenta(venta.fechaLocal) || new Date();
-                return !masAntigua || fecha < masAntigua ? fecha : masAntigua;
-            }, null);
-            const fechaCorte = new Date(document.getElementById('fecha-reporte').value + 'T00:00:00');
-            const fechaInicioTexto = fechaInicio.toLocaleDateString('es-GT', { day: '2-digit', month: 'long', year: 'numeric' });
-            const fechaCorteTexto = fechaCorte.toLocaleDateString('es-GT', { day: '2-digit', month: 'long', year: 'numeric' });
-            const generado = new Date().toLocaleString('es-GT', { dateStyle: 'medium', timeStyle: 'short' });
-            const totalPeriodo = ventasPeriodo.reduce((suma, venta) => suma + (Number(venta.total) || 0), 0);
-            const unidadesPeriodo = filas.reduce((suma, fila) => suma + fila.cantidad, 0);
+            const comandos = [];
+            const color = (r, g, b) => comandos.push(r + ' ' + g + ' ' + b + ' rg');
+            const linea = (x1, y1, x2, y2) => comandos.push('.68 .72 .75 RG .6 w [2 2] 0 d ' + x1 + ' ' + y1 + ' m ' + x2 + ' ' + y2 + ' l S [] 0 d');
+            const texto = (x, y, tamano, contenido, negrita = false, alineacion = 'izquierda') => {
+                const limpio = limpiarTextoPDF(contenido);
+                const anchoEstimado = limpio.length * tamano * (negrita ? .56 : .5);
+                let posicionX = x;
+                if (alineacion === 'derecha') posicionX = x - anchoEstimado;
+                if (alineacion === 'centro') posicionX = x - anchoEstimado / 2;
+                comandos.push('BT /' + (negrita ? 'F2' : 'F1') + ' ' + tamano + ' Tf ' + posicionX.toFixed(1) + ' ' + y.toFixed(1) + ' Td (' + limpio + ') Tj ET');
+            };
 
-            paginas.forEach((filasPagina, indicePagina) => {
-                const comandos = [];
-                const color = (r, g, b) => comandos.push(r + ' ' + g + ' ' + b + ' rg');
-                const rectangulo = (x, y, w, h, r, g, b) => comandos.push(r + ' ' + g + ' ' + b + ' rg ' + x + ' ' + y + ' ' + w + ' ' + h + ' re f');
-                const linea = (x1, y1, x2, y2, r = .86, g = .89, b = .91) => comandos.push(r + ' ' + g + ' ' + b + ' RG .7 w ' + x1 + ' ' + y1 + ' m ' + x2 + ' ' + y2 + ' l S');
-                const texto = (x, y, tamano, contenido, negrita = false, alineacion = 'izquierda') => {
-                    const limpio = limpiarTextoPDF(contenido);
-                    const anchoEstimado = limpio.length * tamano * (negrita ? .56 : .5);
-                    let posicionX = x;
-                    if (alineacion === 'derecha') posicionX = x - anchoEstimado;
-                    if (alineacion === 'centro') posicionX = x - anchoEstimado / 2;
-                    comandos.push('BT /' + (negrita ? 'F2' : 'F1') + ' ' + tamano + ' Tf ' + posicionX.toFixed(1) + ' ' + y + ' Td (' + limpio + ') Tj ET');
-                };
-
-                rectangulo(0, 744, ancho, 98, .063, .149, .239);
-                rectangulo(0, 740, ancho, 4, .835, .659, .294);
-                rectangulo(margen, 775, 40, 40, .086, .549, .525);
-                color(1, 1, 1);
-                texto(62, 790, 13, 'MN', true, 'centro');
-                texto(96, 804, 9, 'MI NEGOCIO', true);
-                color(.72, .82, .86);
-                texto(96, 786, 8, 'CONTROL DE INVENTARIO Y VENTAS');
-                color(1, 1, 1);
-                texto(553, 800, 9, 'VENTAS DE TODO EL PERIODO', true, 'derecha');
-                color(.72, .82, .86);
-                texto(553, 782, 8, 'HASTA ' + fechaCorteTexto.toUpperCase(), false, 'derecha');
-
-                let inicioTabla;
-                if (indicePagina === 0) {
-                    color(.063, .149, .239);
-                    texto(margen, 708, 18, 'Ventas de todo el periodo', true);
-                    color(.40, .48, .55);
-                    texto(margen, 691, 9, 'Desde ' + fechaInicioTexto + ' hasta ' + fechaCorteTexto);
-                    const tarjetas = [
-                        { x: 42, titulo: 'VENTAS', valor: String(ventasPeriodo.length), color: [.086, .549, .525] },
-                        { x: 216, titulo: 'UNIDADES', valor: String(unidadesPeriodo).replace(/\.00$/, ''), color: [.31, .47, .64] },
-                        { x: 390, titulo: 'TOTAL VENDIDO', valor: 'Q' + totalPeriodo.toFixed(2), color: [.835, .659, .294] }
-                    ];
-                    tarjetas.forEach(tarjeta => {
-                        rectangulo(tarjeta.x, 622, 163, 54, .96, .97, .98);
-                        rectangulo(tarjeta.x, 622, 4, 54, tarjeta.color[0], tarjeta.color[1], tarjeta.color[2]);
-                        color(.42, .49, .55);
-                        texto(tarjeta.x + 15, 656, 7, tarjeta.titulo, true);
-                        color(.063, .149, .239);
-                        texto(tarjeta.x + 15, 635, 13, tarjeta.valor, true);
-                    });
-                    inicioTabla = 585;
-                } else {
-                    color(.063, .149, .239);
-                    texto(margen, 708, 15, 'Ventas de todo el periodo', true);
-                    color(.40, .48, .55);
-                    texto(553, 708, 9, 'Continuacion', false, 'derecha');
-                    inicioTabla = 680;
-                }
-
-                rectangulo(margen, inicioTabla, 511, 30, .063, .149, .239);
-                color(1, 1, 1);
-                texto(54, inicioTabla + 11, 7, 'FECHA', true);
-                texto(121, inicioTabla + 11, 7, 'VENTA', true);
-                texto(181, inicioTabla + 11, 7, 'PRODUCTO', true);
-                texto(395, inicioTabla + 11, 7, 'CANT.', true, 'derecha');
-                texto(468, inicioTabla + 11, 7, 'PRECIO', true, 'derecha');
-                texto(541, inicioTabla + 11, 7, 'IMPORTE', true, 'derecha');
-
-                let y = inicioTabla - 26;
-                filasPagina.forEach((fila, indiceFila) => {
-                    if (indiceFila % 2 === 0) rectangulo(margen, y - 9, 511, 27, .965, .973, .978);
-                    color(.145, .22, .29);
-                    const fechaTexto = fila.fecha.toLocaleDateString('es-GT', { day: '2-digit', month: 'short', year: '2-digit' });
-                    const nombre = fila.producto.length > 30 ? fila.producto.slice(0, 27) + '...' : fila.producto;
-                    texto(54, y, 7, fechaTexto);
-                    texto(121, y, 7, 'V-' + fila.numero);
-                    texto(181, y, 7, nombre);
-                    texto(395, y, 7, String(fila.cantidad).replace(/\.00$/, '') + fila.unidad, false, 'derecha');
-                    texto(468, y, 7, 'Q' + fila.precio.toFixed(2), false, 'derecha');
-                    texto(541, y, 7, 'Q' + fila.importe.toFixed(2), true, 'derecha');
-                    linea(margen, y - 10, 553, y - 10);
-                    y -= 28;
-                });
-
-                if (indicePagina === paginas.length - 1) {
+            let y = alto - 17;
+            bloques.forEach(bloque => {
+                if (bloque.tipo === 'separador') {
+                    y -= 4;
+                    linea(margen, y, ancho - margen, y);
                     y -= 5;
-                    rectangulo(340, y - 12, 213, 34, .91, .95, .95);
-                    color(.086, .549, .525);
-                    texto(353, y, 9, 'TOTAL DEL PERIODO', true);
-                    color(.063, .149, .239);
-                    texto(541, y, 11, 'Q' + totalPeriodo.toFixed(2), true, 'derecha');
+                    return;
                 }
-
-                linea(margen, 51, 553, 51, .78, .83, .86);
-                color(.40, .48, .55);
-                texto(margen, 33, 7, 'Generado: ' + generado);
-                texto(ancho / 2, 33, 7, 'Documento generado por Mi Negocio', false, 'centro');
-                color(.063, .149, .239);
-                texto(553, 33, 7, 'PAGINA ' + (indicePagina + 1) + ' / ' + paginas.length, true, 'derecha');
-
-                const contenido = comandos.join('\n');
-                const contenidoId = agregarObjeto('<< /Length ' + contenido.length + ' >>\nstream\n' + contenido + '\nendstream');
-                const paginaId = agregarObjeto('<< /Type /Page /Parent ' + paginasId + ' 0 R /MediaBox [0 0 ' + ancho + ' ' + alto + '] /Resources << /Font << /F1 ' + fuenteId + ' 0 R /F2 ' + fuenteNegritaId + ' 0 R >> >> /Contents ' + contenidoId + ' 0 R >>');
-                idsPaginas.push(paginaId);
+                y -= bloque.alto;
+                color(.10, .13, .16);
+                const x = bloque.alineacion === 'centro'
+                    ? ancho / 2
+                    : bloque.alineacion === 'derecha' ? ancho - margen : margen;
+                texto(x, y + Math.max(2, (bloque.alto - bloque.tamano) / 2), bloque.tamano, bloque.texto, bloque.negrita, bloque.alineacion);
             });
 
+            const contenido = comandos.join('\n');
+            const contenidoId = agregarObjeto('<< /Length ' + contenido.length + ' >>\nstream\n' + contenido + '\nendstream');
+            const paginaId = agregarObjeto('<< /Type /Page /Parent ' + paginasId + ' 0 R /MediaBox [0 0 ' + ancho + ' ' + alto + '] /Resources << /Font << /F1 ' + fuenteId + ' 0 R /F2 ' + fuenteNegritaId + ' 0 R >> >> /Contents ' + contenidoId + ' 0 R >>');
             objetos[catalogoId] = '<< /Type /Catalog /Pages ' + paginasId + ' 0 R >>';
-            objetos[paginasId] = '<< /Type /Pages /Kids [' + idsPaginas.map(id => id + ' 0 R').join(' ') + '] /Count ' + idsPaginas.length + ' >>';
+            objetos[paginasId] = '<< /Type /Pages /Kids [' + paginaId + ' 0 R] /Count 1 >>';
+
             let pdf = '%PDF-1.4\n';
             const offsets = [0];
             for (let i = 1; i < objetos.length; i++) {

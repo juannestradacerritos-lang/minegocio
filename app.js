@@ -2275,7 +2275,7 @@
             
             document.getElementById('estado-reporte')?.classList.add('hidden');
             const boton = document.getElementById('btn-generar-reporte');
-            if (boton) boton.textContent = tipoDocumentoReporte === 'ventas-completas' ? 'Descargar ventas de todo el periodo' : 'Guardar y descargar PDF';
+            if (boton) boton.textContent = tipoDocumentoReporte === 'ventas-completas' ? 'Descargar ticket' : 'Guardar y descargar PDF';
             actualizarResumenFacturaPeriodo();
         }
 

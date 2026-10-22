@@ -187,9 +187,6 @@
             </div>
             <div class="flex items-center space-x-3 relative">
                 <img id="user-avatar" src="" alt="Perfil" class="w-8 h-8 rounded-full border-2 border-white shadow-sm hidden">
-                <button onclick="cambiarTab('ajustes')" aria-label="Abrir ajustes" class="w-9 h-9 bg-blue-700 hover:bg-blue-800 rounded-lg font-bold text-xl transition-colors">
-                    ⚙️
-                </button>
             </div>
         </header>
 
@@ -315,7 +312,7 @@
                 <div class="flex items-stretch gap-2 mb-4">
                     <div class="relative flex-1 min-w-0">
                         <span class="absolute left-4 top-3.5 text-gray-400" aria-hidden="true">🔍</span>
-                        <input type="search" id="buscar-venta" placeholder="Buscar por nombre o código..." class="w-full p-3 pl-10 border border-gray-300" oninput="renderizarListaVenta()" aria-label="Buscar producto para vender">
+                        <input type="search" id="buscar-venta" placeholder="Buscar producto..." class="w-full p-3 pl-10 border border-gray-300" oninput="renderizarListaVenta()" aria-label="Buscar por nombre o código">
                     </div>
                     <button type="button" onclick="abrirLectorCodigo('vender')" class="shrink-0 bg-teal-600 hover:bg-teal-700 text-white px-4 font-bold flex items-center gap-2" aria-label="Escanear producto para vender">
                         <span aria-hidden="true">▦</span><span>Escanear</span>

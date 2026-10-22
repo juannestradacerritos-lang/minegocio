@@ -1,23 +1,15 @@
         // Tema: respeta la elección guardada y, si no hay ninguna, sigue el tema del dispositivo.
-        const consultaTemaOscuro = window.matchMedia('(prefers-color-scheme: dark)');
-
         function aplicarTema(oscuro) {
             document.body.classList.toggle('dark-mode', oscuro);
             const interruptor = document.getElementById('interruptor-modo-oscuro');
             if (interruptor) interruptor.checked = oscuro;
             // Colorea la barra del sistema en la PWA según el tema activo.
-            document.querySelector('meta[name="theme-color"]')?.setAttribute('content', oscuro ? '#07141e' : '#10263d');
+            document.querySelector('meta[name="theme-color"]')?.setAttribute('content', oscuro ? '#081b1b' : '#155a4c');
         }
 
-        const temaGuardado = localStorage.getItem('modoOscuro');
-        aplicarTema(temaGuardado === null ? consultaTemaOscuro.matches : temaGuardado === 'true');
-
-        // Si el usuario nunca eligió un tema, acompaña los cambios del sistema.
-        consultaTemaOscuro.addEventListener?.('change', evento => {
-            if (localStorage.getItem('modoOscuro') !== null) return;
-            aplicarTema(evento.matches);
-            if (!document.getElementById('tab-graficos').classList.contains('hidden')) requestAnimationFrame(renderizarGraficos);
-        });
+        // El modo claro es el punto de partida; la preferencia guardada siempre se respeta.
+        if (localStorage.getItem('modoOscuro') === null) localStorage.setItem('modoOscuro', 'false');
+        aplicarTema(localStorage.getItem('modoOscuro') === 'true');
 
         const firebaseConfig = {
             apiKey: "AIzaSyC43cEVLZ106chtuuXlQ-HoWkUp34kzauE",
@@ -1526,8 +1518,8 @@
             stock.step = usaLibras ? '0.01' : '1';
             stock.min = usaLibras ? '0.01' : '1';
             stock.inputMode = usaLibras ? 'decimal' : 'numeric';
-            document.getElementById('nuevo-stock-label').textContent = usaLibras ? 'Libras disponibles' : 'Unidades que trae';
-            document.getElementById('nuevo-precio-label').textContent = usaLibras ? 'Precio de venta por libra' : 'Precio de venta por unidad';
+            document.getElementById('nuevo-stock-label').textContent = usaLibras ? 'Libras disponibles' : 'Unidades disponibles';
+            document.getElementById('nuevo-precio-label').textContent = usaLibras ? '¿A cuánto venderás cada libra?' : '¿A cuánto venderás cada unidad?';
             document.getElementById('nuevo-costo-unidad-texto').textContent = usaLibras ? 'libra' : 'unidad';
             document.getElementById('nuevo-unidad-ayuda').textContent = tipo === 'ambas'
                 ? 'Registra las existencias disponibles; una venta por unidad descuenta 1 y una venta por libra descuenta la cantidad indicada.'
@@ -1664,7 +1656,13 @@
             ));
             
             if(conStock.length === 0) {
-                contenedor.innerHTML = `<span class="text-sm text-gray-400">${busqueda ? 'No se encontraron productos.' : 'No hay productos con stock.'}</span>`;
+                if (busqueda) {
+                    contenedor.innerHTML = '<div class="sale-empty-state"><span class="sale-empty-icon" aria-hidden="true">⌕</span><strong>No encontramos ese producto</strong><p>Prueba con otro nombre o código.</p></div>';
+                } else if (inventario.length === 0) {
+                    contenedor.innerHTML = '<div class="sale-empty-state"><span class="sale-empty-icon" aria-hidden="true">🧺</span><strong>Aún no hay productos</strong><p>Agrega un producto para empezar a registrar ventas.</p><button type="button" onclick="cambiarTab(\'nuevo\')">Agregar primer producto</button></div>';
+                } else {
+                    contenedor.innerHTML = '<div class="sale-empty-state"><span class="sale-empty-icon" aria-hidden="true">📦</span><strong>No hay productos disponibles</strong><p>Revisa el inventario para ver cuáles necesitan reposición.</p><button type="button" onclick="cambiarTab(\'catalogo\', document.getElementById(\'nav-catalogo\'))">Ver inventario</button></div>';
+                }
                 return;
             }
 
@@ -2576,3 +2574,4 @@
                 });
             });
         }
+

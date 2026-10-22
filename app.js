@@ -554,6 +554,195 @@
             }).join('');
         }
 
+
+        // Datos compartidos por las descargas de imagen y PDF por categoría.
+        function obtenerResumenCategoriaDia() {
+            const selector = document.getElementById('categoria-fecha-dia');
+            const dia = selector?.value || fechaLocalActual();
+            const filtro = categoriaVentasSeleccionada || 'todas';
+            const acumulados = new Map();
+            const ventasIncluidas = new Set();
+            let cantidadTotal = 0;
+            let importeTotal = 0;
+
+            const claveFecha = fecha => {
+                const fechaValida = obtenerFechaVenta(fecha);
+                if (!fechaValida) return '';
+                return `${fechaValida.getFullYear()}-${String(fechaValida.getMonth() + 1).padStart(2, '0')}-${String(fechaValida.getDate()).padStart(2, '0')}`;
+            };
+
+            ventas.forEach((venta, indiceVenta) => {
+                if (claveFecha(venta.fechaLocal || venta.fecha) !== dia) return;
+                let ventaAporta = false;
+                (venta.items || []).forEach(item => {
+                    const nombreOriginal = String(item.nombre || 'Producto');
+                    const nombreBase = nombreOriginal.replace(/ \\((mediano|grande)\\)$/i, '');
+                    const producto = inventario.find(p => p.id === item.productoId) || inventario.find(p => p.nombre === nombreBase);
+                    const categoria = item.categoria || producto?.categoria || 'Otros';
+                    if (filtro !== 'todas' && categoria !== filtro) return;
+                    const cantidad = Number(item.cantidad) || 0;
+                    const importe = (Number(item.precio) || 0) * cantidad;
+                    if (!acumulados.has(nombreOriginal)) acumulados.set(nombreOriginal, { nombre: nombreOriginal, categoria, cantidad: 0, importe: 0 });
+                    const fila = acumulados.get(nombreOriginal);
+                    fila.cantidad += cantidad;
+                    fila.importe += importe;
+                    cantidadTotal += cantidad;
+                    importeTotal += importe;
+                    ventaAporta = true;
+                });
+                if (ventaAporta) ventasIncluidas.add(venta.id || indiceVenta);
+            });
+
+            const fecha = new Date(`${dia}T00:00:00`);
+            const categoriaTexto = filtro === 'todas' ? 'Todas las categorías' : filtro;
+            const fechaTexto = Number.isNaN(fecha.getTime())
+                ? dia
+                : fecha.toLocaleDateString('es-GT', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+            return {
+                dia, fechaTexto, categoriaTexto,
+                ventas: ventasIncluidas.size,
+                cantidad: cantidadTotal,
+                total: importeTotal,
+                productos: [...acumulados.values()].sort((a, b) => b.importe - a.importe)
+            };
+        }
+
+        function renderizarVentasCategoria() {
+            const etiqueta = document.getElementById('categoria-periodo');
+            if (!etiqueta) return;
+            const resumen = obtenerResumenCategoriaDia();
+            etiqueta.textContent = resumen.productos.length
+                ? `${resumen.productos.length} productos · ${resumen.ventas} ventas · Total: Q${resumen.total.toFixed(2)} · ${resumen.fechaTexto}`
+                : `Sin ventas para ${resumen.categoriaTexto.toLowerCase()} el ${resumen.fechaTexto}.`;
+        }
+        window.renderizarVentasCategoria = renderizarVentasCategoria;
+
+        function nombreArchivoCategoria(resumen, extension) {
+            const nombre = resumen.categoriaTexto.normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')
+                .replace(/[^a-zA-Z0-9]+/g, '_').replace(/^_|_$/g, '') || 'Todas';
+            return `Ventas_${nombre}_${resumen.dia}.${extension}`;
+        }
+
+        function descargarImagenCategoria() {
+            const resumen = obtenerResumenCategoriaDia();
+            const ancho = 1200;
+            const alto = 470 + Math.max(1, resumen.productos.length) * 62;
+            const canvas = document.createElement('canvas');
+            canvas.width = ancho;
+            canvas.height = alto;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return mostrarAviso('No se pudo crear la imagen', 'error');
+
+            ctx.fillStyle = '#f3f6f5';
+            ctx.fillRect(0, 0, ancho, alto);
+            ctx.fillStyle = '#155a4c';
+            ctx.fillRect(0, 0, ancho, 220);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '700 28px system-ui, sans-serif';
+            ctx.fillText('MI NEGOCIO  ·  REPORTE DE VENTAS', 64, 68);
+            ctx.font = '700 42px system-ui, sans-serif';
+            ctx.fillText('Ventas por categoría', 64, 132);
+            ctx.font = '22px system-ui, sans-serif';
+            ctx.fillStyle = '#d9eee6';
+            ctx.fillText(`${resumen.categoriaTexto}  ·  ${resumen.fechaTexto}`, 64, 176);
+
+            const tarjetas = [
+                { label: 'VENTAS', value: String(resumen.ventas) },
+                { label: 'PRODUCTOS', value: String(resumen.productos.length) },
+                { label: 'TOTAL VENDIDO', value: `Q${resumen.total.toFixed(2)}` }
+            ];
+            const cardY = 246, cardW = 336, gap = 32;
+            tarjetas.forEach((tarjeta, i) => {
+                const x = 64 + i * (cardW + gap);
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath(); ctx.roundRect(x, cardY, cardW, 112, 18); ctx.fill();
+                ctx.fillStyle = '#6a7d74'; ctx.font = '700 17px system-ui, sans-serif';
+                ctx.fillText(tarjeta.label, x + 22, cardY + 38);
+                ctx.fillStyle = '#176b57'; ctx.font = '800 32px system-ui, sans-serif';
+                ctx.fillText(tarjeta.value, x + 22, cardY + 82);
+            });
+
+            const tablaY = 400;
+            ctx.fillStyle = '#e3ece7';
+            ctx.beginPath(); ctx.roundRect(64, tablaY, ancho - 128, 50, 10); ctx.fill();
+            ctx.fillStyle = '#40564c'; ctx.font = '700 17px system-ui, sans-serif';
+            ctx.fillText('PRODUCTO', 88, tablaY + 32);
+            ctx.fillText('CANTIDAD', 780, tablaY + 32);
+            ctx.textAlign = 'right';
+            ctx.fillText('IMPORTE', ancho - 88, tablaY + 32);
+            ctx.textAlign = 'left';
+
+            if (!resumen.productos.length) {
+                ctx.fillStyle = '#6a7d74'; ctx.font = '22px system-ui, sans-serif';
+                ctx.fillText('No hay ventas registradas para esta selección.', 88, tablaY + 100);
+            } else {
+                resumen.productos.forEach((producto, i) => {
+                    const y = tablaY + 50 + i * 62;
+                    ctx.fillStyle = i % 2 ? '#f7faf8' : '#ffffff';
+                    ctx.fillRect(64, y, ancho - 128, 62);
+                    ctx.fillStyle = '#1c3029'; ctx.font = '600 19px system-ui, sans-serif';
+                    ctx.fillText(producto.nombre, 88, y + 38, 620);
+                    ctx.fillStyle = '#40564c'; ctx.font = '18px system-ui, sans-serif';
+                    ctx.fillText(Number(producto.cantidad.toFixed(2)).toString(), 780, y + 38);
+                    ctx.fillStyle = '#176b57'; ctx.font = '700 19px system-ui, sans-serif';
+                    ctx.textAlign = 'right';
+                    ctx.fillText(`Q${producto.importe.toFixed(2)}`, ancho - 88, y + 38);
+                    ctx.textAlign = 'left';
+                });
+            }
+
+            canvas.toBlob(blob => {
+                if (!blob) return mostrarAviso('No se pudo crear la imagen', 'error');
+                const url = URL.createObjectURL(blob);
+                const enlace = document.createElement('a');
+                enlace.href = url;
+                enlace.download = nombreArchivoCategoria(resumen, 'png');
+                document.body.appendChild(enlace);
+                enlace.click();
+                enlace.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 1500);
+                mostrarAviso('Imagen descargada');
+            }, 'image/png');
+        }
+
+        function descargarPDFCategoria() {
+            const resumen = obtenerResumenCategoriaDia();
+            if (!window.PDFInforme) return mostrarAviso('El generador de PDF no está disponible. Recarga la página.', 'error');
+            const doc = window.PDFInforme.crearDocumento({
+                titulo: 'Ventas por categoría',
+                subtitulo: `${resumen.categoriaTexto} · ${resumen.fechaTexto}`,
+                etiquetaBanda: 'Resumen diario',
+                detalleBanda: window.PDFInforme.fechaGeneracion()
+            });
+            doc.tarjetas([
+                { etiqueta: 'VENTAS', valor: String(resumen.ventas) },
+                { etiqueta: 'PRODUCTOS', valor: String(resumen.productos.length), color: '0.31 0.47 0.64' },
+                { etiqueta: 'TOTAL VENDIDO', valor: window.PDFInforme.dinero(resumen.total), color: '0.835 0.659 0.294' }
+            ]);
+            doc.seccion('Detalle por producto', resumen.productos.length ? resumen.categoriaTexto : '');
+            if (!resumen.productos.length) {
+                doc.vacio('Sin ventas para la categoría y fecha elegidas');
+            } else {
+                doc.tabla('PRODUCTO');
+                resumen.productos.forEach((producto, indice) => doc.fila({
+                    n: indice + 1,
+                    nombre: producto.nombre,
+                    cantidad: producto.cantidad,
+                    importe: producto.importe,
+                    pct: resumen.total > 0 ? producto.importe / resumen.total * 100 : 0,
+                    par: indice % 2 === 0
+                }));
+                doc.total('TOTAL DEL DÍA', resumen.cantidad, resumen.total);
+            }
+            window.PDFInforme.descargar(doc.finalizar(), nombreArchivoCategoria(resumen, 'pdf'));
+            mostrarAviso('PDF descargado');
+        }
+
+        document.getElementById('btn-imagen-categoria')?.addEventListener('click', descargarImagenCategoria);
+        document.getElementById('btn-pdf-categoria')?.addEventListener('click', descargarPDFCategoria);
+        document.getElementById('categoria-fecha-dia')?.addEventListener('change', renderizarVentasCategoria);
+        renderizarVentasCategoria();
+
         function obtenerFechaVenta(fecha) {
             if (!fecha) return null;
             const valor = typeof fecha.toDate === 'function' ? fecha.toDate() : new Date(fecha);

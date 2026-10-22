@@ -494,11 +494,13 @@
             }
             ultimoDiaResumen = hoy;
             renderizarVentasHoy();
+            renderizarResumenVentasCategoria();
         }
 
         document.getElementById('categoria-fecha-dia').addEventListener('change', event => {
             seguirHoy = !event.target.value || event.target.value === fechaLocalActual();
             renderizarVentasHoy();
+            renderizarResumenVentasCategoria();
         });
         setInterval(actualizarDiaResumen, 60000);
         document.addEventListener('visibilitychange', () => {
@@ -556,6 +558,68 @@
             }).join('');
         }
 
+
+        function renderizarResumenVentasCategoria() {
+            const contenedor = document.getElementById('resumen-ventas-categoria');
+            const etiquetaFecha = document.getElementById('resumen-categoria-fecha');
+            if (!contenedor) return;
+
+            const selector = document.getElementById('categoria-fecha-dia');
+            const dia = selector?.value || fechaLocalActual();
+            const inicio = new Date(dia + 'T00:00:00');
+            const fin = new Date(inicio);
+            fin.setDate(fin.getDate() + 1);
+            const esHoy = dia === fechaLocalActual();
+            if (etiquetaFecha) {
+                etiquetaFecha.textContent = esHoy
+                    ? 'Lo que más se vendió hoy.'
+                    : 'Lo que más se vendió el ' + inicio.toLocaleDateString('es-GT', { day: '2-digit', month: 'long', year: 'numeric' }) + '.';
+            }
+
+            const acumulados = new Map();
+            ventas.forEach(venta => {
+                const fecha = obtenerFechaVenta(venta.fecha) || obtenerFechaVenta(venta.fechaLocal);
+                if (!fecha || fecha < inicio || fecha >= fin) return;
+                (venta.items || []).forEach(item => {
+                    const nombreBase = String(item.nombre || 'Producto').replace(/ \((mediano|grande)\)$/i, '');
+                    const producto = inventario.find(p => p.id === item.productoId) || inventario.find(p => p.nombre === nombreBase);
+                    const categoria = String(item.categoria || producto?.categoria || 'Otros');
+                    const cantidad = Number(item.cantidad) || 0;
+                    const precio = Number(item.precio) || 0;
+                    const importeItem = Number(item.importe);
+                    const importe = Number.isFinite(importeItem) ? importeItem : cantidad * precio;
+                    if (!acumulados.has(categoria)) acumulados.set(categoria, { total: 0, unidades: 0, libras: 0 });
+                    const fila = acumulados.get(categoria);
+                    fila.total += importe;
+                    if (item.unidadVenta === 'libra') fila.libras += cantidad;
+                    else fila.unidades += cantidad;
+                });
+            });
+
+            const categorias = [...acumulados.entries()]
+                .map(([nombre, datos]) => ({ nombre, ...datos }))
+                .sort((a, b) => b.total - a.total);
+            if (!categorias.length) {
+                contenedor.innerHTML = '<p class="category-sales-empty">Aún no hay ventas para mostrar este día.</p>';
+                return;
+            }
+
+            const maximo = Math.max(...categorias.map(categoria => categoria.total), 1);
+            contenedor.innerHTML = categorias.map(categoria => {
+                const porcentaje = Math.max(4, Math.min(100, (categoria.total / maximo) * 100));
+                const cantidades = formatearCantidades(categoria.unidades, categoria.libras);
+                return `<article class="category-sales-row">
+                    <div class="category-sales-heading">
+                        <strong>${escaparHTML(categoria.nombre)}</strong>
+                        <span>Q${categoria.total.toFixed(2)}</span>
+                    </div>
+                    <div class="category-sales-track" role="img" aria-label="${escaparHTML(categoria.nombre)}: Q${categoria.total.toFixed(2)}">
+                        <span style="width:${porcentaje.toFixed(1)}%"></span>
+                    </div>
+                    <small>${escaparHTML(cantidades)}</small>
+                </article>`;
+            }).join('');
+        }
 
         // Datos compartidos por las descargas de imagen y PDF por categoría.
         function obtenerResumenCategoriaDia() {
@@ -979,6 +1043,7 @@
             document.getElementById('resumen-venta').innerText = `Q${ventasRealizadas.toFixed(2)}`;
             document.getElementById('resumen-ganancia').innerText = `Q${(ventaTotal - costoTotal).toFixed(2)}`;
             renderizarVentasHoy();
+            renderizarResumenVentasCategoria();
             renderizarMenuCategorias();
         }
 

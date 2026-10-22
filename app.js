@@ -26,6 +26,8 @@
         const db = firebase.firestore();
         const auth = firebase.auth();
         const provider = new firebase.auth.GoogleAuthProvider();
+        // Después de cerrar sesión, deja elegir explícitamente qué cuenta usar.
+        provider.setCustomParameters({ prompt: 'select_account' });
 
         // Cada cuenta guarda sus datos en una ruta independiente.
         function coleccionUsuario(nombre) {
@@ -315,9 +317,14 @@
             });
         }
 
-        function cerrarSesion() {
-            auth.signOut();
+        async function cerrarSesion() {
             cerrarMenuAjustes();
+            try {
+                await auth.signOut();
+            } catch (error) {
+                console.error('No se pudo cerrar la sesión:', error);
+                alert('No se pudo cerrar la sesión. Revisa tu conexión e inténtalo de nuevo.');
+            }
         }
 
         function iniciarLecturaInventario() {

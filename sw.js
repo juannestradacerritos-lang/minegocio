@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mi-negocio-v119';
+const CACHE_NAME = 'mi-negocio-v120';
 const APP_SHELL = ['./', './index.html', './styles.css', './app.js', './aviso-carrito.js', './pdf-comun.js', './pdf-categoria.js', './categorias.js', './modal-bloqueo.js', './manifest.json', './icon.svg'];
 const PAGINA_OFFLINE = './index.html';
 const RECURSOS_EXTERNOS = [
@@ -9,7 +9,6 @@ const RECURSOS_EXTERNOS = [
 ];
 
 function respuestaValida(response) {
-  // Las respuestas opacas de otros dominios tienen status 0, pero sí se pueden reutilizar desde Cache Storage.
   return response && (response.ok || response.type === 'opaque');
 }
 
@@ -19,26 +18,29 @@ async function guardarEnCache(request, response) {
   await cache.put(request, response.clone());
 }
 
+async function actualizarPaginaEnCache() {
+  try {
+    const response = await fetch(new Request(PAGINA_OFFLINE, { cache: 'reload' }));
+    if (response.ok) await guardarEnCache(PAGINA_OFFLINE, response);
+  } catch (error) {
+    // Sin conexión: se conserva la página que ya está guardada.
+  }
+}
+
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE_NAME);
 
-    // Cada archivo se guarda por separado para que un fallo no invalide toda la instalación.
-    const resultadosLocales = await Promise.allSettled(
-      // 'reload' evita que la caché HTTP del navegador entregue archivos viejos al instalar una versión nueva.
-      APP_SHELL.map(recurso => cache.add(new Request(recurso, { cache: 'reload' })))
-    );
+    // No activar una versión incompleta: HTML, estilos, lógica e iconos deben estar disponibles offline.
+    await cache.addAll(APP_SHELL.map(recurso => new Request(recurso, { cache: 'reload' })));
 
-    // index.html es imprescindible para mostrar la aplicación sin conexión.
-    const indice = APP_SHELL.indexOf(PAGINA_OFFLINE);
-    if (resultadosLocales[indice]?.status === 'rejected') {
-      throw resultadosLocales[indice].reason;
-    }
-
-    // Las bibliotecas externas también se intentan guardar sin bloquear la instalación.
-    await Promise.allSettled(RECURSOS_EXTERNOS.map(recurso => cache.add(recurso)));
-    // No se llama a skipWaiting() aquí: la versión nueva queda en espera hasta que el usuario
-    // pulse "Actualizar" en la aplicación (mensaje SKIP_WAITING).
+    // Los scripts externos se guardan como recursos no-CORS para poder reutilizarlos offline.
+    await Promise.allSettled(RECURSOS_EXTERNOS.map(async recurso => {
+      const peticion = new Request(recurso, { mode: 'no-cors', cache: 'reload' });
+      const respuesta = await fetch(peticion);
+      if (respuestaValida(respuesta)) await cache.put(peticion, respuesta);
+    }));
+    // La versión queda en espera hasta que el usuario pulse "Actualizar".
   })());
 });
 
@@ -64,14 +66,18 @@ self.addEventListener('fetch', event => {
 
   if (esNavegacion) {
     event.respondWith((async () => {
+      const paginaGuardada = await caches.match(PAGINA_OFFLINE) || await caches.match('./');
+      if (paginaGuardada) {
+        // Abrir primero la versión local permite entrar aunque el Wi-Fi esté lento o caído.
+        event.waitUntil(actualizarPaginaEnCache());
+        return paginaGuardada;
+      }
       try {
         const response = await fetch(event.request);
         await guardarEnCache(PAGINA_OFFLINE, response);
         return response;
       } catch (error) {
-        const paginaGuardada = await caches.match(PAGINA_OFFLINE);
-        if (paginaGuardada) return paginaGuardada;
-        return new Response('La aplicación no está disponible sin conexión todavía.', {
+        return new Response('Abre Mi Negocio una vez con internet para guardar la aplicación y poder usarla sin conexión.', {
           status: 503,
           headers: { 'Content-Type': 'text/plain; charset=utf-8' }
         });
@@ -83,7 +89,6 @@ self.addEventListener('fetch', event => {
   if (esRecursoApp || esDependencia) {
     event.respondWith((async () => {
       const cached = await caches.match(event.request, { ignoreSearch: esRecursoApp });
-
       const actualizar = fetch(event.request).then(async response => {
         await guardarEnCache(event.request, response);
         return response;
@@ -93,7 +98,6 @@ self.addEventListener('fetch', event => {
         event.waitUntil(actualizar.catch(() => undefined));
         return cached;
       }
-
       try {
         return await actualizar;
       } catch (error) {
@@ -102,4 +106,3 @@ self.addEventListener('fetch', event => {
     })());
   }
 });
-

@@ -2280,11 +2280,15 @@
         }
 
         function confirmarVenta() {
+            if (!carrito.length) return mostrarAviso('Agrega un producto antes de cobrar', 'error');
+
+            const carritoCobrado = carrito.map(item => ({ ...item }));
+            const totalCobrado = totalVentaActual;
             const venta = {
-                total: totalVentaActual,
+                total: totalCobrado,
                 fechaLocal: new Date().toISOString(),
                 fecha: firebase.firestore.FieldValue.serverTimestamp(),
-                items: carrito.map(item => ({
+                items: carritoCobrado.map(item => ({
                     productoId: item.id,
                     nombre: item.tamano ? `${item.nombre} (${item.tamano})` : item.nombre,
                     categoria: item.categoria || 'Otros',
@@ -2296,29 +2300,82 @@
             };
 
             const batch = db.batch();
-            const descuentosPorProducto = carrito.reduce((totales, item) => {
+            const ventaRef = coleccionUsuario('ventas').doc();
+            let ventaGuardadaLocalmente = false;
+            let detenerObservacion = () => {};
+            const boton = document.getElementById('btn-finalizar-venta');
+
+            const finalizarCobroLocal = () => {
+                if (ventaGuardadaLocalmente) return;
+                ventaGuardadaLocalmente = true;
+                carrito = [];
+                renderizarCarrito();
+                cerrarModalCobro();
+                establecerCargaBoton(boton, false);
+                mostrarAviso(
+                    navigator.onLine
+                        ? 'Venta guardada. Confirmando sincronización…'
+                        : 'Venta guardada en este teléfono; pendiente de sincronizar.',
+                    'exito'
+                );
+            };
+
+            const restaurarCarritoSiFalla = () => {
+                carritoCobrado.forEach(itemCobrado => {
+                    const existente = carrito.find(item =>
+                        item.id === itemCobrado.id &&
+                        item.tamano === itemCobrado.tamano &&
+                        (item.modoVenta || item.unidadVenta) === (itemCobrado.modoVenta || itemCobrado.unidadVenta)
+                    );
+                    if (existente) existente.cantidad += itemCobrado.cantidad;
+                    else carrito.push({ ...itemCobrado });
+                });
+                renderizarCarrito();
+            };
+
+            const descuentosPorProducto = carritoCobrado.reduce((totales, item) => {
                 totales[item.id] = (totales[item.id] || 0) + item.cantidad * (item.descuentoStock || 1);
                 return totales;
             }, {});
             Object.entries(descuentosPorProducto).forEach(([id, descuento]) => {
-                const prodRef = coleccionUsuario("productos").doc(id);
+                const prodRef = coleccionUsuario('productos').doc(id);
                 const prodReal = inventario.find(p => p.id === id);
                 if (prodReal) {
-                    batch.update(prodRef, { stock: Math.max(0, prodReal.stock - descuento) });
-                    registrarMovimiento({ productoId: id, producto: prodReal.nombre, categoria: prodReal.categoria || 'Otros', tipo: 'venta', detalle: 'Salida por venta', cantidad: -descuento }, batch);
+                    batch.update(prodRef, { stock: Math.max(0, Number(prodReal.stock) - descuento) });
+                    registrarMovimiento({
+                        productoId: id,
+                        producto: prodReal.nombre,
+                        categoria: prodReal.categoria || 'Otros',
+                        tipo: 'venta',
+                        detalle: 'Salida por venta',
+                        cantidad: -descuento
+                    }, batch);
                 }
             });
-            batch.set(coleccionUsuario("ventas").doc(), venta);
+            batch.set(ventaRef, venta);
 
-            const boton = document.getElementById('btn-finalizar-venta');
             establecerCargaBoton(boton, true);
+            // Firestore emite la copia local (hasPendingWrites) antes de que el servidor la confirme.
+            detenerObservacion = ventaRef.onSnapshot({ includeMetadataChanges: true }, snapshot => {
+                if (snapshot.exists && snapshot.metadata.hasPendingWrites) finalizarCobroLocal();
+            }, error => {
+                detenerObservacion();
+                console.warn('No se pudo observar el estado local de la venta:', error);
+            });
+
             batch.commit().then(() => {
-                carrito = [];
-                renderizarCarrito();
-                cerrarModalCobro();
-                mostrarAviso('Venta cobrada e inventario actualizado', 'exito');
+                if (!ventaGuardadaLocalmente) finalizarCobroLocal();
+                detenerObservacion();
+                mostrarAviso('Venta sincronizada correctamente', 'exito');
             }).catch(error => {
-                alert('No se pudo registrar la venta: ' + error.message);
+                detenerObservacion();
+                if (ventaGuardadaLocalmente) {
+                    restaurarCarritoSiFalla();
+                    mostrarAviso('No se confirmó la venta. Revisa la conexión antes de volver a cobrar.', 'error');
+                } else {
+                    alert('No se pudo registrar la venta: ' + error.message);
+                }
+                console.error('No se pudo confirmar la venta en Firestore:', error);
             }).finally(() => establecerCargaBoton(boton, false));
         }
 

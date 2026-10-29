@@ -71,6 +71,23 @@
             temporizadorToast = setTimeout(() => toast.classList.remove('visible'), 2600);
         }
 
+        // Firestore conserva cambios pendientes localmente y se fuerza la reconexión al volver internet.
+        window.addEventListener('offline', () => {
+            mostrarAviso('Sin internet. Puedes seguir usando los datos ya sincronizados.');
+        });
+        window.addEventListener('online', () => {
+            if (auth.currentUser) {
+                db.enableNetwork()
+                    .then(() => mostrarAviso('Internet restablecido. Sincronizando tus datos…', 'exito'))
+                    .catch(error => console.warn('Firestore no pudo reanudar la conexión:', error));
+            } else {
+                mostrarAviso('Internet restablecido.', 'exito');
+            }
+        });
+        if (!navigator.onLine) {
+            setTimeout(() => mostrarAviso('Sin internet. Puedes seguir usando los datos ya sincronizados.'), 700);
+        }
+
         function establecerCargaBoton(boton, cargando) {
             if (!boton) return;
             boton.disabled = cargando;
